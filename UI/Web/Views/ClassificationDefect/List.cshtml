@@ -1,0 +1,367 @@
+﻿@using Service.ClassificationDefects
+@{
+
+    //page title
+    ViewBag.Title = "Classification Defect";
+    Layout = "~/Views/Shared/_KendoUILayout.cshtml";
+}
+<script src="@Url.Content("~/Scripts/kendo/2014.1.318/kendo.web.min.js")"></script>
+
+<div class="classificaionDefect-filter">
+    <input type="text" id="searchByClassificationDefectName-txt" placeholder="Classification Defect Name" class="form-control" />
+    <button id="searchClassificationDefect-btn" class="form-control" title="Search">Search</button>
+</div>
+
+<div id="classificationDefect-grid"></div>
+
+<script id="classificationDefect-delete-button-template" type="text/x-kendo-template">
+    <button class="k-button delete-button-template" onclick="deleteClassificationDefectsClick()" title="Delete Selected">Delete Selected</button>
+</script>
+
+<script type="text/x-kendo-template" id="windowTemplateDeleteConfirm">
+    <p class="delete-message">Do you want to delete the classification defect(s)?</p>
+    <input class="k-button delete-confirm" type="button" value="Yes" />
+    <input class="k-button delete-cancel" type="button" value="No" />
+</script>
+
+<script>
+    $(document).ready(function () {
+
+        var dataSourceSupplier = new kendo.data.DataSource({
+            transport: {
+                read: {
+                    dataType: "json",
+                    type: "POST",
+                    url: "@Html.Raw(Url.Action("GetAllSupplier", "QualityAlert"))"
+                }
+            }
+        });
+
+        //get search data when gird read or reload
+        function getSearchStrData() {
+            return {
+                ClassificationDefectName: $("#searchByClassificationDefectName-txt").val(),
+            };
+        }
+
+        var datasource = new kendo.data.DataSource({
+            type: "json",
+            transport: {
+                read: {
+                    url: "@Html.Raw(Url.Action("List", "ClassificationDefect"))",
+                    type: "POST",
+                    dataType: "json",
+                    data: getSearchStrData
+                },
+                update: {
+                    url: "@Html.Raw(Url.Action("Update", "ClassificationDefect"))",
+                    type: "POST",
+                    dataType: "json",
+                    complete: function (e) {
+                        if (e.responseJSON != undefined && e.responseJSON.status == "success")
+                            $("#classificationDefect-grid").data("kendoGrid").dataSource.read();
+                    }
+                },
+                create: {
+                    url: "@Html.Raw(Url.Action("Create", "ClassificationDefect"))",
+                    type: "POST",
+                    dataType: "json",
+                    complete: function (e) {
+                        if (e.responseJSON != undefined && e.responseJSON.status == "success")
+                            $("#classificationDefect-grid").data("kendoGrid").dataSource.read();
+                    }
+                }
+            },
+            schema: {
+                data: "Data",
+                total: "Total",
+                errors: "Errors",
+                model: {
+                    id: "Id",
+                    fields: {
+                        Id: { editable: false, defaultValue: 0 },
+                        Name: { editable: true, validation: { required: true } },
+                        Note: { editable: true },
+                        DisplayOrder: { editable: true, type: "number" },
+                        Materials: { editable: true },
+                        Suppliers: { editable: true }
+                    }
+                }
+            },
+            error: function (e) {
+                display_kendoui_grid_error(e);
+            },
+            pageSize: 10,
+            serverPaging: true,
+            serverFiltering: true,
+            serverSorting: true
+        });
+
+        function textInputNameInitialize(container, options) {
+            $('<input type="text" name="' + options.field + '" style="width: 320px;" class="k-input k-textbox" required/>')
+                .appendTo(container);
+        }
+
+        function textEditorNoteInitialize(container, options) {
+            $('<textarea name="' + options.field + '"  cols="50" rows="3" style="width: 320px;" class="k-input k-textbox"/>')
+                .appendTo(container);
+        };
+
+        function materialEditor(container, options) {
+            $("<select data-bind='value:" + options.field + "' style='width: 320px;'/>")
+                .appendTo(container)
+                .kendoMultiSelect({
+                    dataTextField: "Name",
+                    dataValueField: "Id",
+                    dataSource: options.values,
+                    suggest: true,
+                });
+        }
+
+        function materialDisplay(data) {
+            if (data.Materials != null && data.Materials != '') {
+                var listMaterialName = [];
+                data.Materials.forEach(function (material) {
+                    listMaterialName.push(material.Name);
+                });
+                return listMaterialName.join(', ');
+            }
+            else return '';
+        }
+
+        function supplierEditor(container, options) {
+            $("<select data-bind='value:" + options.field + "' style='width: 320px;'/>")
+                .appendTo(container)
+                .kendoMultiSelect({
+                    dataTextField: "Name",
+                    dataValueField: "Id",
+                    dataSource: dataSourceSupplier,
+                    suggest: true,
+                });
+        }
+
+        function supplierDisplay(data) {
+            if (data.Suppliers != null && data.Suppliers != '') {
+                var listSupplierName = [];
+                data.Suppliers.forEach(function (supplier) {
+                    listSupplierName.push(supplier.Name);
+                });
+                return listSupplierName.join(', ');
+            }
+            else return '';
+        }
+
+        var ListMaterial = [ @{
+        var materialService = DependencyResolver.Current.GetService<IMaterialService>();
+        var listMaterial = materialService.GetAllMaterials().ToList();
+
+        }
+        @for (var i = 0; i < listMaterial.Count(); i++)
+        {
+            var material = listMaterial[i];
+            <text>
+
+             { "Id": "@(Html.Raw(HttpUtility.JavaScriptStringEncode(material.Id.ToString())))", "Name": "@(Html.Raw(HttpUtility.JavaScriptStringEncode(material.Name)))" }
+                    </text>
+            if (i != listMaterial.Count - 1)
+            {
+                <text>,</text>
+            }
+        }
+        ];
+
+        $("#classificationDefect-grid").kendoGrid({
+            dataSource: datasource,
+            pageable: {
+                refresh: true,
+                pageSizes: ["5", "10", "15", "20"]
+            },
+            editable: {
+                mode: "popup",
+                //default title of popup editor
+                window: {
+                    title: "Create ClassificationDefect",
+                }
+            },
+            edit: function (e) {
+
+                //edit size of popup window
+                $(".k-edit-form-container").parent().width(500).data("kendoWindow").center();
+                $(".k-edit-buttons.k-state-default").width(484);
+
+                //change title popup editor
+                if (e.model.Id != '')
+                    e.container.kendoWindow("title", "Modify ClassificationDefect");
+
+                //remove lable and input of check_row when edit or create
+                $('label[for=check_row]').parent().remove();
+                $('div[data-container-for=check_row]').remove();
+
+                $('div[data-container-for=DisplayOrder] .k-widget.k-numerictextbox').width(320);
+            },
+            toolbar: ["create", { template: $("#classificationDefect-delete-button-template").html() }],
+            scrollable: false,
+            columns: [
+                {
+                    field: "check_row",
+                    title: " ",
+                    width: 30,
+                    template: "<input type='checkbox' value=#= Id# class='sel' />",
+                    attributes: { class: "text_align_center" }
+                },
+                {
+                    field: "Name",
+                    title: "Name",
+                    width: 200,
+                    headerAttributes: { class: "text_align_center" },
+                    //attributes: { class: "text_align_center" },
+                    editor: textInputNameInitialize
+                },
+                {
+                    field: "Materials",
+                    title: "Material",
+                    width: 200,
+                    template: materialDisplay,
+                    editor: materialEditor,
+                    values: ListMaterial
+                },
+                {
+                    field: "Suppliers",
+                    title: "Suppliers",
+                    width: 200,
+                    template: supplierDisplay,
+                    editor: supplierEditor,
+                },
+                {
+                    field: "DisplayOrder",
+                    title: "Display Order",
+                    width: 100,
+                    headerAttributes: { class: "text_align_center" },
+                    attributes: { class: "text_align_center" },
+                    format: "n0",
+                    template: "#=DisplayOrder#",
+                },
+                {
+                    field: "Note",
+                    title: "Note",
+                    width: 250,
+                    headerAttributes: { class: "text_align_center" },
+                    //attributes: { class: "text_align_center" },
+                    editor: textEditorNoteInitialize
+                },
+                {
+                    command: [
+                        {
+                            name: "edit",
+                            text: { update: "Save Changes", cancel: "Cancel" }
+                        },
+                    ],
+                    title: "&nbsp;",
+                    attributes: { class: "text_align_center" },
+                    width: "100px"
+                }
+            ],
+        });
+
+        function display_kendoui_grid_error(e) {
+            if (e.errors) {
+                if ((typeof e.errors) == 'string') {
+                    //single error
+                    //display the message
+                    alert(e.errors);
+                } else {
+                    //array of errors
+                    //source: http://docs.kendoui.com/getting-started/using-kendo-with/aspnet-mvc/helpers/grid/faq#how-do-i-display-model-state-errors?
+                    var message = "The following errors have occurred:";
+                    //create a message containing all errors.
+                    $.each(e.errors, function (key, value) {
+                        if (value.errors) {
+                            message += "\n";
+                            message += value.errors.join("\n");
+                        }
+                    });
+                    //display the message
+                    alert(message);
+                }
+            } else {
+                alert(e.xhr.responseText);
+            }
+        }
+
+        //show edit popup when double click on row on grid
+        $("#classificationDefect-grid").delegate("tbody>tr", "dblclick", function () {
+            if (!$(this).hasClass('k-grid-edit-row')) {
+                $("#classificationDefect-grid").data("kendoGrid").editRow($(this));
+            }
+        });
+
+        deleteClassificationDefectsClick = function (e) {
+            if ($("#classificationDefect-grid").find("input:checked").length <= 0)
+                return;
+            deleteClassificationDefects();
+        };
+
+        function deleteClassificationDefects() {
+            //define delete popup comfirm
+            var kendoWindow = $("<div id='window'/>").kendoWindow({
+                title: "Delete classification defect(s)",
+                visible: false,
+                width: "400px",
+                resizable: false,
+                modal: true,
+                viewable: false,
+                content: {
+                    template: $("#windowTemplateDeleteConfirm").html()
+                }
+            });
+
+            kendoWindow.data("kendoWindow")
+                .content($("#windowTemplateDeleteConfirm").html())
+                .center().open();
+
+            //get array of id to delete
+            function deletionData() {
+                var ids = [];
+                $("#classificationDefect-grid").find("input:checked").each(function (i, value) {
+                    ids.push($(value).val());
+                });
+                return ids;
+            }
+
+            kendoWindow.find(".delete-confirm,.delete-cancel")
+                .click(function () {
+                    if ($(this).hasClass("delete-confirm")) {
+                        $.ajax({
+                            url: "@Html.Raw(Url.Action("DeleteClassificationDefects", "ClassificationDefect"))",
+                            type: "POST",
+                        dataType: "json",
+                        data: {
+                            listId: deletionData()
+                        },
+                        success: function (result) {
+                            if (result.status != undefined && result.status == "success")
+                                $('#classificationDefect-grid').data('kendoGrid').dataSource.read();
+                            else
+                                alert(result.Content);
+                        }
+                    });
+                    }
+
+                kendoWindow.data("kendoWindow").close();
+            })
+            .end();
+        }
+
+        //searchByClassificationDefectName textbox press enter event
+        $("#searchByClassificationDefectName-txt").keyup(function (event) {
+            if (event.keyCode == 13) {
+                $("#searchClassificationDefect-btn").click();
+            }
+        });
+
+        //searchClassificationDefect button click event
+        $("#searchClassificationDefect-btn").click(function (e) {
+            $("#classificationDefect-grid").data("kendoGrid").dataSource.read();
+        });
+    });
+</script>

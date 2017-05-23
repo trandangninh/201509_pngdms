@@ -1,0 +1,87 @@
+﻿@using Microsoft.AspNet.Identity
+@model Web.Models.RoleViewModel
+
+
+@using (Html.BeginForm("SetRole", "UserManager", FormMethod.Post, new { @id = "setroleform", @class = "form-horizontal", role = "form" }))
+{
+    @Html.AntiForgeryToken()
+    @Html.HiddenFor(m=>m.Username)
+    <div class="validation-summary-errors">
+        <ul id="ResultRole" style="list-style: none" class="pull-left">
+        </ul>
+    </div>
+    
+    <div class="row">
+        <div class="col-md-12 form-vertical">
+            <div class="box border red">
+                <div class="box-title">
+                    <h4><i class="fa fa-bars"></i>Role </h4>
+                </div>
+                <div class="box-body big">
+
+                    
+                    
+                    <div class="form-group">
+                        @Html.LabelFor(m => m.Role, new { @class = "col-md-4 control-label" })
+                        <div class="col-md-8">
+                            @Html.DropDownListFor(m => m.Role, Model.ListRole, new { @class = "form-control", @name = "Role", @id = "Role" })
+                            @Html.ValidationMessageFor(m => m.Role)
+
+
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="col-md-offset-2 col-md-10">
+                            <input id="UpdateRoleBtn" type="submit" value="Update role" class="btn btn-primary pull-right" />
+                         </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+}
+
+<script>
+    $("#UpdateRoleBtn").click(function () {
+
+        $('#setroleform').validate();
+        if ($("#setroleform").valid()) {
+            var data = $('#setroleform').serialize();
+                $.ajax({
+                    url: '@Url.Action("SetRoleAjax", "UserManager")',
+                    type: 'post',
+                    dataType: 'json',
+                    beforeSend: function() {
+                        $("#UpdateRoleBtn").attr("disabled", "disabled");
+                        $("#UpdateRoleBtn").attr("value", "Updating");
+                    },
+                    success: function(result) {
+                        if (result.status == "success") {
+                            $('#ResultRole').append("<li class='message has-success'><h2 class='control-label pull-left'>Change role successful!</h2></li>");
+                            $("#UpdateRoleBtn").attr("value", "Update role");
+                            setTimeout(function() {
+                                $('.message').remove();
+                                $('#UpdateRoleBtn').removeAttr("disabled");
+                            }, 2000);
+                            return false;
+                        } else {
+                            for (var i = 0; i < result.listError.length; i++) {
+                                $('#ResultRole').append("<li class='message has-error'><h2 class='control-label pull-left'>" + result.listError[i] + "</h2></li>");
+                            }
+                            $("#UpdateRoleBtn").attr("value", "Update role");
+                            setTimeout(function() {
+                                $('.message').remove();
+                                $('#UpdateRoleBtn').removeAttr("disabled");
+                            }, 2000);
+                            return false;
+                        }
+                    },
+                    data: data
+
+                });
+            return false;
+            }
+
+        });
+        </script>

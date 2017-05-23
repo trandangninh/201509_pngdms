@@ -1,0 +1,195 @@
+﻿@{
+
+    //page title
+    ViewBag.Title = "UserRole";
+    Layout = "~/Views/Shared/_KendoUILayout.cshtml";
+}
+<script src="@Url.Content("~/Scripts/kendo/2014.1.318/kendo.web.min.js")"></script>
+<div id="userRole-grid"></div>
+
+<script type="text/x-kendo-template" id="windowTemplateDeleteConfirm">
+    <p class="delete-message">Are you sure you want to delete this UserRole?</p>
+    <input class="k-button delete-confirm" type="button" value="Yes" />
+    <input class="k-button delete-cancel" type="button" value="No" />
+</script>
+
+<script>
+    $(document).ready(function () {
+        $("#userRole-grid").kendoGrid({
+            dataSource: {
+                type: "json",
+                transport: {
+                    read: {
+                        url: "@Html.Raw(Url.Action("List", "UserRole"))",
+                        type: "POST",
+                        dataType: "json"
+                    },
+                    update: {
+                        url: "@Html.Raw(Url.Action("Update", "UserRole"))",
+                        type: "POST",
+                        dataType: "json"
+                    },
+                    destroy: {
+                        url: "@Html.Raw(Url.Action("Delete", "UserRole"))",
+                        type: "POST",
+                        dataType: "json",
+                        complete: function (e) {
+                            if (e.responseJSON != undefined && e.responseJSON.status != "success")
+                            {
+                                $("#userRole-grid").data("kendoGrid").dataSource.read();
+                                alert(e.responseJSON.Content);
+                            }
+                        }
+                    },
+                    create: {
+                        url: "@Html.Raw(Url.Action("Create", "UserRole"))",
+                        type: "POST",
+                        dataType: "json",
+                        complete: function (e) {
+                            if (e.responseJSON != undefined && e.responseJSON.status == "success")
+                                $("#userRole-grid").data("kendoGrid").dataSource.read();
+                        }
+                    }
+                },
+                schema: {
+                    data: "Data",
+                    total: "Total",
+                    errors: "Errors",
+                    model: {
+                        id: "Id",
+                        fields: {
+                            Id: { editable: false, defaultValue: 0},
+                            Name: { editable: true, validation: { required: true } },
+                            IsSystem: { editable: false, type: "boolean", defaultValue: false },
+                            IsActive: { editable: true, type: "boolean" },
+                        }
+                    }
+                },
+                error: function (e) {
+                    display_kendoui_grid_error(e);
+                },
+                pageSize: 10,
+                serverPaging: true,
+                serverFiltering: true,
+                serverSorting: true
+            },
+            pageable: {
+                refresh: true,
+                pageSizes: ["5", "10", "15", "20"]
+            },
+            editable: {
+                mode: "popup",
+                //default title of popup editor
+                window: {
+                    title: "Create User Role",
+                }
+            },
+            edit: function (e) {
+                //change title popup editor
+                if (e.model.Id != '')
+                    e.container.kendoWindow("title", "Modify User Role");
+            },
+            toolbar: ["create"],
+            scrollable: false,
+            columns: [
+                {
+                    field: "Name",
+                    title: "Name",
+                    width: 400
+                },
+                {
+                    field: "IsSystem",
+                    title: "IsSystem",
+                    width: 400,
+                    headerAttributes: { style: "text-align:center" },
+                    attributes: { style: "text-align:center" },
+                    template: '<img src="@Url.Content("~/Content/img/")active-#=IsSystem#.gif" />'
+                },
+                {
+                    field: "IsActive",
+                    title: "IsActive",
+                    width: 400,
+                    headerAttributes: { style: "text-align:center" },
+                    attributes: { style: "text-align:center" },
+                    template: '<img src="@Url.Content("~/Content/img/")active-#=IsActive#.gif" />'
+                },
+                {
+                    command: [
+                        {
+                            name: "edit",
+                            text: { update: "Save Changes", cancel: "Cancel" }
+                        },
+                        {
+                            text: 'Delete',
+                            click: deleteItem
+                        }
+                    ],
+                    title: "&nbsp;",
+                    width: "250px"
+                }
+            ]
+        });
+
+        function display_kendoui_grid_error(e) {
+            if (e.errors) {
+                if ((typeof e.errors) == 'string') {
+                    //single error
+                    //display the message
+                    alert(e.errors);
+                } else {
+                    //array of errors
+                    //source: http://docs.kendoui.com/getting-started/using-kendo-with/aspnet-mvc/helpers/grid/faq#how-do-i-display-model-state-errors?
+                    var message = "The following errors have occurred:";
+                    //create a message containing all errors.
+                    $.each(e.errors, function (key, value) {
+                        if (value.errors) {
+                            message += "\n";
+                            message += value.errors.join("\n");
+                        }
+                    });
+                    //display the message
+                    alert(message);
+                }
+            } else {
+                alert(e.xhr.responseText);
+            }
+        }
+    });
+
+    function deleteItem(e) {
+        var dataItem = this.dataItem($(e.currentTarget).closest("tr"));
+
+        //define delete popup comfirm
+        var kendoWindow = $("<div id='window'/>").kendoWindow({
+            //height: "250px",
+            title: "Delete Confirm",
+            visible: false,
+            width: "400px",
+            resizable: false,
+            modal: true,
+            viewable: false,
+            content: {
+                template: $("#windowTemplateDeleteConfirm").html()
+            }
+        });
+
+        kendoWindow.data("kendoWindow")
+            .content($("#windowTemplateDeleteConfirm").html())
+            .center().open();
+
+        kendoWindow.find(".delete-confirm,.delete-cancel")
+            .click(function () {
+                if ($(this).hasClass("delete-confirm")) {
+                    var grid = $("#userRole-grid").data("kendoGrid");
+                    grid.dataSource.remove(dataItem);
+                    grid.dataSource.sync();
+                    grid.refresh();
+                }
+
+                kendoWindow.data("kendoWindow").close();
+            })
+            .end();
+
+    }
+</script>
+

@@ -1,0 +1,111 @@
+﻿@model Web.Models.UserInfoViewModel
+
+@using (Html.BeginForm("Manage", "Account", FormMethod.Post, new { @id = "changeinfoform", @class = "form-horizontal", role = "form" }))
+{
+    @Html.AntiForgeryToken()
+
+    <div class="validation-summary-errors">
+        <ul id="ResultInfo" style="list-style: none" class="pull-left"></ul>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12 form-vertical">
+            <div class="box border orange">
+                <div class="box-title">
+                    <h4><i class="fa fa-bars"></i>General Information</h4>
+                </div>
+                <div class="box-body big">
+                    <h4>Basic Information</h4>
+                  
+                    @Html.HiddenFor(m => m.Username)
+                    <div class="form-group">
+                        @Html.LabelFor(m => m.Email, new { @class = "col-md-4 control-label" })
+                        <div class="col-md-8">
+                            @Html.TextBoxFor(m => m.Email, new { @class = "form-control" })
+                            @Html.ValidationMessageFor(m => m.Email)
+                        </div>
+                    </div>
+                    
+
+                    <div class="form-group">
+                        @Html.LabelFor(m => m.FirstName, new { @class = "col-md-4 control-label" })
+                        <div class="col-md-8">
+                            @Html.TextBoxFor(m => m.FirstName, new { @class = "form-control" })
+                            @Html.ValidationMessageFor(m => m.FirstName)
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        @Html.LabelFor(m => m.LastName, new { @class = "col-md-4 control-label" })
+                        <div class="col-md-8">
+                            @Html.TextBoxFor(m => m.LastName, new { @class = "form-control" })
+                            @Html.ValidationMessageFor(m => m.LastName)
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        @Html.LabelFor(m => m.PhoneNumber, new { @class = "col-md-4 control-label" })
+                        <div class="col-md-8">
+                            @Html.TextBoxFor(m => m.PhoneNumber, new { @class = "form-control" })
+                            @Html.ValidationMessageFor(m => m.PhoneNumber)
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="col-md-offset-2 col-md-10">
+                            <input id="UpdateInfoBtn" type="submit" value="Update info" class="btn btn-primary pull-right" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+}
+
+
+<script>
+    
+    $('#changeinfoform').validate({
+        
+        submitHandler: function (form) {
+            
+            if ($("#changeinfoform").valid()) {
+                var data = $('#changeinfoform').serialize();
+                $.ajax({
+                    url: '@Url.Action("ChangeInfo","Account")',
+                    type: 'post',
+                    dataType: 'json',
+                    beforeSend: function() {
+                        $("#UpdateInfoBtn").attr("disabled", "disabled");
+                        $("#UpdateInfoBtn").attr("value", "Updating");
+                    },
+                    success: function (result) {
+                       if (result.status == "success") {
+                            $('#ResultInfo').append("<li class='messageinfo has-success'><h2 class='control-label pull-left'>Change information successful!</h2></li>");
+                            $("#UpdateInfoBtn").attr("value", "Update info");
+                            setTimeout(function () {
+                                $('.messageinfo').remove();
+                                $('#UpdateInfoBtn').removeAttr("disabled");
+                            }, 2000);
+                        } else {
+                            for (var i = 0; i < result.listError.length; i++) {
+                                $('#ResultInfo').append("<li class='messageinfo has-error'><h2 class='control-label pull-left'>" + result.listError[i] + "</h2></li>");
+                            }
+                            $("#UpdateInfoBtn").attr("value", "Update info");
+                            setTimeout(function () {
+                                $('.messageinfo').remove();
+                                $('#UpdateInfoBtn').removeAttr("disabled");
+                               
+                            }, 2000);
+                        }
+                    },
+                    data: data
+                });
+               
+            }
+                
+        },
+       
+    }
+   );
+
+    
+</script>

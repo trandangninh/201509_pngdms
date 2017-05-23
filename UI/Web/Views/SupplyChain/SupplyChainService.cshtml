@@ -1,0 +1,534 @@
+﻿@using Entities.Domain
+@using Nois.Web.Framework.Kendoui;
+@using Service.Common
+@using Service.Interface
+@using Service.Users
+@model Web.Models.SupplyChain.SupplyChainModel
+@{
+
+    Layout = null;
+    var _report = DependencyResolver.Current.GetService<IReportService>();
+}
+
+<div class="row">
+    <div class="col-md-12">
+
+        <div class="box border orange">
+
+            <table id="supplychaingridService" class="table" style="border: none !important;">
+
+                <tbody>
+                    <tr>
+                        <td style="border: none !important; padding: 0">
+                            <table id="making" class="table making-service">
+                                <thead>
+                                    <tr>
+                                        <th rowspan="2">DMS</th>
+                                        <th></th>
+                                        <th colspan="5">Daily-FE</th>
+                                    </tr>
+                                    <tr>
+
+                                        <td class="owner line-edit-service">
+                                            @{
+                                                var count = 0;
+                                                var isDMS = false;
+                                            }
+                                            <span id="OwnerDms">@Model.SupplyChainService[0].Owner</span>
+                                            @{
+
+
+                                                var ownerservice = DependencyResolver.Current.GetService<IUserService>();
+                                                var owner = ownerservice.GetAllUsersAsync().ToList();
+                                                var userAdmin = ownerservice.GetUserByUsernameAsync("Admin").Result;
+                                                if (userAdmin != null)
+                                                {
+                                                    owner.Remove(userAdmin);
+                                                }
+
+                                                <select id="Owner1">
+                                                    @foreach (var user in owner)
+                                                    {
+                                                        if (user.Username == Model.SupplyChainService[0].Owner)
+                                                        {
+                                                            <option value="@user.Username" selected>@user.Username</option>
+                                                        }
+                                                        else
+                                                        {
+                                                            <option value="@user.Username">@user.Username</option>
+                                                        }
+
+                                                    }
+                                                </select>
+                                            }
+                                        </td>
+                                        <th>CFR(%)</th>
+                                        <th>SAMBC(%)</th>
+                                        <th>Priority Line</th>
+                                        <th>Priority SKU</th>
+                                        <th>Shipment</th>
+
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @for (int i = 0; i < 3; i++)
+                                    {
+                                        if (!isDMS)
+                                        {
+                                            <text>
+                                                <tr data-type="1" data-measurecode="@(i + 1)" style="height: 30px !important" class="scdds-target ">
+
+                                                    <td class="scdds-DMS" rowspan="3">Service</td></text>
+                                            isDMS = true;
+                                        }
+                                        else
+                                        {
+                                            <text>
+                                            <tr data-type="1" class="tr-edit" data-measurecode="@(i + 1)" style="height: 30px !important">
+                                            </text>
+                                        }
+                                        if (i == 0)
+                                        {
+                                            <td>
+                                                <span>@Model.SupplyChainService[i].MeasureName</span>
+                                                <input type="text " value="@Model.SupplyChainService[i].MeasureName" />
+                                            </td>
+                                            <td class="cfr target-making-service line-check-edit-service line-edit-service line-service">
+                                                <span>@Model.SupplyChainService[i].CFR </span>
+                                                <input type="text " value="@Model.SupplyChainService[i].CFR" />
+                                            </td>
+                                            <td class="sambc target-making-service line-check-edit-service line-edit-service line-service">
+                                                <span>@Model.SupplyChainService[i].SAMBC </span>
+                                                <input type="text " value="@Model.SupplyChainService[i].SAMBC" />
+                                            </td>
+                                            <td class="priorityline target-making-service line-check-edit-service line-edit-service line-service">
+                                                <span>@Model.SupplyChainService[i].PriorityLine </span>
+                                                <input type="text " value="@Model.SupplyChainService[i].PriorityLine" />
+                                            </td>
+                                            <td class="prioritysku target-making-service line-check-edit-service line-edit-service line-service">
+                                                <span>@Model.SupplyChainService[i].PrioritySKU </span>
+                                                <input type="text " value="@Model.SupplyChainService[i].PrioritySKU" />
+                                            </td>
+                                            <td style="background: none !important; color:#000" class="shipment target-making-service line-check-edit-service line-edit-service line-service">
+                                                <span>@Model.SupplyChainService[i].Shipment </span>
+                                                <input type="text " value="@Model.SupplyChainService[i].Shipment" />
+                                            </td>
+
+                                        }
+                                        else
+                                        {
+                                            <td>
+                                                <span>@Model.SupplyChainService[i].MeasureName</span>
+                                                <input type="text " value="@Model.SupplyChainService[i].MeasureName" />
+                                            </td>
+                                            <td class="cfr @_report.checkColor(Model.SupplyChainService[0].CFR, Model.SupplyChainService[i].CFR) line-check-edit-service line-edit-service line-service">
+                                                <span>@Model.SupplyChainService[i].CFR </span>
+                                                <input type="text " value="@Model.SupplyChainService[0].CFR" />
+                                            </td>
+                                            <td class="@_report.checkColor(Model.SupplyChainService[0].SAMBC, Model.SupplyChainService[i].SAMBC) sambc line-check-edit-service line-edit-service line-service">
+                                                <span>@Model.SupplyChainService[i].SAMBC </span>
+                                                <input type="text " value="@Model.SupplyChainService[i].SAMBC" />
+                                            </td>
+                                            <td class="@_report.checkColor(Model.SupplyChainService[0].PriorityLine, Model.SupplyChainService[i].PriorityLine) priorityline line-check-edit-service line-edit-service line-service">
+                                                <span>@Model.SupplyChainService[i].PriorityLine </span>
+                                                <input type="text " value="@Model.SupplyChainService[i].PriorityLine" />
+                                            </td>
+                                            <td class="@_report.checkColor(Model.SupplyChainService[0].PrioritySKU, Model.SupplyChainService[i].PrioritySKU) prioritysku line-check-edit-service line-edit-service line-service">
+                                                <span>@Model.SupplyChainService[i].PrioritySKU </span>
+                                                <input type="text " value="@Model.SupplyChainService[i].PrioritySKU" />
+                                            </td>
+                                            <td style="background: none !important; color:#000" class="@_report.checkColor(Model.SupplyChainService[0].Shipment, Model.SupplyChainService[i].Shipment) shipment line-check-edit-service line-edit-service line-service">
+                                                <span>@Model.SupplyChainService[i].Shipment </span>
+                                                <input type="text " value="@Model.SupplyChainService[i].Shipment" />
+                                            </td>
+                                        }
+
+                                     @:</tr>
+                                    }
+
+                                </tbody>
+                            </table>
+
+                        </td>
+                        <td style="border: none !important; padding: 0">
+                            <table id="packing" class="table packing-service" style="width: 100%; margin-left: -2px">
+                                <thead>
+                                    <tr>
+                                        <th colspan="5">Daily-FR</th>
+                                    </tr>
+                                    <tr>
+                                        <th>CFR(%)</th>
+                                        <th>SAMBC(%)</th>
+                                        <th>Priority Line</th>
+                                        <th>Priority SKU</th>
+                                        <th>Shipment</th>
+
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @{
+                                        isDMS = false;
+                                    }
+                                    @for (int i = 3; i < 6; i++)
+                                    {
+                                        if (!isDMS)
+                                        {
+                                            <text>
+                                                <tr data-type="2" data-measurecode="@(i-2)" style="height: 30px !important" class="scdds-target">
+                                            </text>
+                                            isDMS = true;
+                                        }
+                                        else
+                                        {
+                                            <text>
+                                            <tr data-type="2" data-measurecode="@(i-2)" style="height: 30px !important">
+                                            </text>
+                                        }
+
+                                        if (i == 3)
+                                        {
+                                            <td class="cfr target-packing-service line-edit-service line-check-edit-service line-service">
+                                                <span>@Model.SupplyChainService[i].CFR </span>
+                                                <input type="text " value="@Model.SupplyChainService[i].CFR" />
+                                            </td>
+    <td class="sambc target-packing-service line-edit-service line-check-edit-service line-service">
+        <span>@Model.SupplyChainService[i].SAMBC </span>
+        <input type="text " value="@Model.SupplyChainService[i].SAMBC" />
+    </td>
+    <td class="priorityline target-packing-service line-check-edit-service line-edit-service line-service">
+        <span>@Model.SupplyChainService[i].PriorityLine </span>
+        <input type="text " value="@Model.SupplyChainService[i].PriorityLine" />
+    </td>
+    <td class="prioritysku target-packing-service line-check-edit-service line-edit-service line-service">
+        <span>@Model.SupplyChainService[i].PrioritySKU </span>
+        <input type="text " value="@Model.SupplyChainService[i].PrioritySKU" />
+    </td>
+    <td style="background: none !important; color:#000" class="shipment target-packing-service line-check-edit-service line-edit-service line-service">
+        <span>@Model.SupplyChainService[i].Shipment </span>
+        <input type="text " value="@Model.SupplyChainService[i].Shipment" />
+    </td>
+                                        }
+                                        else
+                                        {
+                                            <td class="cfr @_report.checkColor(Model.SupplyChainService[3].CFR, Model.SupplyChainService[i].CFR) line-edit-service line-check-edit-service line-service">
+                                                <span>@Model.SupplyChainService[i].CFR </span>
+                                                <input type="text " value="@Model.SupplyChainService[i].CFR" />
+                                            </td>
+                                            <td class="sambc @_report.checkColor(Model.SupplyChainService[3].SAMBC, Model.SupplyChainService[i].SAMBC) line-edit-service line-check-edit-service line-service">
+                                                <span>@Model.SupplyChainService[i].SAMBC </span>
+                                                <input type="text " value="@Model.SupplyChainService[i].SAMBC" />
+                                            </td>
+                                            <td class="priorityline @_report.checkColor(Model.SupplyChainService[3].PriorityLine, Model.SupplyChainService[i].PriorityLine) line-check-edit-service line-edit-service line-service">
+                                                <span>@Model.SupplyChainService[i].PriorityLine </span>
+                                                <input type="text " value="@Model.SupplyChainService[i].PriorityLine" />
+                                            </td>
+                                            <td class="prioritysku @_report.checkColor(Model.SupplyChainService[3].PrioritySKU, Model.SupplyChainService[i].PrioritySKU) line-check-edit-service line-edit-service line-service">
+                                                <span>@Model.SupplyChainService[i].PrioritySKU </span>
+                                                <input type="text " value="@Model.SupplyChainService[i].PrioritySKU" />
+                                            </td>
+    <td style="background: none !important; color:#000" class="shipment @_report.checkColor(Model.SupplyChainService[3].Shipment, Model.SupplyChainService[i].Shipment) line-check-edit-service line-edit-service line-service">
+        <span>@Model.SupplyChainService[i].Shipment </span>
+        <input type="text " value="@Model.SupplyChainService[i].Shipment" />
+    </td>
+                                        }
+
+                                    @:</tr>
+                                    }
+
+                                </tbody>
+                            </table>
+                        </td>
+                    </tr>
+
+
+                </tbody>
+            </table>
+
+        </div>
+
+    </div>
+</div>
+
+
+
+<script src="@Url.Content("~/Scripts/kendo/2014.1.318/kendo.web.min.js")"></script>
+<script>
+    var isEdittingService = false;
+    var currentDate;
+    var oldval = 0;
+    $(document).ready(function () {
+
+        function getURLParameter(name) {
+            return decodeURIComponent(
+                (location.search.match(RegExp("[?|&]" + name + '=(.+?)(&|$)')) || [, null])[1]
+            );
+        }
+
+        var date = getURLParameter('date');
+        if (date != "null") {
+            currentDate = date;
+            $("#datepicker").val(date);
+        } else {
+            $("#datepicker").val($.datepicker.formatDate('mm/dd/yy', new Date()));
+            currentDate = $.datepicker.formatDate('mm/dd/yy', new Date());
+
+        }
+        // gird supply chain\
+
+        function CheckColorService(target, number) {
+            target = target.replace("%", "");
+            number = number.replace("%", "");
+            if ($.isNumeric(target) && $.isNumeric(number)) {
+                if (parseFloat(target) > parseFloat(number))
+                    return "no-match-target";
+                else return "match-target";
+            }
+            else {
+
+                return "";
+            }
+        }
+
+        function validateDecimal(e) {// check value input
+
+            if (e.value.length > 0) {
+                var RE = /^[+-]?\d+(\.\d+)?$/;
+                if (RE.test(e.value)) {
+                    return true;
+                } else {
+                    return false;
+                }
+            } else {
+                return true;
+            }
+        }
+
+
+
+        $("#tabresult-dms-service td input ").addClass("hide");
+        $("#tabresult-dms-service td select ").addClass("hide");
+        var isEdittingService = false;
+
+        var $tableservice = jQuery(".making-service");
+        var $tablePackingservice = jQuery(".packing-service");
+
+        $tableservice.on("tr.td.next", function (e, $input) {
+            $input = $($input);
+            var $nextInRowTd = $input.parent(".line-check-edit-service").next();
+            var intdexTr = $input.parent().parent().index();
+            console.log($input);
+            if ($input.parent("td").hasClass("shipment") && $input.parents("table").hasClass("making-service")) {
+
+
+                var $nextTdPacking = $tablePackingservice.children("tbody").children("tr").eq(intdexTr).children("td").eq(0);
+                console.log($nextTdPacking);
+                activeEditService($nextTdPacking);
+            }
+            if ($input.parent("td").hasClass("shipment") && $input.parents("table").hasClass("packing-service")) {
+                var $nextTdMaking = $tableservice.children("tbody").children("tr").eq(intdexTr + 1).children("td").eq(1);
+                activeEditService($nextTdMaking);
+            }
+            if (!$input.parent("td").hasClass("shipment")) {
+                console.log($input.parent("td").hasClass("shipment"));
+                if ($nextInRowTd.length > 0) {
+                    activeEditService($nextInRowTd);
+
+                } else {
+                    var currentTdIndex = 2;
+                    var $trParent = $input.parents("tr");
+                    var $nextTr = $trParent.next();
+                    if ($nextTr.length > 0 && $nextTr.hasClass("tr-edit")) {
+                        var $nextTd = $nextTr.children("td").eq(currentTdIndex);
+                        if ($nextTd.length > 0) {
+                            activeEditService($nextTd);
+                        }
+                    } else {
+                        $nextTr = $input.parents("tr").next().next().next();
+                        var $nextTd = $nextTr.children("td").eq(currentTdIndex);
+                        if ($nextTd.length > 0) {
+                            activeEditService($nextTd);
+                        }
+                    }
+                }
+            }
+
+        });
+
+
+        function activeEditService(e) {
+            $(e).children("input").removeClass("hide");
+            $(e).children("span").addClass("hide");
+            $(e).children("input").select();
+            $(e).children("input").focus();
+
+            $(e).children("select").removeClass("hide");
+            $(e).children("select").focus();
+            oldval = $(e).children('input').val();
+            setTimeout(function () {
+                isEdittingService = true;
+            }, 100);
+            
+        }
+
+        $(".line-edit-service").on('click', function () {// target
+            if (isEdittingService == false) {
+                activeEditService(this);
+            }
+        });
+
+        function editvalueService(e) {
+            console.log(isEdittingProduct);
+            var $input = jQuery(e);
+            var $tr = jQuery($input.parent().parent());
+            //if input exist and on edit mode
+            if ($input.length > 0 //if textbox is on active
+                    && isEdittingService //if on edit mode
+            ) {
+
+                var newVal = $input.val();
+                if (newVal != oldval) { //validate new value
+                    //var owner = $("#Owner1").val();
+                    var owner =  $("#OwnerDms").text()
+                    var type = $tr.data('type');
+                    var measureCode = $tr.data('measurecode');
+                    var cfr = $tr.children(".cfr").children("input").val();
+                    var sambc = $tr.children(".sambc").children("input").val();
+                    var priorityline = $tr.children(".priorityline ").children("input").val();
+                    var prioritysku = $tr.children(".prioritysku").children("input").val();
+                    var shipment = $tr.children(".shipment").children("input").val();
+
+                    $.ajax({
+                        url: '/SupplyChain/UpdateService',
+                        type: 'POST',
+                        dataType: 'json',
+                        data: {
+                            Owner: owner,
+                            type: type,
+                            MeasureCode: measureCode,
+                            CFR: cfr,
+                            SAMBC: sambc,
+                            PrioritySKU: prioritysku,
+                            PriorityLine: priorityline,
+                            Shipment: shipment,
+                            Date: currentDate
+
+                        },
+                        success: function (data) {
+                            if (data.status == "success") {
+                                $input.parent().children('span').removeClass("hide"); //show span
+                                $input.parent().children('span').html(newVal.replace(/\n/g, "<br />"));
+                                $input.addClass("hide");
+                                var $currentTd = $input.parents(".line-edit-service");
+                                if ($currentTd.parents("table").hasClass("making-service")) { // set color for td making
+                                    if (!$currentTd.hasClass("target-making-service"))
+                                        {
+                                            var $currentIndexId = $currentTd.index() - 1; // get index current target over
+                                            var inputTarget = $(".target-making-service").eq($currentIndexId).children("span").html(); // get value span
+                                            var color = CheckColorService(inputTarget, newVal); // calular color
+                                            $currentTd.removeClass("no-match-target"); // remove class css
+                                            $currentTd.removeClass("match-target"); // remove class css
+                                            $currentTd.addClass(color); // add  true class
+                                        }
+                                } else {
+                                    if ($currentTd.parents("table").hasClass("packing-service")) {
+                                        if (!$currentTd.hasClass("target-packing-service"))
+                                            {
+                                                var $currentIndexId = $currentTd.index() ; // get index current target over
+                                                var inputTarget = $(".target-packing-service").eq($currentIndexId).children("span").html(); // get value span
+                                                var color = CheckColorService(inputTarget, newVal); // calular color
+                                                $currentTd.removeClass("no-match-target"); // remove class css
+                                                $currentTd.removeClass("match-target"); // remove class css
+                                                $currentTd.addClass(color); // add  true class
+                                            }
+                                    }
+                                    
+                                }
+
+                            }
+                        }
+                    });
+                } else {
+                    //if value not change
+
+                    $input.parent().children('span').removeClass("hide"); //show span
+                    $input.addClass("hide");
+                }
+            }
+            isEdittingService = false; //remove edit mode
+        }
+
+
+        jQuery(".line-edit-service").children("input")
+                .keypress(function (event) {
+
+                    var charCode = event.which || event.keyCode;
+                    if (charCode == 13) {
+                       
+                            event.preventDefault();
+                            editvalueService(this);
+                            isEdittingService = false;
+                            $tableservice.trigger("tr.td.next", this);
+                        
+                    }
+
+                })
+                .blur(function () {
+                   
+                        editvalueService(this);
+                        isEdittingService = false;
+                    
+                });
+
+
+
+
+
+        //end gird supply chain
+        jQuery(".line-edit-service").children("select").blur(function () {
+            var $input = jQuery(this);
+
+            var $tr = jQuery($input.parent().parent());
+
+
+            //if input exist and on edit mode
+            if ($input.length > 0 //if textbox is on active
+                    && isEdittingService //if on edit mode
+            ) {
+                var newVal = $input.val();
+                if (newVal != "" && newVal != oldval) { //validate new value
+                    var owner = this.value;
+
+                    $.ajax({
+                        url: '/SupplyChain/UpdateService',
+                        type: 'POST',
+                        dataType: 'json',
+                        data: {
+                            Owner: owner,
+                            Date: currentDate
+
+                        },
+                        success: function (data) {
+                            if (data.status == "success") {
+
+                                $input.parent().children('span').removeClass("hide"); //show span
+                                $input.parent().children('span').html(owner);
+                                $input.addClass("hide");
+                            }
+                        }
+                    });
+                } else {
+                    //if value not change
+
+                    $input.parent().children('span').removeClass("hide"); //show span
+                    $input.addClass("hide");
+                }
+
+            } else {
+
+            }
+            isEdittingService = false; //remove edit mode
+        });
+
+    });
+
+</script>

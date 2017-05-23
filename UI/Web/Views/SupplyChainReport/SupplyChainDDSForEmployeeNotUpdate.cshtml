@@ -1,0 +1,221 @@
+﻿@using Entities.Domain
+@using Nois.Web.Framework.Kendoui;
+@model List<Web.Models.SupplyChain.SupplyChainModel>
+@{
+
+    Layout = null;
+}
+
+
+<div class="row">
+    <div class="col-md-12">
+
+        <div class="box border orange scroll-x">
+
+
+            <table id="supplychaingrid" class="table">
+                <thead>
+                    <tr>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        @foreach (var item in Model)
+                        {
+                            <th colspan="5">@item.SupplyChainHSE[0].CreatedDate</th>
+                        }
+                    </tr>
+
+                    <tr>
+                        <th>DMS</th>
+                        <th>Measure-Making</th>
+                        <th>Owner</th>
+                        @foreach (var item in Model)
+                        {
+                           
+                            <th>LPD1</th>
+                            <th>LPD2</th>
+                            <th>LPD3</th>
+                            <th>Batch</th>
+                            <th>FR(MK)</th>
+                           
+                        }
+                    </tr>
+                </thead>
+
+                <tbody>
+                    <!-- Making -->
+                    @{
+                        var addDmsCompleted = false;
+                    }
+
+                    @for (int i = 0; i < 3; i++)
+                    {
+                        if (i == 0)
+                        {
+                            <text>
+                                <tr data-type="1" data-measurecode="@(i + 1)" class="scdds-target">
+                            </text>
+                        }
+                        else
+                        {
+                            <text>
+                            <tr data-type="1" data-measurecode="@(i + 1)">
+                            </text>
+                        }
+
+                        if (!addDmsCompleted)
+                        {
+                            <text>
+                                <td rowspan="7" class="scdds-DMS">DDS</td></text>
+                            addDmsCompleted = true;
+                        }
+
+                      
+                            <td class="measurecode">
+                                @Model[0].SupplyChainDDS[i].MeasureName
+
+                            </td>
+                       <td class="owner ">
+                        <span>@Model[0].SupplyChainDDS[i].Owner</span>
+                           </td>
+                        foreach (var item in Model)
+                        {
+                            
+                            <td class="lpd1  line-cols">
+                                <span>@item.SupplyChainDDS[i].LPD1 </span>
+                                <input type="text " value="@item.SupplyChainDDS[i].LPD1" />
+                            </td>
+                            <td class="lpd2  line-cols">
+                                <span>@item.SupplyChainDDS[i].LPD2 </span>
+                                <input type="text " value="@item.SupplyChainDDS[i].LPD2" />
+                            </td>
+                            <td class="lpd3  line-cols">
+                                <span>@item.SupplyChainDDS[i].LPD3 </span>
+                                <input type="text " value="@item.SupplyChainDDS[i].LPD3" />
+                            </td>
+                            <td class="batch  line-cols">
+                                <span>@item.SupplyChainDDS[i].Batch </span>
+                                <input type="text " value="@item.SupplyChainDDS[i].Batch" />
+                            </td>
+                            <td class="frmk  line-cols">
+                                <span>@item.SupplyChainDDS[i].FRMK </span>
+                                <input type="text " value="@item.SupplyChainDDS[i].FRMK" />
+                            </td>
+
+                         
+
+                        }
+                       
+                     @:</tr>
+            }
+
+                    <!--Packing-->
+                    <tr class="thead">
+                        <td>Measure-Packing</td>
+                        <td>Owner</td>
+                        @foreach (var item in Model)
+                        {
+                          
+                            <td>Bottle</td>
+                            <td>Sachet</td>
+                            <td>Pouch</td>
+                            <td>FR(PK)</td>
+                            <td>FE</td>
+                          
+                        }
+                    </tr>
+                    @for (int i = 3; i < 6; i++)
+                    {
+                        if (i == 3)
+                        {
+                            <text>
+                                <tr data-type="2" data-measurecode="@(i - 2)" class="scdds-target">
+                            </text>
+                        }
+                        else
+                        {
+                            <text>
+                            <tr data-type="2" data-measurecode="@(i - 2)">
+                            </text>
+                        }
+                        <td>@Model[0].SupplyChainDDS[i].MeasureName</td>
+                        <td class="owner ">
+                                    <span>@Model[0].SupplyChainDDS[i].Owner</span>
+
+                                </td>
+                        foreach (var item in Model)
+                        {
+
+                            <text>
+                                <td class="bottle  line-cols" title="@item.SupplyChainDDS[i].BottleRemark ">
+                                    <span>@item.SupplyChainDDS[i].Bottle</span>
+
+                                </td>
+                                <td class="sachet  line-cols" title="@item.SupplyChainDDS[i].SachetRemark  ">
+                                    <span>@item.SupplyChainDDS[i].Sachet</span>
+
+                                </td>
+                                <td class="pouch  line-cols" title="@item.SupplyChainDDS[i].PouchRemark  ">
+                                    <span>@item.SupplyChainDDS[i].Pouch</span>
+
+                                </td>
+                                <td class="frpk  line-cols" title="@item.SupplyChainDDS[i].FRPKRemark  ">
+                                    <span>@item.SupplyChainDDS[i].FRPK</span>
+
+                                </td>
+                                <td class="fe  line-cols">
+                                    <span>@item.SupplyChainDDS[i].FE</span>
+
+                                </td>
+
+                             </text>
+
+                        }
+                       
+                    @: </tr>
+            }
+
+                </tbody>
+            </table>
+
+        </div>
+
+    </div>
+</div>
+
+
+
+<script src="@Url.Content("~/Scripts/kendo/2014.1.318/kendo.web.min.js")"></script>
+<script>
+    var IsEditting = false;
+    var currentDate;
+    var oldval = 0;
+    $(document).ready(function () {
+
+        function getURLParameter(name) {
+            return decodeURIComponent(
+                (location.search.match(RegExp("[?|&]" + name + '=(.+?)(&|$)')) || [, null])[1]
+            );
+        }
+
+        var date = getURLParameter('date');
+        if (date != "null") {
+            currentDate = date;
+            $("#datepicker").val(date);
+        } else {
+            $("#datepicker").val($.datepicker.formatDate('mm/dd/yy', new Date()));
+            currentDate = $.datepicker.formatDate('mm/dd/yy', new Date());
+
+        }
+        // gird supply chain\
+        $("#tabresult td input ").addClass("hide");
+        $("#tabresult td select ").addClass("hide");
+        var isEditting = false;
+
+
+
+
+    });
+
+</script>
+

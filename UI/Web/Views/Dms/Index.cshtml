@@ -1,0 +1,316 @@
+﻿@using Entities.Domain
+@using Service.Users
+
+@{
+    ViewBag.Title = "Dms Manager";
+    Layout = "~/Views/Shared/_KendoUILayout.cshtml";
+}
+<script src="@Url.Content("~/Scripts/kendo/2014.1.318/kendo.web.min.js")"></script>
+
+<div class="department-filter">
+    <input id="department_cbx" />
+    <span style="margin: 5px;">Department:</span>
+</div>
+<div id="grid"></div>
+
+
+
+<script>
+    var dataSourceDepartment = new kendo.data.DataSource({
+        transport: {
+            read: {
+                dataType: "json",
+                type: "POST",
+                url: "@Html.Raw(Url.Action("GetAllDepartment", "Department"))"
+            }
+        }
+    });
+
+
+    var UserDS = [ @{
+                var userService = DependencyResolver.Current.GetService<IUserService>();
+            var listUsername =  userService.GetAllUsersAsync().Where(u => u.Active).Select(p=>p.Username).ToList();
+
+        }
+    @for (var i = 0; i < listUsername.Count(); i++)
+        {
+            var username = listUsername[i];
+            <text>
+
+             "@(Html.Raw(HttpUtility.JavaScriptStringEncode(username)))"
+                    </text>
+            if (i != listUsername.Count - 1)
+            {
+                <text>,</text>
+            }
+        }];
+
+    function ownerDisplay(data) {
+        if (data.ListUsername != "")
+            return data.ListUsername.join(', ');
+        else return '';
+    }
+
+    function ownerEditor(container, options) {
+        $("<select multiple='multiple' required data-bind='value:" + options.field + "'/>").appendTo(container).kendoMultiSelect({
+            dataSource: options.values,
+            suggest: true,
+        });
+    }
+
+
+    function DepartmentDropDownEditor(container, options) {
+        $('<input required data-text-field="Name" data-value-field="Id" data-bind="value:' + options.field + '"/>')
+            .appendTo(container)
+            .kendoComboBox({
+                autoBind: false,
+                dataSource: dataSourceDepartment,
+                //template: "<i class=\"fa fa-#=data.Name.toLowerCase()#\"></i> #=data.Name#"
+            });
+    }
+
+
+    $(document).ready(function () {
+
+        $("#department_cbx").kendoComboBox({
+            dataTextField: "Name",
+            dataValueField: "Id",
+            dataSource: dataSourceDepartment,
+            height: 100,
+            index: 1,
+            change: function (e) {
+                $("#grid").data("kendoGrid").dataSource.read();
+            }
+            , dataBound: function () {
+                combobox.select(0);
+                $("#grid").data("kendoGrid").dataSource.read();
+            }
+        });
+
+        var combobox = $("#department_cbx").data("kendoComboBox");
+
+        function department() {
+            return { departmentId: combobox.value() }
+        }
+
+
+        //data post to server when create
+        function creationData() {
+            return { departmentId: combobox.value() }
+        }
+
+
+
+        var grid = $("#grid").kendoGrid({
+            dataSource: {
+                type: "json",
+                transport: {
+                    read: {
+                        url: "@Html.Raw(Url.Action("List", "Dms"))",
+                    type: "POST",
+                    dataType: "json",
+                    data: department
+
+                },
+                update: {
+                    url: "@Html.Raw(Url.Action("Update", "Dms"))",
+                type: "POST",
+                dataType: "json",
+                data: serialize
+            },
+            destroy: {
+                url: "@Html.Raw(Url.Action("Delete", "Dms"))",
+            type: "POST",
+            //dataType: "json"
+        },
+            create: {
+            url: "@Html.Raw(Url.Action("Create", "Dms"))",
+            type: "POST",
+            dataType: "json",
+            data: creationData
+        //data: serialize
+    }
+    },
+    schema: {
+        data: "Data",
+        total: "Total",
+        errors: "Errors",
+        model: {
+            id: "Id",
+            fields: {
+                Id: { editable: false, defaultValue: 0 },
+                DmsCode: {
+                        editable: true,
+                        validation:
+                    {
+                        required: true
+                    }
+                },
+                Description: {
+                        editable: true,
+                        validation:
+                    {
+                        required: true,
+                        }
+                },
+                Note: {
+                        editable: true,
+                        validation:
+                    {
+                        required: true,
+                        }
+                },
+                Department: {
+                        editable: true,
+                        defaultValue: { Id: "0", Name: "--  Choose Department  --" }
+                },
+                ListUsername: {
+                        validation:
+                        {
+                            required: true,
+                        }
+                    //validation: {
+                    //    required: true,
+                    //    productnamevalidation: function (input) {
+                    //        console.log(input);
+                    //        if (input.is("[name='ListUsername']") && input.val() == "") {
+                    //            input.attr("data-productnamevalidation-msg", "Product Name should start with capital letter");
+                    //            return false;
+                    //        }
+
+                    //        return true;
+                    //    }
+                    //}
+                },
+                Order: {
+                    type: "number"
+                },
+                Active: {
+                        type: "boolean"
+                },
+                    }
+        }
+    },
+    error: function (e) {
+        display_kendoui_grid_error(e);
+        //this.cancelChanges();
+    },
+    requestEnd: function (e) {
+        if (e.type == "create" || e.type == "update") {
+            this.read();
+        }
+    },
+    pageSize: 10,
+        serverPaging: true,
+    serverFiltering: true,
+    serverSorting: true
+    },
+    columns: [
+        {
+            field: "DmsCode",
+            title: "DmsCode",
+            width: 250,
+            template: '#:DmsCode#'
+        },
+        {
+            field: "Description",
+            title: "Description",
+            width: 250,
+
+            template: "#:Description#"
+        },
+        {
+            field: "Note",
+            title: "Note",
+            width: 250,
+            template: "#:Note#"
+        },
+        //{
+        //    field: "Department",
+        //    title: "Department",
+        //    width: 150,
+        //    editor: DepartmentDropDownEditor,
+        //    template: "#=Department.Name#"
+        //},
+        {
+            field: "ListUsername",
+            title: "Owner",
+            width: 250,
+            template: ownerDisplay,
+            editor: ownerEditor,
+            values: UserDS,
+        },
+                    {
+                        field: "Order",
+                        title: "Order",
+                        width: 100,
+                        format: "n0",
+                        template: "#=Order#"
+                    },
+                    {
+                        field: "Active",
+                        title: "Active",
+                        width: 100,
+                        template: '<img src="@Url.Content("~/Content/img/")active-#=Active#.gif" />'
+                    },
+        {
+            command: [
+                {
+                    name: "edit",
+                    text: "",
+                    template: "<a class='k-button k-grid-edit' href='' style='min-width:16px;'><span class='k-icon k-edit'></span></a>"
+                }
+            ],
+            width: 200
+        }
+    ],
+        pageable: {
+        refresh: true,
+        pageSizes: ["5", "10", "15", "20"]
+        },
+    editable: "inline",
+        toolbar: ["create"],
+    edit: editorFunction,
+    scrollable: false
+        }).data("kendoGrid");
+
+
+    })
+
+
+
+        function editorFunction(e) {
+            if (e.model.Id != '') {
+                //not allow edit DmsCode
+                //e.container.find("input[name=DmsCode]").attr("disabled", "true");
+                //e.container.find("input[name=DmsCode]").css("border", "none");
+            }
+            else//event create button
+            {
+            }
+        }
+
+
+        function serialize(data) {
+            for (var property in data) {
+                if ($.isArray(data[property])) {
+                    serializeArray(property, data[property], data);
+                }
+                if (data[property] == null) {
+                    data[property] = " ";
+                }
+            }
+        }
+        function serializeArray(prefix, array, result) {
+            for (var i = 0; i < array.length; i++) {
+                if ($.isPlainObject(array[i])) {
+                    for (var property in array[i]) {
+                        result[prefix + "[" + i + "]." + property] = array[i][property];
+                    }
+                }
+                else {
+                    result[prefix + "[" + i + "]"] = array[i];
+                }
+            }
+        }
+</script>

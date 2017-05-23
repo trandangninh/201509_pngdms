@@ -1,0 +1,192 @@
+﻿@model string
+<div id="reporttable-grid" style="margin-bottom: 10px;"></div>
+<script>
+    var datasource = new kendo.data.DataSource({
+        type: "json",
+        transport: {
+            read: {
+                url: "@Html.Raw(Url.Action("ReportTable", "QualityAlert"))",
+                type: "POST",
+                dataType: "json",
+                data: { month: "@Model" },
+                complete: function () {
+                }
+            }
+        },
+        schema: {
+            data: "Data",
+            total: "Total",
+            errors: "Errors",
+            model: {
+                id: "Id",
+                fields: {
+                    Id: { editable: false, defaultValue: 0 },
+                    SupplierName: { editable: false },
+                    FY: { editable: false },
+                    JAS: { editable: false},
+                    OND: { editable: false},
+                    JFM: { editable: false},
+                    AMJ: { editable: false },
+                    JUL: { editable: false },
+                    AUG: { editable: false},
+                    SEP: { editable: false},
+                    OCT: { editable: false},
+                    NOV: { editable: false },
+                    DEC: { editable: false},
+                    JAN: { editable: false},
+                    FEB: { editable: false},
+                    MAR: { editable: false },
+                    APR: { editable: false},
+                    MAY: { editable: false},
+                    JUN: { editable: false}
+                }
+            }
+        },
+        error: function (e) {
+            display_kendoui_grid_error(e);
+        }
+    });
+    function display_kendoui_grid_error(e) {
+        if (e.errors) {
+            if ((typeof e.errors) == 'string') {
+                //single error
+                //display the message
+                alert(e.errors);
+            } else {
+                //array of errors
+                //source: http://docs.kendoui.com/getting-started/using-kendo-with/aspnet-mvc/helpers/grid/faq#how-do-i-display-model-state-errors?
+                var message = "The following errors have occurred:";
+                //create a message containing all errors.
+                $.each(e.errors, function (key, value) {
+                    if (value.errors) {
+                        message += "\n";
+                        message += value.errors.join("\n");
+                    }
+                });
+                //display the message
+                alert(message);
+            }
+        } else {
+            alert(e.xhr.responseText);
+        }
+    }
+    var grid = $("#reporttable-grid").kendoGrid({
+            dataSource: datasource,
+            scrollable: false,
+            columns: [
+                {
+                    field: "SupplierName",
+                    title: "Supplier name",
+                    //width: 80,
+                    attributes: { class: "text_align_center" },
+                }, {
+                    field: "FY",
+                    title: "FY",
+                    //width: 80,
+                    headerAttributes: { class: "text_align_center" },
+                    attributes: { class: "text_align_center" }
+                }, {
+                    field: "JAS",
+                    title: "JAS",
+                    //width: 80,
+                    headerAttributes: { class: "text_align_center" },
+                    attributes: { class: "text_align_center" }
+                }, {
+                    field: "OND",
+                    title: "OND",
+                    //width: 80,
+                    headerAttributes: { class: "text_align_center" },
+                    attributes: { class: "text_align_center" }
+                }, {
+                    field: "JFM",
+                    title: "JFM",
+                    //width: 80,
+                    headerAttributes: { class: "text_align_center" },
+                    attributes: { class: "text_align_center" }
+                }, {
+                    field: "AMJ",
+                    title: "AMJ",
+                    //width: 80,
+                    headerAttributes: { class: "text_align_center" },
+                    attributes: { class: "text_align_center" }
+                }, {
+                    field: "JUL",
+                    title: "JUL",
+                    //width: 80,
+                    headerAttributes: { class: "text_align_center" },
+                    attributes: { class: "text_align_center" }
+                }, {
+                    field: "AUG",
+                    title: "AUG",
+                    //width: 80,
+                    headerAttributes: { class: "text_align_center" },
+                    attributes: { class: "text_align_center" }
+                }, {
+                    field: "SEP",
+                    title: "SEP",
+                    //width: 80,
+                    headerAttributes: { class: "text_align_center" },
+                    attributes: { class: "text_align_center" }
+                }, {
+                    field: "OCT",
+                    title: "OCT",
+                    //width: 80,
+                    headerAttributes: { class: "text_align_center" },
+                    attributes: { class: "text_align_center" }
+                }, {
+                    field: "NOV",
+                    title: "NOV",
+                    //width: 80,
+                    headerAttributes: { class: "text_align_center" },
+                    attributes: { class: "text_align_center" }
+                }, {
+                    field: "DEC",
+                    title: "DEC",
+                    //width: 80,
+                    headerAttributes: { class: "text_align_center" },
+                    attributes: { class: "text_align_center" }
+                }, {
+                    field: "JAN",
+                    title: "JAN",
+                    //width: 80,
+                    headerAttributes: { class: "text_align_center" },
+                    attributes: { class: "text_align_center" }
+                }, {
+                    field: "FEB",
+                    title: "FEB",
+                    //width: 80,
+                    headerAttributes: { class: "text_align_center" },
+                    attributes: { class: "text_align_center" }
+                }, {
+                    field: "MAR",
+                    title: "MAR",
+                    //width: 80,
+                    headerAttributes: { class: "text_align_center" },
+                    attributes: { class: "text_align_center" }
+                }, {
+                    field: "APR",
+                    title: "APR",
+                    //width: 80,
+                    headerAttributes: { class: "text_align_center" },
+                    attributes: { class: "text_align_center" }
+                }, {
+                    field: "MAY",
+                    title: "MAY",
+                    //width: 80,
+                    headerAttributes: { class: "text_align_center" },
+                    attributes: { class: "text_align_center" }
+                }, {
+                    field: "JUN",
+                    title: "JUN",
+                    //width: 80,
+                    headerAttributes: { class: "text_align_center" },
+                    attributes: { class: "text_align_center" }
+                },
+            ],
+            dataBound: function () {
+                //for (var i = 6; i < 18; i++) {
+                //    grid.data("kendoGrid").hideColumn(i);
+                //}
+            }
+        });
+</script>

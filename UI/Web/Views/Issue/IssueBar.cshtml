@@ -1,0 +1,50 @@
+﻿@model Web.Controllers.IssueBarModel
+
+
+@if (Model.CountOpenIssue > 0)
+{
+
+    <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+        <i class="fa fa-tasks"></i>
+    
+        <span class="badge">@Model.CountOpenIssue</span>
+    
+    </a>
+    <ul class="dropdown-menu tasks">
+        <li class="dropdown-title">
+            <span><i class="fa fa-check"></i> @Model.CountOpenIssue issues recently open</span>
+        </li>
+        @foreach (var shortModel in Model.ListShortModel)
+        {
+           <li>
+                    <a href="#">
+                        <span class="header clearfix">
+                            <span class="pull-left">@shortModel.Content</span>
+                            <span class="pull-right">@shortModel.UpdateDateTime</span>
+                        </span>
+                    </a>
+                </li>
+        }
+       <li class="footer">
+            <a href="@Url.Action("DoFollowUp", "DdsMeeting")">See all issues <i class="fa fa-arrow-circle-right"></i></a>
+        </li>
+    </ul>
+}
+
+else
+{
+    
+<a href="#" class="dropdown-toggle" data-toggle="dropdown">
+    <i class="fa fa-tasks"></i>
+</a>
+<ul class="dropdown-menu tasks">
+    <li class="dropdown-title">
+        <span><i class="fa fa-check"></i> 0 issues recently open</span>
+    </li>
+    
+    <li class="footer">
+        <a href="@Url.Action("DoFollowUp", "DdsMeeting")">See all issues <i class="fa fa-arrow-circle-right"></i></a>
+    </li>
+</ul>
+
+}

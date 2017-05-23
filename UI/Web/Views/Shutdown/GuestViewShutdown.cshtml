@@ -1,0 +1,525 @@
+﻿@using Entities.Domain
+@using Service.Users
+
+@{
+    ViewBag.Title = "Shutdown Request";
+    Layout = "~/Views/Shared/_KendoUILayout.cshtml";
+}
+
+<div class="form-group" style="padding-right: 0; margin-bottom: 55px">
+
+    <div class="pull-left col-xs-3" style="padding-left: 0">
+        <input type="text" class="form-control" placeholder="Search (minium 3 characters)" id="SearchKeyword">
+    </div>
+
+    <div class="pull-left issue-dropdown">
+        <input id="DropdownStatus" value="" />
+    </div>
+
+    <div class="pull-right issue-dropdown">
+        <input id="monthpicker" value="" style="width: 150px" />
+    </div>
+</div>
+<div class="form-group">
+
+    <div id="grid" class="table-overflow-x"></div>
+
+    <div id="bottom_anchor" class="k-grid k-widget"></div>
+    <input type="submit" id="btnRefresh" name="btnRefresh" style="display: none" />
+</div>
+
+
+@section bottomjs
+{
+    <script src="@Url.Content("~/Scripts/kendo/2014.1.318/kendo.web.min.js")"></script>
+    <script>
+        var currentMonth;
+        var today = $.datepicker.formatDate('yy-mm-dd', new Date());
+
+        //console.log(today);
+
+        function getURLParameter(name) {
+            return decodeURIComponent(
+                (location.search.match(RegExp("[?|&]" + name + '=(.+?)(&|$)')) || [, null])[1]
+            );
+        }
+
+        $(document).ready(function() {
+
+            $("#monthpicker").kendoDatePicker({
+                // defines the start view
+                start: "year",
+
+                // defines when the calendar should return date
+                depth: "year",
+
+                // display month and year in the input
+                format: "MMMM yyyy",
+                origin: "top right",
+                position: "bottom right",
+                change: function() {
+                    var monthCheck = $("#monthpicker").val();
+                    //var month = $.datepicker.formatDate('MM/yy', date1);
+                    window.location.href = "/Shutdown/Index?month=" + monthCheck;
+                }
+            });
+
+            var month = getURLParameter('month');
+            if (month != "null") {
+                currentMonth = month;
+                $("#monthpicker").val(month);
+            } else {
+                $("#monthpicker").val($.datepicker.formatDate('MM yy', new Date()));
+                currentMonth = $.datepicker.formatDate('MM/yy', new Date());
+
+            }
+
+            //today = $.datepicker.formatDate('mm/dd/yy', new Date());
+            //console.log(today);
+
+            function display_kendoui_grid_error(e) {
+                if (e.errors) {
+                    if ((typeof e.errors) == 'string') {
+
+                        //single error
+                        //display the message
+                        alert(e.errors);
+
+                    } else {
+                        //array of errors
+                        var message = "The following errors have occurred:";
+                        //create a message containing all errors.
+                        $.each(e.errors, function(key, value) {
+                            if (value.errors) {
+                                message += "\n";
+                                message += value.errors.join("\n");
+                            }
+                        });
+                        //display the message
+                        alert(message);
+                    }
+                } else {
+                    alert('Error happened');
+                }
+            }
+
+
+            function serialize(data) {
+
+                for (var property in data) {
+                    if ($.isArray(data[property])) {
+                        serializeArray(property, data[property], data);
+                    }
+                    if (data[property] == null) {
+                        data[property] = " ";
+                    }
+                }
+            }
+
+            function serializeArray(prefix, array, result) {
+                for (var i = 0; i < array.length; i++) {
+                    if ($.isPlainObject(array[i])) {
+                        for (var property in array[i]) {
+                            result[prefix + "[" + i + "]." + property] = array[i][property];
+                        }
+                    } else {
+                        result[prefix + "[" + i + "]"] = array[i];
+                    }
+
+
+                }
+            }
+
+
+            //local datasource
+            var allUsers = [
+                @{
+                    var userService = DependencyResolver.Current.GetService<IUserService>();
+            var listUsername = userService.GetAllUsersAsync().ToList();
+        }
+
+                @for (int i = 0; i < listUsername.Count; i++)
+        {
+            var user = listUsername[i];
+            <text>
+{
+    Id: '@user.Id',
+    Name: "@(Html.Raw(HttpUtility.JavaScriptStringEncode(user.Username)))"
+}
+</text>
+            if (i != listUsername.Count - 1)
+            {
+                <text>,</text>
+            }
+        }
+        ];
+
+
+        function userDropDownEditor(container, options) {
+            $('<input required data-text-field="Name" data-value-field="Id" data-bind="value:UserCreatedId"/>')
+                .appendTo(container)
+                .kendoDropDownList({
+                    autoBind: false,
+                    dataSource: allUsers
+                });
+        }
+
+        var allStatusAttributes = new kendo.data.DataSource({
+            transport: {
+                read: {
+                    dataType: "json",
+                    type: "POST",
+                    url: "@Html.Raw(Url.Action("GetAllShutdownStatus", "Shutdown"))"
+                }
+            }
+        });
+
+        function statusDropDownEditor(container, options) {
+            $('<input required data-text-field="Name" data-value-field="Id" data-bind="value:' + options.field + '"/>')
+                .appendTo(container)
+                .kendoDropDownList({
+                    dataTextField: "Name",
+                    dataValueField: "Id",
+                    dataSource: allStatusAttributes
+                });
+        }
+
+        function setColor(container, options) {
+            if (container.Status == '@ShutdownStatus.Closed') {
+                return "<div class='issues-close'>" + container.Status + "</div>";
+            }
+            if (container.Status == '@ShutdownStatus.Delayed') {
+                return "<div class='issues-delay'>" + container.Status + "</div>";
+            } else
+                return "<div>" + container.Status + "</div>";
+        };
+
+
+
+        var datasource = new kendo.data.DataSource({
+            type: "json",
+            transport: {
+                read: {
+                    url: "@Html.Raw(Url.Action("List", "Shutdown"))",
+                type: "POST",
+                dataType: "json",
+                data: additionalData
+            },
+            destroy: {
+                url: "@Html.Raw(Url.Action("Delete", "Shutdown"))",
+            type: "POST",
+            dataType: "json"
+        },
+            create: {
+            url: "@Html.Raw(Url.Action("Create", "Shutdown"))",
+            type: "POST",
+        dataType: "json",
+        data: serialize
+        },
+        update: {
+                url: "@Html.Raw(Url.Action("Update", "Shutdown"))",
+                type: "POST",
+                dataType: "json",
+                data: serialize
+        }
+        },
+        schema: {
+                data: "Data",
+                total: "Total",
+                errors: "Errors",
+                model: {
+                id: "Id",
+                fields: {
+                        CanEdit: {
+                            editable: false,
+                            },
+                    //ShutdownId: {
+                    //    editable: false,
+                    //},
+                    Content: {
+                            editable: true,
+                            validation:
+                        {
+                            required: true,
+                            }
+                    },
+                    UserCreated: {
+                            editable: false,
+                            type: "string",
+                            validation:
+                        {
+                            required: true,
+                            }
+                    },
+                    UserCreatedId: {
+                            editable: true,
+                            type: "string",
+                            validation:
+                        {
+                            required: true,
+                            }
+                    },
+                    Status: { editable: true, type: "string", validation: { required: true } },
+                    StatusId: { editable: true, type: "number" },
+                    CreatedDate: {
+                            editable: false,
+                            },
+                    MakingScope: {
+                            editable: true,
+                            validation:
+                        {
+                            required: true,
+                            }
+                    },
+                    PackingScope: {
+                            editable: true,
+                            validation:
+                        {
+                            required: true,
+                            }
+                    },
+                    BasePlanDate: {
+                            editable: true,
+                            type: "date",
+                            format: 'MM/dd/yyyy',
+                            validation:
+                        {
+                            required: true,
+
+                            }
+                    },
+                    Comment: {
+                            editable: true,
+                            },
+                    Remark: {
+                            editable: true,
+                            }
+                }
+                }
+        },
+        requestEnd: function(e) {
+            if (e.type == "create" || e.type == "update") {
+                this.read();
+            }
+        },
+        error: function(e) {
+            display_kendoui_grid_error(e);
+            // Cancel the changes
+            this.cancelChanges();
+        },
+
+        pageSize: 10,
+            serverPaging: true,
+        serverFiltering: true,
+        serverSorting: true
+        });
+
+       var gridShutdown = $("#grid").kendoGrid({
+            dataSource: datasource,
+            pageable: {
+                refresh: true,
+            },
+            height: 'auto !important',
+            edit: function(e) {
+                if (e.model.Id == "") { // fix error for edit
+                    //little hack here
+                    //pre-select the first value of kendoui dropdownlist datasource
+                    //for some reasons (maybe, bug) it always sends 0
+                    //if no value has been selected (changed) in the dropdownlist
+                    if (allUsers.length > 0) {
+                        //e.model.MeasureTypeId = allMeasureTypeAttributes[0].Name;
+                        e.model.UserCreatedId = allUsers[0].Id;
+                        e.model.UserCreated = allUsers[0].Name;
+                    }
+                    allStatusAttributes.fetch(function () {
+                        var view = allStatusAttributes.view();
+                        if (view.length > 0) {
+                            e.model.StatusId = view[0].Id;
+                        }
+                    });
+                    //if (allStatusAttributes.length > 0) {
+                    //    e.model.StatusId = allStatusAttributes[0].Id;
+                    //}
+
+                    //if (allTypeAttributes.length > 0) {
+                    //    e.model.MeasureTypeId = allMeasureTypeAttributes[0].Id;
+                    //}
+                    e.model.BasePlanDate = today;
+
+                }
+            },
+            editable: {
+                confirmation: true,
+                mode: "inline"
+            },
+            scrollable: true,
+            columns: [
+                {
+                    field: "Content",
+                    title: "Shutdown Request",
+                     width: 200,
+                    editor: shutdowRemarkEditor,
+                    template: "#:Content#"
+                },
+                {
+                    field: "UserCreatedId",
+                    title: "Owner",
+                    editor: userDropDownEditor,
+                    template: "#:UserCreated#",
+                    width: 150
+                },
+                {
+                    field: "MakingScope",
+                    title: "Making Scope",
+                     width: 200,
+                    editor: shutdowRemarkEditor,
+                    template: "#:MakingScope#"
+                },
+                {
+                    field: "PackingScope",
+                    title: "Packing Scope",
+                     width: 200,
+                    editor: shutdowRemarkEditor,
+                    template: "#:PackingScope#"
+                },
+                {
+                    field: "BasePlanDate",
+                    title: "Base Plan Date",
+                     width: 110,
+                    format: '{0:MM/dd/yyyy}',
+                    editor: dateTimeEditor,
+                    attributes: {
+                        style:"text-align:center"
+                    }
+                },
+                {
+                    field: "StatusId",
+                    title: "Status",
+                    width: 100,
+                    editor: statusDropDownEditor,
+                    template: setColor
+                },
+                {
+                    field: "Comment",
+                    title: "Comment",
+                    width: 200,
+                    editor: shutdowRemarkEditor,
+                    template: "#=(Comment == null) ? ' ' : Comment #"
+                },
+                {
+                    field: "Remark",
+                    title: "Remark",
+                     width: 200,
+                    editor: shutdowRemarkEditor,
+                    template: "#=(Remark == null) ? ' ' : Remark #"
+                }
+            ]
+        }).on("click", ".k-grid-edit", function() {
+            $(".k-grid-update").html("<span class='k-icon k-update'></span>").css("min-width", "16px").removeClass("k-button-icontext");
+            $(".k-grid-cancel").html("<span class='k-icon k-cancel'></span>").css("min-width", "16px").removeClass("k-button-icontext");
+        }).on("click", ".k-grid-add", function() {
+            $(".k-grid-update").html("<span class='k-icon k-update'></span>").css("min-width", "16px").removeClass("k-button-icontext");
+            $(".k-grid-cancel").html("<span class='k-icon k-cancel'></span>").css("min-width", "16px").removeClass("k-button-icontext");
+        });
+
+        //search
+        //$('#SearchKeyword').bind("input", function (e) {
+        //    if (this.value.length >= 3 || e.keyCode == 13 || e.keyCode == 8 || e.keyCode == 46 || this.value.length == 0) {
+        //        var grid = $("#grid").data('kendoGrid');
+        //        grid.dataSource.page(1); //new search. Set page size to 1
+        //        //grid.dataSource.read();
+
+        //    }
+        //    return false;
+        //});
+
+        function shutdowRemarkEditor(container, options) {
+            $('<textarea data-bind="value: ' + options.field + '"></textarea>').appendTo(container);
+        }
+
+        function dateTimeEditor(container, options) {
+            $('<input data-text-field="' + options.field + '" data-value-field="' + options.field + '" data-bind="value:' + options.field + '" data-format="' + options.format + '"/>')
+                .appendTo(container)
+                .kendoDatePicker({});
+        }
+
+
+        function additionalData() {
+
+            return {
+                Datetime: currentMonth,
+                SearchKeyword: $('#SearchKeyword').val(),
+                UserId: $("#DropdownUser").val(),
+                StatusId: $("#DropdownStatus").val()
+            };
+        }
+
+        //search
+        $('#SearchKeyword').bind("input", function(e) {
+            if (this.value.length >= 3 || e.keyCode == 13 || e.keyCode == 8 || e.keyCode == 46 || this.value.length == 0) {
+                var grid = $("#grid").data('kendoGrid');
+                grid.dataSource.page(1); //new search. Set page size to 1
+                //grid.dataSource.read();
+
+            }
+            return false;
+        });
+
+        function onChange() {
+            var grid = $("#grid").data('kendoGrid');
+            grid.dataSource.page(1);
+        };
+
+        //scroll
+
+        function moveScroll() {
+            var scroll = $(window).scrollTop();
+            var anchor_top = $("table[role='grid']").offset().top;
+            var anchor_bottom = $("#bottom_anchor").offset().top;
+            if (scroll > anchor_top && scroll < anchor_bottom) {
+                clone_table = $("#clone");
+                if (clone_table.length == 0) {
+                    clone_table = $("table[role='grid']").clone();
+                    clone_table.attr('id', 'clone');
+                    clone_table.css({
+                        position: 'fixed',
+                        'pointer-events': 'none',
+                        top: 0
+                    });
+                    clone_table.width($("table[role='grid']").width());
+                    $("#bottom_anchor").append(clone_table);
+                    $("#clone tbody").css({ visibility: 'collapse' });
+                    $("#clone thead").css({ visibility: 'visible', 'pointer-events': 'auto' });
+
+                }
+            } else {
+                $("#clone").remove();
+            }
+        }
+
+        $(window).scroll(moveScroll);
+
+
+            // dropdown list
+            $("#DropdownStatus").kendoDropDownList({
+                dataTextField: "Name",
+                dataValueField: "Id",
+                dataSource: allStatusAttributes,
+                index: 0,
+                change: onChange,
+                optionLabel: "--- Any Status ---",
+            });
+
+        });
+
+    </script>
+    <script>
+        $(document).ready(function() {
+            $("#nav-shutdown").addClass("active");
+            //set readonly datepicker
+
+            $('#monthpicker').prop('readonly', true);
+        });
+    </script>
+
+}

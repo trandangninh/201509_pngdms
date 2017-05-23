@@ -1,0 +1,162 @@
+﻿
+@{
+
+    //page title
+    ViewBag.Title = "Found By Function";
+    Layout = "~/Views/Shared/_KendoUILayout.cshtml";
+}
+<script src="@Url.Content("~/Scripts/kendo/2014.1.318/kendo.web.min.js")"></script>
+
+<div id="FoundByFunction-grid"></div>
+<script id="tooltip-template" type="text/x-kendo-template">
+    <!--<span class = "k-widget k-tooltip k-tooltip-validation k-invalid-msg" > <span class = "k-icon k-warning" > </span>#=message#</span>-->
+    <span class="k-invalid-msg">#=message#</span>
+</script>
+<script>
+    $(document).ready(function () {
+        isCreating = false;
+        //$("#FoundByFunction-grid").kendoValidator();
+        $("#FoundByFunction-grid").kendoGrid({
+            dataSource: {
+                type: "json",
+                transport: {
+                    read: {
+                        url: "@Html.Raw(Url.Action("List", "FoundByFunction"))",
+                        type: "POST",
+                        dataType: "json"
+                    },
+                    update: {
+                        url: "@Html.Raw(Url.Action("Update", "FoundByFunction"))",
+                        type: "POST",
+                        dataType: "json",
+                        complete: function (e) {
+                            if (e.responseJSON != undefined && e.responseJSON.status == "success")
+                                $("#FoundByFunction-grid").data("kendoGrid").dataSource.read();
+                        }
+                    },
+                    destroy: {
+                        url: "@Html.Raw(Url.Action("Delete", "FoundByFunction"))",
+                        type: "POST",
+                        dataType: "json"
+                    },
+                    create: {
+                        url: "@Html.Raw(Url.Action("Create", "FoundByFunction"))",
+                        type: "POST",
+                        dataType: "json",
+                        complete: function (e) {
+                            if (e.responseJSON != undefined && e.responseJSON.status == "success")
+                                $("#FoundByFunction-grid").data("kendoGrid").dataSource.read();
+                        }
+                    }
+                },
+                schema: {
+                    data: "Data",
+                    total: "Total",
+                    errors: "Errors",
+                    model: {
+                        id: "Id",
+                        fields: {
+                            Id:{ editable: false, type:'number' },
+                            Name: { editable: true }
+                        }
+                    }
+                },
+                error: function (e) {
+                    display_kendoui_grid_error(e);
+                },
+                pageSize: 15,
+                serverPaging: true,
+                serverFiltering: true,
+                serverSorting: true
+            },
+            pageable: {
+                refresh: true,
+                pageSizes: ["5", "10", "15", "20"]
+            },
+            editable: {
+                mode: "popup",
+                //default title of popup editor
+                window: {
+                    title: "Modify Found By Function",
+                },
+                //template of custom popup editor
+              template: kendo.template($("#popup_editor").html())
+            },
+            edit: function (e) {
+                //custom validate message
+                e.sender.editable.validatable._errorTemplate = kendo.template($('#tooltip-template').html());
+                if (isCreating) {
+                    //change title popup editor
+                    e.container.kendoWindow("title", "Create New Found By Function");
+                    //change tex (save changes --> create) popup editor
+                    $(".k-grid-update").contents().filter(function () {
+                        return this.nodeType == 3;
+                    })[0].nodeValue = "Create";
+                    isCreating = false;
+                }
+            },
+            toolbar: ["create"],
+            scrollable: false,
+            columns: [
+                //{
+                //    field: "Id"
+                //},
+                {
+                    field: "Name",
+                    title: "Name",
+                    width: 400
+                },
+                {
+                    command: [
+                        {
+                            name: "edit",
+                            text: { update: "Save Changes", cancel: "Cancel" }
+                        },
+                        "destroy"
+                    ],
+                    title: "&nbsp;",
+                    width: "250px"
+                }
+            ]
+        });
+        $(".k-grid-add").on("click", function () {
+            isCreating = true;
+        });
+        function display_kendoui_grid_error(e) {
+            if (e.errors) {
+                if ((typeof e.errors) == 'string') {
+                    //single error
+                    //display the message
+                    alert(e.errors);
+                } else {
+                    //array of errors
+                    //source: http://docs.kendoui.com/getting-started/using-kendo-with/aspnet-mvc/helpers/grid/faq#how-do-i-display-model-state-errors?
+                    var message = "The following errors have occurred:";
+                    //create a message containing all errors.
+                    $.each(e.errors, function (key, value) {
+                        if (value.errors) {
+                            message += "\n";
+                            message += value.errors.join("\n");
+                        }
+                    });
+                    //display the message
+                    alert(message);
+                }
+            } else {
+                alert(e.xhr.responseText);
+            }
+        }
+    });
+</script>
+
+
+@*template of popup edito*@
+<script class="k-popup" id="popup_editor" type="text/x-kendo-template">
+    <div id="abc">
+        <div class="popup-editor-attribute-classification">
+            <label>Name</label>
+            <input id="FoundByFunction-Name" class="k-textbox" type="text" name="Name" data-bind="value:Name" required />
+            <div style="clear: both;"></div>
+        </div>        
+    </div>
+</script>

@@ -1,0 +1,129 @@
+﻿@model Web.Models.Attendance.SearchAttendanceModel
+@{
+    ViewBag.Title = "Attendance";
+    Layout = "~/Views/Shared/_KendoUILayout.cshtml";
+}
+<script src="@Url.Content("~/Scripts/kendo/2014.1.318/kendo.web.min.js")"></script>
+
+<div class="attendance-search">
+    <div class="department-section k-header">
+        <span>Department:</span>
+        @Html.DropDownListFor(m => m.DepartmentId, Model.AvailableDepartments, new { @id = "department-cbx" })
+    </div>
+    <div class="todate-section k-header">
+        <span>To date:</span>
+        @Html.EditorFor(m => m.EndDate)
+    </div>
+    <div class="fromdate-section k-header">
+        <span>From date:</span>
+        @Html.EditorFor(m => m.StartDate)
+    </div>
+</div>
+<div id="attendance-grid"></div>
+<style>
+    .attendance-search {
+        height: 32px;
+    }
+        .attendance-search .department-section {
+            float: left;
+            background-color: transparent;
+        }
+        .attendance-search .fromdate-section,
+        .attendance-search .todate-section {
+            float: right;
+            background-color: transparent;
+            margin-left: 5px;
+        }
+</style>
+<script>
+    $(document).ready(function () {
+        $("#department-cbx").kendoDropDownList({
+            change: search
+        });
+        var departmentCbx = $("#department-cbx").data("kendoDropDownList");
+
+        $("#StartDate").kendoDatePicker({
+            change: search
+        });
+        $("#EndDate").kendoDatePicker({
+            change: search
+        });
+
+        function searchAttendanceModel() {
+            return {
+                DepartmentId: departmentCbx.value(),
+                StartDate: $("#StartDate").val(),
+                endDate: $("#EndDate").val()
+            };
+        };
+
+        $("#attendance-grid").kendoGrid({
+            dataSource: {
+                type: "json",
+                transport: {
+                    read: {
+                        url: "@Html.Raw(Url.Action("List", "Attendance"))",
+                        type: "POST",
+                        dataType: "json",
+                        data: searchAttendanceModel
+                    }
+                },
+                schema: {
+                    data: "Data",
+                    total: "Total",
+                    errors: "Errors",
+                    model: {
+                        id: "Id",
+                        fields: {
+                            DateString: { type: "string" },
+                            UsersInAttendance: { type: "string" },
+                            UsersNotInAttendance: { type: "string" },
+                            Department: { type: "string" }
+                        }
+                    }
+                },
+                error: function (e) {
+                    display_kendoui_grid_error(e);
+                    this.cancelChanges();
+                },
+                pageSize: 10,
+                serverPaging: true,
+                serverFiltering: true,
+                serverSorting: true
+            },
+            pageable: {
+                refresh: true,
+                pageSizes: ["5", "10", "15", "20"]
+            },
+            scrollable: false,
+            columns: [
+                {
+                    field: "DateString",
+                    title: "Created Date",
+                    width: 100
+                },
+                {
+                    field: "UsersInAttendance",
+                    title: "Attendance",
+                    width: 400
+                },
+                {
+                    field: "UsersNotInAttendance",
+                    title: "Absence Users",
+                    width: 400
+                },
+                {
+                    field: "Department",
+                    title: "Department",
+                    width: 100
+                }
+            ]
+        });
+        var grid = $("#attendance-grid").data("kendoGrid");
+
+        function search() {
+            grid.dataSource.read();
+            return false;
+        }
+    });
+</script>

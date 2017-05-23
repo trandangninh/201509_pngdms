@@ -1,0 +1,490 @@
+﻿@using Entities.Domain
+@using Microsoft.Ajax.Utilities
+@using RepositoryPattern.Infrastructure
+@using Service.Lines
+@using Web.Models.Packing
+@{
+    ViewBag.Title = "Manage tracking";
+    Layout = "~/Views/Shared/_KendoUILayout.cshtml";
+
+    var listResults = new List<Web.Models.Packing.LineResult>();
+ 
+    var _lineService = EngineContext.Current.Resolve<ILineService>();
+    var listLine = _lineService.SearchLines(departmentId:2,active:true);
+
+    foreach (var result in listLine.Result)
+    {
+        var resultModel = new LineResult()
+        {
+            LineCode = result.LineCode,
+            LineName = result.LineName
+        };
+        listResults.Add(resultModel);
+    }
+    listResults = listResults.DistinctBy(x => x.LineCode).ToList();
+  
+}
+
+
+<div class="form-group" style="padding-right:0; margin-bottom: 55px">
+   
+   
+
+    <div class="pull-left col-xs-3" style="padding-right:0; margin-bottom:5px">
+        <div style="float: left; padding-left: 0px; padding-right: 20px; padding-top: 5px;">From</div>  <input type="text"  id="fromDatepicker" class="datepicker-fullscreen" style="width: 150px;" />
+
+    </div>
+    <div class="pull-left " style="padding-right:0; margin-bottom:5px">
+
+        <div style="float: left; padding-left: 0px; padding-right: 20px; padding-top: 5px;">To</div>  <input type="text" id="toDatepicker" class="datepicker-fullscreen" style="width: 150px;" />
+
+    </div>
+
+        <input type="hidden" id="fromDate" name="fromDate" value="" />
+        <input type="hidden" id="toDate" name="toDate" value="" />
+  
+    <div class="pull-right" style="margin-bottom: 5px">
+        Line <input id="drpLineTracking" value="" />
+    </div>
+</div>
+<div class="form-group">
+
+    <div id="trackinggrid"></div>
+
+  
+    <div id="bottom_anchor" class="k-grid k-widget"></div>
+    <input type="submit" id="btnRefresh" name="btnRefresh" style="display: none" />
+</div>
+
+
+@section bottomjs
+{
+    <script src="@Url.Content("~/Scripts/kendo/2014.1.318/kendo.web.min.js")"></script>
+    <script src="@Url.Content("~/Scripts/moment.min.js")"></script>
+    
+    <script>
+    $(document).ready(function () {
+     
+        function getURLParameter(name) { // get parameter url
+            return decodeURIComponent(
+                (location.search.match(RegExp("[?|&]" + name + '=(.+?)(&|$)')) || [, null])[1]
+            );
+        }
+
+        var fromDate = getURLParameter('fromDate'); // from date
+        if (fromDate != "null") { // get from date to url
+
+            $("#fromDatepicker").val(fromDate);
+            $("#fromDatepicker").val(fromDate);
+            $("#fromDate").val(fromDate);
+        } else {
+            $("#fromDatepicker").val($.datepicker.formatDate('mm/dd/yy', new Date())); // set current date for from day
+            fromDate = $.datepicker.formatDate('mm/dd/yy', new Date());
+            $("#fromDate").val($.datepicker.formatDate('mm/dd/yy', new Date()));
+        }
+
+        var toDate = getURLParameter('toDate'); // to date
+        if (toDate != "null") { // get to date to url
+            $("#toDatepicker").val(toDate);
+            $("#toDate").val(toDate);
+        } else {
+            $("#toDatepicker").val($.datepicker.formatDate('mm/dd/yy', new Date())); // set current date for from day
+            toDate = $.datepicker.formatDate('mm/dd/yy', new Date());
+            $("#toDate").val($.datepicker.formatDate('mm/dd/yy', new Date()));
+        }
+
+        $("#export-excel").attr("href", "/Tracking/Manage?fromDate=" + fromDate + "&toDate=" + toDate); // set href for #export-excel to export excell
+
+        // date click
+        var currentDate = new Date();
+        $("#fromDatepicker").kendoDatePicker({
+            origin: "top right",
+            position: "bottom right",
+
+            max: new Date(),
+            change: function () {
+                $('.overlay-loading').show();
+                setTimeout(function () {
+                    // Do something after 5 seconds
+
+                    var fromDate = $('#fromDatepicker').data('kendoDatePicker').value();
+                    var toDate = $('#toDatepicker').data('kendoDatePicker').value();
+                    var maxDate = moment(fromDate);
+                    maxDate.format('L');
+                    maxDate.add('days', 30);
+
+                    var checkDay = maxDate;
+                    var checkMaxDate = Math.floor((currentDate - Date.parse(fromDate)) / 86400000); // check total day
+
+                    if (checkMaxDate < 30) {
+                        checkDay = moment(new Date());
+                    }
+                    if (fromDate > toDate) {
+                        window.location.href = "/Tracking/Manage?fromDate=" + kendo.toString(fromDate, 'd') + "&toDate=" + checkDay.format('L');
+                    } else {
+                        if (checkDay < toDate) {
+                            window.location.href = "/Tracking/Manage?fromDate=" + kendo.toString(fromDate, 'd') + "&toDate=" + checkDay.format('L');
+                        } else {
+                            window.location.href = "/Tracking/Manage?fromDate=" + kendo.toString(fromDate, 'd') + "&toDate=" + kendo.toString(toDate, 'd');
+                        }
+
+                    }
+                }, 500);
+
+            }
+        });
+
+
+        var maxDate = $('#fromDatepicker').data('kendoDatePicker').value();
+        var checkDay1 = moment(maxDate);
+        checkDay1.format('L');
+
+        var checkMaxDate1 = Math.floor((currentDate - Date.parse(fromDate)) / 86400000); // check total day
+
+        if (checkMaxDate1 < 30) {
+            checkDay1 = currentDate;
+        } else {
+            checkDay1.add('days', 30);
+        }
+
+        var minDate = $('#fromDatepicker').data('kendoDatePicker').value();
+
+        $("#toDatepicker").kendoDatePicker({
+            origin: "top right",
+            position: "bottom right",
+            min: minDate,
+            max: new Date(checkDay1),
+            change: function () {
+                $('.overlay-loading').show();
+                var fromDate = $('#fromDatepicker').data('kendoDatePicker').value();
+                var toDate = $('#toDatepicker').data('kendoDatePicker').value();
+                window.location.href = "/Attendance/Index?fromDate=" + kendo.toString(fromDate, 'd') + "&toDate=" + kendo.toString(toDate, 'd');
+
+            }
+        });
+
+
+
+    });
+</script>
+
+    <script>
+        $(document).ready(function() {
+          
+            var currentDate;
+            //data for drpLine tracking
+            var allLineAttributesTracing = [
+                @for (int i = 0; i < listResults.Count; i++)
+            {
+
+                <text>
+{
+    Id: "@listResults[i].LineCode",
+    Name: "@listResults[i].LineName"
+}
+</text>
+                if (i != listResults.Count - 1)
+                {
+                    <text>,</text>
+                }
+            }
+        ];
+            // dropdownlist drpLine
+            $("#drpLineTracking").kendoDropDownList({
+                dataTextField: "Name",
+                dataValueField: "Id",
+                dataSource: allLineAttributesTracing,
+                index: 0,
+                change: onChange,
+                optionLabel: "--- Any Line ---",
+            });
+
+            $("#drpLineTracking").kendoDropDownList({
+                dataTextField: "Name",
+                dataValueField: "Id",
+                dataSource: allLineAttributesTracing,
+                index: 0,
+                change: onChangeLineTracking
+
+            });
+
+            function serializeTracking(data) {
+                data["CreatedDate"] = currentDate;
+                data["LineCode"] = $("#drpLineTracking").val();
+                for (var property in data) {
+                    if (data[property] == null) {
+                        data[property] = " ";
+                    }
+                }
+
+            }
+
+            function onChangeLineTracking() {
+                var grid = $("#trackinggrid").data('kendoGrid');
+                grid.dataSource.page(1);
+            };
+
+            function additionalDataTracking() {
+                return {
+
+                    FromDate: $("#fromDatepicker").val(),
+                    ToDate: $("#toDatepicker").val(),
+                    LineCode: $("#drpLineTracking").val()
+                };
+            }
+            function onChange() {
+                var th = $("#tabresult").find(".table").find(".linename");
+                var td = $("#tabresult").find(".table").find(".line-check"); // find all td with class .line-edittable
+                var selectedvalue = $("#drpLine").val(); // get select value dopdownlist line
+
+
+                if (selectedvalue == "") { // if select first value
+                    $(td).removeClass("hide");
+                    $(th).removeClass("hide");
+                } else { // if select a line
+                    $(td).addClass("hide"); // hide all td with class .line-edittable
+                    $(th).addClass("hide");
+                    for (var j = 0; j < th.length; j++) {
+                        if ($(th[j]).html() == selectedvalue) {
+                            $(th[j]).removeClass("hide"); // show td with line choosen
+                        }
+                    }
+                    for (var i = 0; i < td.length; i++) {
+                        if ($(td[i]).data('linename') == selectedvalue) {
+                            $(td[i]).removeClass("hide"); // show td with line choosen
+                        }
+                    }
+                }
+            };
+            var datasourceTracking = new kendo.data.DataSource({
+                type: "json",
+                transport: {
+                    read: {
+                        url: "@Html.Raw(Url.Action("List", "Tracking"))",
+                    type: "POST",
+                    dataType: "json",
+                    data: additionalDataTracking
+                },
+                destroy: {
+                    url: "@Html.Raw(Url.Action("Delete", "Tracking"))",
+                type: "POST",
+                dataType: "json",
+
+            },
+                create: {
+                url: "@Html.Raw(Url.Action("Create", "Tracking"))",
+                type: "POST",
+            dataType: "json",
+            data: serializeTracking
+        },
+            update: {
+            url: "@Html.Raw(Url.Action("Update", "Tracking"))",
+            type: "POST",
+            dataType: "json",
+            data: serializeTracking
+            }
+        },
+        aggregate: [
+            { field: "Quantity", aggregate: "sum" }
+        ],
+            schema: {
+            data: "Data",
+            total: "Total",
+            errors: "Errors",
+
+            model: {
+                    id: "Id",
+                    fields: {
+                    CreatedDate: {
+                                editable: false,
+                                type: "string",
+                                },
+                        FGCode: {
+                                editable: true,
+                                type: "string",
+                                validation:
+                            {
+                                required: false,
+                                }
+                        },
+                        Variant: {
+                                editable: true,
+                                type: "string",
+                                validation:
+                            {
+                                required: false,
+                                }
+                        },
+
+                        Size: {
+                                editable: true,
+                                type: "string",
+                                validation:
+                            {
+                                required: false,
+                                }
+                        },
+                        Lot: {
+                                editable: true,
+                                type: "string",
+                                validation:
+                            {
+                                required: false,
+                                }
+                        },
+                        Cause: {
+                                editable: true,
+                                type: "string",
+                                validation:
+                            {
+                                required: false,
+                                }
+                        },
+                        Where: {
+                                editable: true,
+                                type: "string",
+                                validation:
+                            {
+                                required: false,
+                                }
+                        },
+                        Quantity: {
+                                editable: true,
+                                type: "number",
+                                validation:
+                            {
+                                required: false,
+                                }
+                        }
+
+                    }
+            }
+            },
+        requestEnd: function(e) {
+            if (e.type == "create" || e.type == "update") {
+                this.read();
+            }
+
+        },
+        error: function(e) {
+            display_kendoui_grid_error(e);
+            // Cancel the changes
+            this.cancelChanges();
+        },
+
+        pageSize: 10,
+            serverPaging: true,
+        serverFiltering: true,
+        serverSorting: true
+        });
+
+        $("#trackinggrid").kendoGrid({
+            dataSource: datasourceTracking,
+            pageable: {
+                refresh: true,
+            },
+            height: 'auto',
+            edit: function(e) {
+                //console.log("MeasureType" + e.MeasureType);
+                //window.setTimeout(function() {
+
+                //    var total = calc();
+
+                //    $("#quantityTotal").html(total);
+                //},100);
+                //little hack here
+                //pre-select the first value of kendoui dropdownlist datasource
+                //for some reasons (maybe, bug) it always sends 0
+                //if no value has been selected (changed) in the dropdownlist
+
+            },
+            editable: {
+                confirmation: true,
+                mode: "inline"
+            },
+            scrollable: false,
+            toolbar: ["create"],
+            columns: [
+                {
+                    field: "CreatedDate",
+                    title: "Create Date",
+                    width: 250,
+                    template: '#:CreatedDate#'
+                },
+                {
+                    field: "FGCode",
+                    title: "FGCode",
+                    width: 250,
+                    template: "#=(FGCode == null) ? ' ' : FGCode #"
+                },
+                {
+                    field: "Variant",
+                    title: "Variant",
+                    width: 250,
+                    template: "#=(Variant == null) ? ' ' : Variant #"
+                },
+                {
+                    field: "Size",
+                    title: "Size",
+                    width: 250,
+                    template: "#=(Size == null) ? ' ' : Size #"
+                },
+                {
+                    field: "Lot",
+                    title: "Lot",
+                    width: 250,
+                    template: "#=(Lot == null) ? ' ' : Lot #"
+                },
+                {
+                    field: "Cause",
+                    title: "Cause",
+                    width: 250,
+                    template: "#=(Cause == null) ? ' ' : Cause #"
+                },
+                {
+                    field: "Where",
+                    title: "Where",
+                    width: 250,
+                    template: "#=(Where == null) ? ' ' : Where #"
+                },
+                {
+                    field: "Quantity",
+                    title: "Quantity",
+                    width: 250,
+                    footerTemplate: "<div class=\"total-tracking-quantity\">Total: #= sum #</div>"
+                }
+             
+,
+            {
+            command: [
+            {
+                name: "edit",
+                text: "",
+                template: "<a class='k-button k-grid-edit' href='' style='min-width:16px;'><span class='k-icon k-edit'></span></a>"
+            },
+                {
+                    name: "destroy",
+                    text: ""
+                }
+            ],
+            width:
+            200
+        }
+      
+        ]
+        });
+
+
+        });
+
+
+    </script>
+    <script>
+        $(document).ready(function() {
+            $("#nav-followup").addClass("active");
+            //set readonly datepicker
+            $('#fromDatepicker').prop('readonly', true);
+            $('#toDatepicker').prop('readonly', true);
+        });
+    </script>
+},

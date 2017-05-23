@@ -1,0 +1,86 @@
+﻿@model Web.Models.QualityAlert.ComplaintTrackingChartModel
+@{
+    ViewBag.Title = "Report";
+    Layout = "~/Views/Shared/_KendoUILayout.cshtml";
+}
+@*<link href="@Url.Content("~/Content/kendo.common-material.min.css")" rel="stylesheet" type="text/css" />*@
+<script src="@Url.Content("~/Scripts/kendo/2014.1.318/kendo.all.min.js")"></script>
+
+<a href='/ScoreCard' class='k-button k-button-icontext btn-info-custom' title=" Back to Scorecard" style="padding: 5px;">
+    <span class="k-icon k-i-arrow-w"></span>Back to Scorecard
+</a>
+
+<div class="demo-section k-content wide">
+    <div id="chart"></div>
+</div>
+<script>
+    function createChart() {
+        $("#chart").kendoChart({
+            title: {
+                text: "@Model.SuplierName supplier"
+            },
+            legend: {
+                position: "right"
+            },
+            seriesDefaults: {
+                type: "bar",
+                stack: true
+            },
+            series: [
+                @foreach (var item in Model.Items)
+                    {
+                        <text>
+                        {
+                            data: [@item.Data],
+                            name: "@item.Name",
+                            color: "@item.Color",
+                            //visual: function (e) {
+                            //    //create the default visual
+                            //    var visual = e.createVisual();
+                            //    //scale it so that it has the predefined size
+                            //    visual.transform(kendo.geometry.transform().scale(1, 12/e.rect.height(), e.rect.center()));
+                            //    return visual;
+                            //}
+                        },
+                    </text>
+                    }],
+            valueAxes: [{
+                //max: 20,
+                line: {
+                    visible: false
+                },
+                minorGridLines: {
+                    visible: true
+                }
+            }],
+            categoryAxis: {
+                categories: [@Html.Raw(Model.ClassificationDefectNameList)],
+                majorGridLines: {
+                    visible: false
+                }
+            },
+            tooltip: {
+                visible: true,
+                template: "#= series.name #: #= value #",
+                //visual: function (e) {
+                //    //create the default visual
+                //    var visual = e.createVisual();
+                //    //scale it so that it has the predefined size
+                //    visual.transform(kendo.geometry.transform().translateY(e.rect.height()/2));
+                //    return visual;
+                //}
+            },
+            chartArea: {
+                height: 500
+            }
+        });
+    }
+    kendo.resize($(".k-chart"));
+    $(document).ready(function () {
+        createChart();
+    });
+    $(window).on("resize", function () {
+        kendo.resize($(".k-chart"));
+    });
+</script>
+

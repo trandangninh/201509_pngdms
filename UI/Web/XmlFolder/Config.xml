@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Config>
+  <QAMarkLimit>216</QAMarkLimit>
+  <QASeverityLimit>8</QASeverityLimit>
+  <Email>son.tran@newoceaninfosys.com</Email>
+</Config>

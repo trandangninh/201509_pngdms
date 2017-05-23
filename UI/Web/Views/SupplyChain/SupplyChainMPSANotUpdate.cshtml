@@ -1,0 +1,131 @@
+﻿@using Entities.Domain
+@using Nois.Web.Framework.Kendoui;
+@model Web.Models.SupplyChain.SupplyChainModel
+@{
+  
+    Layout = null;
+}
+
+        
+<div class="box border orange">
+                                <table id="supplychaingrid" class="table">
+                                    <thead>
+                                        <tr>
+                                            <th>DMS</th>
+                                            <th>Measure-Making</th>
+                                            <th>Owner</th>
+                                            <th>FR</th>
+                                            <th>Bottle</th>
+                                            <th>Pouch</th>
+                                            <th>Sachet1</th>
+                                            <th>Sachet2</th>         
+                                            <th class="remark-supplychain">Remarks</th>
+                                        </tr>
+                                    </thead>
+
+                                    <!-- Making -->
+                                    <tbody>
+                                        <tr data-type="1" data-measurecode="@(1)" class="scdds-target">
+                                            <td rowspan="8" class="scdds-DMS">MPSA</td>
+                                            <td class="measurecode">@Model.SupplyChainMPSA[0].MeasureName <input type="text " value="@Model.SupplyChainMPSA[0].MeasureCode" /></td>
+                                            <td class="owner "> </td>
+                                            <td class="mpsafr  line-cols" colspan="5">
+                                                <span>@Model.SupplyChainMPSA[0].MPSAFR </span>
+                                                <input type="text " value="@Model.SupplyChainMPSA[0].MPSAFR" />
+                                            </td>
+
+                                            <td class="remark remark-float  ">
+                                                <span>@Model.SupplyChainMPSA[0].Remark </span>
+                                                <input type="text " value="@Model.SupplyChainMPSA[0].MPSAFR" />
+                                            </td>
+                                        </tr>
+                                        @for (int i = 1; i < 5; i++)
+                                        {
+                                            <tr data-type="1" data-measurecode="@(i+1)">
+                                                <td class="measurecode">@Model.SupplyChainMPSA[i].MeasureName <input type="text " value="@Model.SupplyChainMPSA[i].MeasureCode" /></td>
+                                                <td class="owner ">
+                                                    <span>
+                                                        @foreach (var user in Model.SupplyChainMPSA[i].ListUsernameInSupplyChainMPSA)
+                                                        {
+                                                            <text> @user; </text>
+                                                        }
+                                                    </span>
+                                                   
+
+                                                </td>
+                                                <td class="fr line-cols" title="@Model.SupplyChainMPSA[i].FRRemarks">
+                                                    @Model.SupplyChainMPSA[i].FR
+                                                      </td>
+                                                <td class="bottle line-cols" title="@Model.SupplyChainMPSA[i].BottleRemarks">
+                                                    <span>@Model.SupplyChainMPSA[i].Bottle </span>
+                                            
+                                                </td>
+                                                <td class="pouch  line-cols" title="@Model.SupplyChainMPSA[i].PouchRemark">
+                                                    <span>@Model.SupplyChainMPSA[i].Pouch </span>
+                                                </td>
+                                                <td class="sachet1  line-cols" title="@Model.SupplyChainMPSA[i].Sachet1Remarks">
+                                                    <span>@Model.SupplyChainMPSA[i].Sachet1 </span>
+                                                   </td>
+                                                <td class="sachet2  line-cols" title="@Model.SupplyChainMPSA[i].Sachet2Remarks">
+                                                    <span>@Model.SupplyChainMPSA[i].Sachet2 </span>
+                                                   </td>
+                                                <td class="remark remark-float  line-remark">
+                                                    <span>@Html.Raw(Model.SupplyChainMPSA[i].RemarkDisplay.Replace("\n", "<br />")) </span>
+                                                    <input type="text " value="@Model.SupplyChainMPSA[i].Remark" />
+                                                </td>
+                                            </tr>
+                                        }
+
+                                        <!--End Making-->
+                                        <!-- Output message -->
+
+                                        <tr class="thead">
+                                            <td>Output Measure</td>
+                                            <td>Owner</td>
+                                            <td>MPSA-FR</td>
+                                            <td colspan="4">MPSA-FE</td>
+                                            <td>Remarks</td>
+                                        </tr>
+                                        @for (int i = 5; i < 7; i++)
+                                        {
+                                            <tr data-measurecode="@(i+1)">
+                                                <td class="measurecode"><span>@Model.SupplyChainMPSA[i].MeasureName</span> <input type="text " value="@Model.SupplyChainMPSA[i].MeasureCode" /></td>
+                                                <td class="owner ">
+                                                    <span>
+                                                        @foreach (var user in Model.SupplyChainMPSA[i].ListUsernameInSupplyChainMPSA)
+                                                        {
+                                                            <text> @user; </text>
+                                                        }
+                                                    </span>
+                                                   
+                                                </td>
+                                                <td class="mpsafr  line-cols">
+                                                    <span>@Model.SupplyChainMPSA[i].MPSAFR </span>
+                                                    <input type="text " value="@Model.SupplyChainMPSA[i].MPSAFR" />
+                                                </td>
+                                                <td class="mpsafe  line-cols" colspan="4">
+                                                    <span>@Model.SupplyChainMPSA[i].MPSAFE </span>
+                                                    <input type="text " value="@Model.SupplyChainMPSA[i].MPSAFE" />
+                                                </td>
+                                                <td class="remark remark-float line-remark">
+                                                    <span>@Model.SupplyChainMPSA[i].Remark </span>
+                                                    <input type="text " value="@Model.SupplyChainMPSA[i].Remark" />
+                                                </td>
+
+
+                                            </tr>
+                                        }
+                                    </tbody>
+                                    <!--End output message-->
+                                </table>
+
+                            </div>
+
+
+    <script src="@Url.Content("~/Scripts/kendo/2014.1.318/kendo.web.min.js")"></script>
+    <script>
+        var IsEditting = false;
+        var currentDate;
+        var oldval = 0;
+        $("#tabresult-dms-mpsa td input").addClass("hide");
+    </script>

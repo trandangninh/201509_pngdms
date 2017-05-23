@@ -1,0 +1,35 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ListProductPlanningColor>
+   <ProducPlanningColor>
+    <ProductName>GB</ProductName>
+    <Color>#39058e</Color>
+  </ProducPlanningColor>
+  <ProducPlanningColor>
+    <ProductName>Mys</ProductName>
+    <Color>#231727</Color>
+  </ProducPlanningColor>
+  <ProducPlanningColor>
+    <ProductName>AB</ProductName>
+    <Color>#adda55</Color>
+  </ProducPlanningColor>
+  <ProducPlanningColor>
+    <ProductName>IN</ProductName>
+    <Color>#e51616</Color>
+  </ProducPlanningColor>
+  <ProducPlanningColor>
+    <ProductName>SF</ProductName>
+    <Color>#009ee0</Color>
+  </ProducPlanningColor>
+  <ProducPlanningColor>
+    <ProductName>YT</ProductName>
+    <Color>#e3ccfb</Color>
+  </ProducPlanningColor>
+  <ProducPlanningColor>
+    <ProductName>PA</ProductName>
+    <Color>#238341</Color>
+  </ProducPlanningColor>
+   <ProducPlanningColor>
+    <ProductName>BB</ProductName>
+    <Color>#ffcf17</Color>
+  </ProducPlanningColor>
+</ListProductPlanningColor>

@@ -1,0 +1,222 @@
+﻿@using Entities.Domain
+@using Nois.Web.Framework.Kendoui;
+@using Service.Common
+@using Service.Interface
+@model Web.Models.SupplyChain.SupplyChainModel
+@{
+
+    Layout = null;
+    var _report = DependencyResolver.Current.GetService<IReportService>();
+}
+
+<div class="row">
+    <div class="col-md-12">
+
+        <div class="box border orange">
+
+            <table id="supplychaingridService" class="table" style="border: none !important;">
+
+                <tbody>
+                    <tr>
+                        <td style="border: none !important; padding: 0">
+                            <table id="making" class="table making-service">
+                                <thead>
+                                    <tr>
+                                        <th rowspan="2">DMS</th>
+                                        <th></th>
+                                        <th colspan="5">Daily-FE</th>
+                                    </tr>
+                                    <tr>
+
+                                        <td class="owner ">
+                                            @{
+                                                var count = 0;
+                                                var isDMS = false;
+                                            }
+                                            <span>@Model.SupplyChainService[0].Owner</span>
+                                           
+                                           
+                                        </td>
+                                        <th>CFR(%)</th>
+                                        <th>SAMBC(%)</th>
+                                        <th>Priority Line</th>
+                                        <th>Priority SKU</th>
+                                        <th>Shipment</th>
+
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @for (int i = 0; i < 3; i++)
+                                    {
+                                        if (!isDMS)
+                                        {
+                                            <text>
+                                                <tr data-type="1" data-measurecode="@(i + 1)" style="height: 30px !important" class="scdds-target ">
+
+                                                    <td class="scdds-DMS" rowspan="3">Service</td></text>
+                                            isDMS = true;
+                                        }
+                                        else
+                                        {
+                                            <text>
+                                            <tr data-type="1" class="tr-edit" data-measurecode="@(i + 1)" style="height: 30px !important">
+                                            </text>
+                                        }
+                                        if (i == 0)
+                                        {
+                                            <td>
+                                                <span>@Model.SupplyChainService[i].MeasureName</span>
+                                               
+                                            </td>
+                                            <td class="cfr target-making-service line-check-edit line-service">
+                                                <span>@Model.SupplyChainService[i].CFR </span>
+                                               </td> 
+                                            <td class="sambc target-making-service line-check-edit line-service">
+                                                <span>@Model.SupplyChainService[i].SAMBC </span>
+                                               </td> 
+                                            <td class="priorityline target-making-service line-check-edit line-service">
+                                                <span>@Model.SupplyChainService[i].PriorityLine </span>
+                                               
+                                            </td>
+                                            <td class="prioritysku target-making-service line-check-edit line-service">
+                                                <span>@Model.SupplyChainService[i].PrioritySKU </span>
+                                                
+                                            </td>
+                                            <td style="background: none !important; color:#000" class="shipment target-making-service line-check-edit line-service">
+                                                <span>@Model.SupplyChainService[i].Shipment </span>
+
+                                            </td>
+
+                                        }
+                                        else
+                                        {
+                                            <td>
+                                                <span>@Model.SupplyChainService[i].MeasureName</span>
+                                               
+                                            </td>
+                                            <td class="cfr @_report.checkColor(Model.SupplyChainService[0].CFR, Model.SupplyChainService[i].CFR) line-check-edit line-edit-service line-service">
+                                                <span>@Model.SupplyChainService[i].CFR </span>
+                                                
+                                            </td>
+                                            <td class="@_report.checkColor(Model.SupplyChainService[0].SAMBC, Model.SupplyChainService[i].SAMBC) sambc line-check-edit line-edit-service line-service">
+                                                <span>@Model.SupplyChainService[i].SAMBC </span>
+                                               
+                                            </td>
+                                            <td class="@_report.checkColor(Model.SupplyChainService[0].PriorityLine, Model.SupplyChainService[i].PriorityLine) priorityline line-check-edit line-edit-service line-service">
+                                                <span>@Model.SupplyChainService[i].PriorityLine </span>
+                                               
+                                            </td>
+                                            <td class="@_report.checkColor(Model.SupplyChainService[0].PrioritySKU, Model.SupplyChainService[i].PrioritySKU) prioritysku line-check-edit line-edit-service line-service">
+                                                <span>@Model.SupplyChainService[i].PrioritySKU </span>
+                                                
+                                            </td>
+                                            <td style="background: none !important; color:#000" class="@_report.checkColor(Model.SupplyChainService[0].Shipment, Model.SupplyChainService[i].Shipment) shipment line-check-edit line-edit-service line-service">
+                                                <span>@Model.SupplyChainService[i].Shipment </span>
+
+                                            </td>
+                                        }
+
+                                   @: </tr>
+                                    }
+
+                                </tbody>
+                            </table>
+
+                        </td>
+                        <td style="border: none !important; padding: 0">
+                            <table id="packing" class="table packing-service" style="width: 100%; margin-left: -2px">
+                                <thead>
+                                    <tr>
+                                        <th colspan="5">Daily-FR</th>
+                                    </tr>
+                                    <tr>
+                                        <th>CFR(%)</th>
+                                        <th>SAMBC(%)</th>
+                                        <th>Priority Line</th>
+                                        <th>Priority SKU</th>
+                                        <th>Shipment</th>
+
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @{
+                                        isDMS = false;
+                                    }
+                                    @for (int i = 3; i < 6; i++)
+                                    {
+                                        if (!isDMS)
+                                        {
+                                            <text>
+                                                <tr data-type="2" data-measurecode="@(i-2)" style="height: 30px !important" class="scdds-target">
+                                            </text>
+                                            isDMS = true;
+                                        }
+                                        else
+                                        {
+                                            <text>
+                                            <tr data-type="2" data-measurecode="@(i-2)" style="height: 30px !important">
+                                            </text>
+                                        }
+
+                                        if (i == 3)
+                                        {
+                                            <td class="cfr target-packing-service  line-check-edit line-service">
+                                                <span>@Model.SupplyChainService[i].CFR </span>
+                                               
+                                            </td>
+                                            <td class="sambc target-packing-service  line-check-edit line-service">
+                                                <span>@Model.SupplyChainService[i].SAMBC </span>
+                                               
+                                            </td>
+                                            <td class="priorityline target-packing-service line-check-edit  line-service">
+                                                <span>@Model.SupplyChainService[i].PriorityLine </span>
+                                               
+                                            </td>
+                                            <td class="prioritysku target-packing-service line-check-edit  line-service">
+                                                <span>@Model.SupplyChainService[i].PrioritySKU </span>
+                                               
+                                            </td>
+                                            <td style="background: none !important; color:#000" class="shipment target-packing-service line-check-edit  line-service">
+                                                <span>@Model.SupplyChainService[i].Shipment </span>
+
+                                            </td>
+                                        }
+                                        else
+                                        {
+                                            <td class="cfr @_report.checkColor(Model.SupplyChainService[3].CFR, Model.SupplyChainService[i].CFR) line-edit-service line-check-edit line-service">
+                                                <span>@Model.SupplyChainService[i].CFR </span>
+                                              
+                                            </td>
+                                            <td class="sambc @_report.checkColor(Model.SupplyChainService[3].SAMBC, Model.SupplyChainService[i].SAMBC) line-edit-service line-check-edit line-service">
+                                                <span>@Model.SupplyChainService[i].SAMBC </span>
+                                                
+                                            </td>
+                                            <td class="priorityline @_report.checkColor(Model.SupplyChainService[3].PriorityLine, Model.SupplyChainService[i].PriorityLine) line-check-edit line-edit-service line-service">
+                                                <span>@Model.SupplyChainService[i].PriorityLine </span>
+                                               
+                                            </td>
+                                            <td class="prioritysku @_report.checkColor(Model.SupplyChainService[3].PrioritySKU, Model.SupplyChainService[i].PrioritySKU) line-check-edit line-edit-service line-service">
+                                                <span>@Model.SupplyChainService[i].PrioritySKU </span>
+                                               
+                                            </td>
+                                            <td style="background: none !important; color:#000" class="shipment @_report.checkColor(Model.SupplyChainService[3].Shipment, Model.SupplyChainService[i].Shipment) line-check-edit line-edit-service line-service">
+                                                <span>@Model.SupplyChainService[i].Shipment </span>
+
+                                            </td>
+                                        }
+                                     @:</tr>
+                                    }
+
+                                </tbody>
+                            </table>
+                        </td>
+                    </tr>
+
+
+                </tbody>
+            </table>
+
+        </div>
+
+    </div>
+</div>

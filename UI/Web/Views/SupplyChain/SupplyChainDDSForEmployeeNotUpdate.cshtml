@@ -1,0 +1,235 @@
+﻿@using Service.Common
+@using Service.Interface
+@model Web.Models.SupplyChain.SupplyChainModel
+@{
+
+    Layout = null;
+    var _report = DependencyResolver.Current.GetService<IReportService>();
+}
+
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="box border orange">
+            <table id="supplychaingriddds" class="table">
+                <thead>
+                    <tr>
+                        <th>DMS</th>
+                        <th>Measure-Making</th>
+                        <th>Owner</th>
+                        <th>LPD1</th>
+                        <th>LPD2</th>
+                        <th>LPD3</th>
+                        <th>Bat</th>
+                        <th>FR( MK )</th>
+                        <th class="remark-supplychain">Remarks</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    <!-- Making -->
+                    @{
+                        var addDmsCompleted = false;
+                    }
+
+                    @for (int i = 0; i < 3; i++)
+                    {
+                        if (i == 0)
+                        {
+                            <text>
+                                <tr data-type="1" data-measurecode="@(i + 1)" class="scdds-target">
+                            </text>
+                        }
+                        else
+                        {
+                            <text>
+                            <tr class="tr-edit" data-type="1" data-measurecode="@(i + 1)">
+                            </text>
+                        }
+
+                        if (!addDmsCompleted)
+                        {
+                            <text>
+                                <td rowspan="7" class="scdds-DMS">DDS</td></text>
+                            addDmsCompleted = true;
+                        }
+
+                        <text>
+                            <td class="measurecode">
+                                @Model.SupplyChainDDS[i].MeasureName
+                            
+                            </td>
+                        </text>
+
+                        if (i == 0)
+                        {
+
+                            <td></td>
+                            <td class="lpd1 target-making-dds   line-cols">
+                                <span>@Model.SupplyChainDDS[i].LPD1 </span>
+                             
+                            </td>
+                            <td class="lpd2 target-making-dds   line-cols">
+                                <span>@Model.SupplyChainDDS[i].LPD2 </span>
+                            
+                            </td>
+                            <td class="lpd3 target-making-dds   line-cols">
+                                <span>@Model.SupplyChainDDS[i].LPD3 </span>
+                               
+                            </td>
+                            <td class="batch target-making-dds   line-cols">
+                                <span>@Model.SupplyChainDDS[i].Batch </span>
+                               
+                            </td>
+                            <td class="frmk target-making-dds   line-cols">
+                                <span>@Model.SupplyChainDDS[i].FRMK </span>
+                             
+                            </td>
+
+    <td class="remark target-making-dds   line-remark remark-float">
+        <span>@Html.Raw(Model.SupplyChainDDS[i].RemarkDisplay.Replace("\n", "<br />")) </span>
+
+    </td>
+                        }
+                        else
+                        {
+                            <td class="owner ">
+                                <span>@Model.SupplyChainDDS[i].Owner</span>
+                           
+                            </td>
+
+
+                            <td class="@_report.checkColor(Model.SupplyChainDDS[0].LPD1, Model.SupplyChainDDS[i].LPD1) making-dds lpd1   line-cols">
+                                <span>@Model.SupplyChainDDS[i].LPD1 </span>
+                               
+                            </td>
+
+                            <td class="@_report.checkColor(Model.SupplyChainDDS[0].LPD2, Model.SupplyChainDDS[i].LPD2) making-dds lpd2   line-cols">
+                                <span>@Model.SupplyChainDDS[i].LPD2 </span>
+                             
+                            </td>
+                            <td class="@_report.checkColor(Model.SupplyChainDDS[0].LPD3, Model.SupplyChainDDS[i].LPD3) making-dds lpd3   line-cols">
+                                <span>@Model.SupplyChainDDS[i].LPD3 </span>
+                               
+                            </td>
+                            <td class="@_report.checkColor(Model.SupplyChainDDS[0].Batch, Model.SupplyChainDDS[i].Batch) making-dds batch   line-cols">
+                                <span>@Model.SupplyChainDDS[i].Batch </span>
+                              
+                            </td>
+                            <td class="@_report.checkColor(Model.SupplyChainDDS[0].FRMK, Model.SupplyChainDDS[i].FRMK) making-dds frmk   line-cols">
+                                <span>@Model.SupplyChainDDS[i].FRMK </span>
+                               
+                            </td>
+
+    <td class="remark   line-remark remark-float">
+        <span>@Html.Raw(Model.SupplyChainDDS[i].RemarkDisplay.Replace("\n", "<br />")) </span>
+
+    </td>
+                        }
+
+
+                    @:</tr>
+                    }
+
+                    <!--Packing-->
+                    <tr class="thead">
+                        <td>Measure-Packing</td>
+                        <td>Owner</td>
+                        <td>Bottle</td>
+                        <td>Sachet</td>
+                        <td>Pouch</td>
+                        <td>FR(PK)</td>
+                        <td>FE</td>
+                        <td>Remarks</td>
+                    </tr>
+                    @for (int i = 3; i < 6; i++)
+                    {
+                        if (i == 3)
+                        {
+                            <text>
+                                <tr data-type="2" data-measurecode="@(i-2)" class="scdds-target">
+                            </text>
+                        }
+                        else
+                        {
+                            <text>
+                            <tr class="tr-edit" data-type="2" data-measurecode="@(i-2)">
+                            </text>
+                        }
+
+                        <td>@Model.SupplyChainDDS[i].MeasureName</td>
+                        if (i == 3)
+                        {
+                            <td></td>
+                            <td class="target-packing-dds pacing-dds bottle   line-cols">
+                                <span>@Model.SupplyChainDDS[i].Bottle</span>
+                              
+                            </td>
+                            <td class="target-packing-dds pacing-dds sachet   line-cols">
+                                <span>@Model.SupplyChainDDS[i].Sachet</span>
+                               
+                            </td>
+                            <td class="target-packing-dds pacing-dds pouch   line-cols">
+                                <span>@Model.SupplyChainDDS[i].Pouch</span>
+                            
+                            </td>
+                            <td class="target-packing-dds pacing-dds frpk   line-cols">
+                                <span>@Model.SupplyChainDDS[i].FRPK</span>
+                          
+                            </td>
+                            <td class="target-packing-dds pacing-dds fe   line-cols">
+                                <span>@Model.SupplyChainDDS[i].FE</span>
+                              
+                            </td>
+
+                            <td class="remark    line-remark">
+                                <span>@Html.Raw(Model.SupplyChainDDS[i].RemarkDisplay.Replace("\n","<br />"))</span>
+                            
+                            </td>
+                        }
+                        else
+                        {
+                            <td class="owner ">
+                                <span>@Model.SupplyChainDDS[i].Owner</span>
+                            </td>
+    <td class="@_report.checkColor(Model.SupplyChainDDS[3].Bottle, Model.SupplyChainDDS[i].Bottle) bottle   line-cols" title="@Model.SupplyChainDDS[i].BottleRemark ">
+        <span>@Model.SupplyChainDDS[i].Bottle</span>
+
+    </td>
+    <td class="@_report.checkColor(Model.SupplyChainDDS[3].Sachet, Model.SupplyChainDDS[i].Sachet) sachet   line-cols" title="@Model.SupplyChainDDS[i].SachetRemark ">
+        <span>@Model.SupplyChainDDS[i].Sachet</span>
+
+    </td>
+    <td class="@_report.checkColor(Model.SupplyChainDDS[3].Pouch, Model.SupplyChainDDS[i].Pouch) pouch   line-cols" title="@Model.SupplyChainDDS[i].PouchRemark ">
+        <span>@Model.SupplyChainDDS[i].Pouch</span>
+
+    </td>
+    <td class="@_report.checkColor(Model.SupplyChainDDS[3].FRPK, Model.SupplyChainDDS[i].FRPK) frpk   line-cols" title="@Model.SupplyChainDDS[i].FRPKRemark ">
+        <span>@Model.SupplyChainDDS[i].FRPK</span>
+
+    </td>
+    <td class="@_report.checkColor(Model.SupplyChainDDS[3].FE, Model.SupplyChainDDS[i].FE) fe   line-cols" >
+        <span>@Model.SupplyChainDDS[i].FE</span>
+
+    </td>
+
+                            <td class="@_report.checkColor(Model.SupplyChainDDS[3].Remark, Model.SupplyChainDDS[i].Remark) remark   line-remark">
+                                <span>@Html.Raw(Model.SupplyChainDDS[i].RemarkDisplay.Replace("\n","<br />"))</span>
+                              
+                            </td>
+                        }
+
+                       
+                     @:</tr>
+                    }
+
+                </tbody>
+            </table>
+
+        </div>
+
+    </div>
+</div>
+
+
+

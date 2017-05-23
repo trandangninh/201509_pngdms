@@ -1,0 +1,194 @@
+﻿@{
+
+    //page title
+    ViewBag.Title = "Meeting";
+    Layout = "~/Views/Shared/_KendoUILayout.cshtml";
+}
+<script src="@Url.Content("~/Scripts/kendo/2014.1.318/kendo.web.min.js")"></script>
+
+<div id="meeting-grid"></div>
+<script id="command-template" type="text/x-kendo-template">
+    @*<button id="sadfsd" class="k-button">Edit User In Meeting</button>*@
+    <a href="#=Department#" class="btn btn-info btn-info-custom" title="Edit User"><i class="fa fa-plus"></i>Edit User</a>
+</script>
+<script>
+    var dataSourceDepartment = new kendo.data.DataSource({
+        transport: {
+            read: {
+                dataType: "json",
+                type: "POST",
+                url: "@Html.Raw(Url.Action("GetAllDepartment", "Department"))"
+            }
+        }
+        ,
+        schema: {
+            parse: function (data) {
+                data.unshift({ Id: "0", Name: "--  Choose Department  --" });
+                return data;
+            }
+        }
+    });
+    function GetDataSourceCurrentLeader(meetingId)
+    {
+        return new kendo.data.DataSource({
+            transport: {
+                read: {
+                    dataType: "json",
+                    type: "POST",
+                    url: "@Html.Raw(Url.Action("GetAllLeader", "Meeting"))"+"/"+meetingId
+                }
+            }
+        ,
+            schema: {
+                parse: function (data) {
+                    data.unshift({ Id: "0", Name: "--  Choose Leader  --" });
+                    return data;
+                }
+            }
+        });
+    }
+
+    function DepartmentDropDownEditor(container, options) {
+        $('<input required data-text-field="Name" data-value-field="Id" data-bind="value:' + options.field + '"/>')
+            .appendTo(container)
+            .kendoComboBox({
+                autoBind: false,
+                dataSource: dataSourceDepartment,
+                //template: "<i class=\"fa fa-#=data.Name.toLowerCase()#\"></i> #=data.Name#"
+            });
+    }
+    function CurrentLeaderDropDownEditor(container, options) {
+        //console.log(container);
+        //console.log(options);
+        $('<input required data-text-field="Name" data-value-field="Id" data-bind="value:' + options.field + '"/>')
+            .appendTo(container)
+            .kendoComboBox({
+                autoBind: false,
+                dataSource: GetDataSourceCurrentLeader(options.model.Id),
+                //template: "<i class=\"fa fa-#=data.Name.toLowerCase()#\"></i> #=data.Name#"
+            });
+    }
+
+    var grid = $("#meeting-grid").kendoGrid({
+        dataSource: {
+            type: "json",
+            transport: {
+                read: {
+                    url: "@Html.Raw(Url.Action("List", "Meeting"))",
+                    type: "POST",
+                    dataType: "json"
+                },
+                update: {
+                    url: "@Html.Raw(Url.Action("Update", "Meeting"))",
+                    type: "POST",
+                    dataType: "json",
+                    complete: function (e) {
+                        if (e.responseJSON != undefined && e.responseJSON.status == "success")
+                            $("#meeting-grid").data("kendoGrid").dataSource.read();
+                    }
+                },
+                destroy: {
+                    url: "@Html.Raw(Url.Action("Delete", "Meeting"))",
+                    type: "POST",
+                    dataType: "json"                  
+                },
+                create: {
+                    url: "@Html.Raw(Url.Action("Create", "Meeting"))",
+                    type: "POST",
+                    dataType: "json",
+                    complete: function (e) {
+                        if (e.responseJSON != undefined && e.responseJSON.status == "success")
+                            $("#meeting-grid").data("kendoGrid").dataSource.read();
+                    }
+                }
+            },
+            schema: {
+                data: "Data",
+                total: "Total",
+                errors: "Errors",
+                model: {
+                    id: "Id",
+                    fields: {
+                        Id: { editable: false, defaultValue: 0 },
+                        Department: {
+                            editable: true,
+                            defaultValue: { Id: "0", Name: "--  Choose Department  --" }
+                        },
+                        Members: {
+                            editable: false
+                        },
+                        Leaders: {
+                            editable: false
+                        },
+                        CurrentLeader: {
+                            editable: true,
+                            defaultValue: { Id: "0", Name: "--  Choose Leader  --" }
+                        }
+                    }
+                }
+            },
+            error: function (e) {
+                display_kendoui_grid_error(e);
+                //this.cancelChanges();
+            },
+            pageSize: 15,
+            serverPaging: true,
+            serverFiltering: true,
+            serverSorting: true
+        },
+        columns: [
+        {
+            field: "Department",
+            title: "Department",
+            width: 200,
+            editor: DepartmentDropDownEditor,
+            template: "#=Department.Name#"
+        },
+        {
+            field: "Members",
+            title: "Member",
+            width: 400,
+            template: "#= @(Html.Raw(HttpUtility.JavaScriptStringEncode("Members"))) #"
+        },
+        {
+            field: "Leaders",
+            title: "Leader",
+            width: 400,
+            template: "#= @(Html.Raw(HttpUtility.JavaScriptStringEncode("Leaders"))) #"
+        },
+        //{
+        //    field: "CurrentLeader",
+        //    title: "Current Leader",
+        //    width: 200,
+        //    editor: CurrentLeaderDropDownEditor,
+        //    template: "#=CurrentLeader.Name#"
+        //},
+        //{
+        //    command: [
+        //    {
+        //        name: "edit",
+        //        text: { update: "Save Changes", cancel: "Cancel" }
+        //    },
+        //    "destroy",
+        //    ],
+        //    title: "Command",
+        //    width: "280px"
+        //},
+                {
+                    field: "",
+                    title: "",
+                    width: 100,
+                    editor: CurrentLeaderDropDownEditor,
+                    template: "<a href='/Meeting/ListUserInMeeting/#=Id#' class='btn btn-info btn-info-custom' title=' Edit User'><i class='fa fa-edit'></i> Edit Attendance Detail</a>"
+                }
+        ],
+        pageable: {
+            refresh: true,
+            pageSizes: ["5", "10", "15", "20"]
+        },
+        editable: "inline",
+        //toolbar: [],
+        scrollable: false
+    }).data("kendoGrid");
+
+</script>

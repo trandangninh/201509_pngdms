@@ -1,0 +1,43 @@
+﻿@model IList<Web.Models.QualityAlert.DefectChartItemModel>
+<div id="pie_chart" style=""></div>
+<script>
+    var pieChart = $("#pie_chart").kendoChart({
+        title: {
+            position: "top",
+            text: "# of Defect per Supplier"
+        },
+        legend: {
+            position: "right"
+        },
+        chartArea: {
+            background: ""
+        },
+        seriesDefaults: {
+            labels: {
+                visible: true,
+                background: "transparent",
+                template: "#= category #: \n #= value#"
+            }
+        },
+        series: [{
+            type: "pie",
+            startAngle: 150,
+            data: [
+                @foreach(var item in Model)
+                    {
+                        <text>
+                    {
+                        category: "@item.SupplierName",
+                        value: @item.Value,
+                        color: "@item.Color"
+                    },
+                    </text>
+                    }
+            ]
+        }],
+        tooltip: {
+            visible: true,
+            format: "{0}"
+        }
+    });
+</script>

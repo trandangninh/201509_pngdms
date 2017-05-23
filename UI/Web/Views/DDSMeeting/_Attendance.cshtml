@@ -1,0 +1,123 @@
+﻿@model Web.Models.DdsMeeting.AttendanceModel
+@using (Html.BeginForm("Attendance", "DdsMeeting",new {departmentId = Model.DepartmentId, date = Model.Date}, FormMethod.Post, new { @id = "attendanceForm" }))
+{
+    <style>
+        .tablestyle thead tr {
+            background: #d7ffc1;
+        }
+        .tablestyle thead tr th{
+            border: none;
+        }
+        .tablestyle tbody tr td {
+            border: none;
+        }
+        .tablestyle > thead > tr > th, .tablestyle > tbody > tr > th, .tablestyle > tfoot > tr > th, .tablestyle > thead > tr > td, .tablestyle > tbody > tr > td, .tablestyle > tfoot > tr > td {
+            padding: 8px;
+            line-height: 1.428571429;
+            vertical-align: top;
+            border-top: 1px solid #ddd;
+        }
+    </style>
+    
+  var isSelectAll = Model.UserAttendanceModels.Count(u => u.IsAttendance) == Model.UserAttendanceModels.Count;
+    
+<div class="tab-pane" id="tabattendance">
+    <div class="validation-summary-errors">
+        <ul id="ResultInfo" style="list-style: none" class="pull-left"></ul>
+    </div>
+    <div>
+        @*if don't have meeting, admin can create*@
+        @*@if (Model.AttendanceModel != null)
+        {
+            <span style="display: none" id="hiddenIdOfAttandence">@Model.AttendanceModel.Id</span>
+        }*@
+
+        <div class="box border orange">
+            <div class="box-title">
+                <h4><i class="fa fa-gear"></i>Attendance Manage</h4>
+                @if (Model.CanWriteAttendance)
+                {
+                <text>
+                    <div class="tools">
+                        <input type="submit" id="createAttendance" name="save" value="Save" class="btn btn-info btn-info-custom" />
+                    </div>
+                </text>
+                }
+                
+            </div>
+            <div class="box-body">
+
+                @if (Model.UserAttendanceModels.Count == 0)
+                {
+                    <text>No users available</text>
+                }
+                else
+                {
+                    <script type="text/javascript">
+                        $(document).ready(function () {
+
+                            $('#selectall').click(function() {
+                                $('.allow').prop('checked', $(this).is(':checked')).change();
+                            });
+                            
+                            @if(isSelectAll)
+                            {
+                                <text>
+                                    $('#selectall').prop('checked', true);
+                                </text>
+                            }
+
+                            $("#attendanceForm").submit(function (event) {
+                                event.preventDefault();
+                                $.ajax({
+                                    type: 'Post',
+                                    url: "@Html.Raw(Url.Action("Attendance", "DdsMeeting", new {departmentId = Model.DepartmentId, date = Model.Date}))",
+                                    data: $(this).serialize(),
+                                    dataType: 'json',
+                                    success: function(data) {
+                                        if (data.status == "success") {
+                                        } else {
+                                            alert(data.message);
+                                        }
+                                    }
+                                });
+                            });
+                        });
+                    </script>
+                    <table class="tablestyle" cellspacing="0" rules="all" border="0" style="width: 100%; border-collapse: collapse;">
+                        <thead>
+                            <tr class="headerstyle">
+                                <th scope="col">
+                                    <strong>User</strong>
+                                </th>
+                                <th scope="col">
+                                    <input type="checkbox" id="selectall" @(Model.CanWriteAttendance?"":"disabled=\"disabled\"") />
+                                    <strong>Attendance</strong>
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @{
+                                bool altRow = true;
+                            }
+                            @foreach (var user in Model.UserAttendanceModels)
+                            {
+                                altRow = !altRow;
+                                <tr class="@(altRow ? "altrowstyle" : "rowstyle")">
+                                    <td>
+                                        <span>@user.Name</span>
+                                    </td>
+                                    <td>
+                                        <input class="allow" type="checkbox" value="@(user.Id)" name="allow_@(user.Id)" @(user.IsAttendance ? " checked=checked" : null) @(Model.CanWriteAttendance?"":"disabled=\"disabled\"")/>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                }
+            </div>
+        </div>
+        @*admin edit*@
+    </div>
+</div>
+}

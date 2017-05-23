@@ -1,0 +1,117 @@
+﻿@model Web.Models.SupplyChain.SupplyChainModel
+@{
+    ViewBag.Title = "DDS Meeting > Supply Chain ";
+    Layout = "~/Views/Shared/_KendoUILayout.cshtml";
+}
+<script src="@Url.Content("~/Scripts/kendo/2014.1.318/kendo.web.min.js")"></script>
+<div class="form-group">
+    <div class="pull-right " style="padding-right:0; margin-bottom:5px">
+        <input id="datepicker" class="datepicker-fullscreen" style="width: 150px;" />
+    </div>
+</div>
+<script>
+    $(document).ready(function() {
+        function getUrlParameter(name) {
+            return decodeURIComponent(
+                (location.search.match(RegExp("[?|&]" + name + '=(.+?)(&|$)')) || [, null])[1]
+            );
+        }
+
+        var date = getUrlParameter('date'); // Get value of param date
+
+        if (date != "null") {
+            $("#datepicker").val(date);
+        } else {
+            $("#datepicker").val($.datepicker.formatDate('mm/dd/yy', new Date()));
+        }
+
+        $("#datepicker").kendoDatePicker({
+            origin: "top right",
+            position: "bottom right",
+            change: function() {
+                window.location.href = "/SupplyChain/Index?date=" +
+                    kendo.toString(this.value(), 'd');
+            }
+        });
+    });
+</script>
+<div class="row">
+    <div class="col-md-12">
+        <!-- BOX -->
+        <div class="box border blue">
+            <div class="box-title">
+                <h4><i class="fa fa-user"></i><span class="hidden-inline-mobile">  </span></h4>
+            </div>
+            <div class="box-body">
+                <div class="tabbable header-tabs">
+                    <ul class="nav nav-tabs">
+                        <li>
+                            <a href="#tabattendance" data-toggle="tab">
+                                <i class="fa fa-dot-circle-o"></i> <span class="hidden-inline-mobile">Attendance</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#tabissue" data-toggle="tab">
+                                <i class="fa fa-edit"></i> <span class="hidden-inline-mobile">Issue daily</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#tabresult-product" data-toggle="tab">
+                                <i class="fa fa-edit"></i> <span class="hidden-inline-mobile">Production Planning</span>
+                            </a>
+                        </li>
+
+                        <li class="active">
+                            <a href="#tabresult" data-toggle="tab">
+                                <i class="fa fa-question"></i> <span class="hidden-inline-mobile">Result daily </span>
+                            </a>
+                        </li>
+
+                        <li class="active">
+                            <a href="#tabresult-dms-productionplanning" data-toggle="tab">
+                                <i class="fa fa-edit"></i> <span class="hidden-inline-mobile">Dms Production Planning </span>
+                            </a>
+                        </li>
+
+                    </ul>
+                    <div class="tab-content">
+
+                        <!-- Result -->
+                        <div class="tab-pane fade in active " id="tabresult">
+                           @Html.Action("Result",new {date=Model.Date})
+                        </div>
+                        <!-- /Result -->
+
+
+                        <div class="tab-pane fade " id="tabresult-product">
+
+                            @*@Html.Partial("_ProductionPlanning", Model)*@
+
+                        </div>
+
+                        <!-- Issue -->
+                        <div class="tab-pane fade" id="tabissue">
+                            
+                        </div>
+                        <!-- /Issue -->
+                        <!-- Attendance -->
+                        @*@if (Model.permissionAttendance)
+                        {*@
+                            <div class="tab-pane fade" id="tabattendance">
+
+                            </div>
+                        @*}*@
+
+                        <!-- /Attendance -->
+
+                        <!-- Result Dms production planning -->
+                        <div class="tab-pane fade" id="tabresult-dms-productionplanning">
+                            @Html.Action("Result", new { date = Model.Date })
+                        </div>
+                        <!-- /Result Dms production planning -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

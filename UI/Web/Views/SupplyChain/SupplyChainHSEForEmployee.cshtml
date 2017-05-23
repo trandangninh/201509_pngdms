@@ -1,0 +1,631 @@
+﻿@using Entities.Domain
+@using Nois.Web.Framework.Kendoui;
+@using Service.Users
+@model Web.Models.SupplyChain.SupplyChainModel
+@{
+
+    Layout = null;
+}
+<div class="row">
+    <div class="col-md-12">
+
+        <div class="box border orange">
+
+            <table id="supplychaingrid" class="table">
+                <thead>
+                    <tr>
+                        <th>DMS</th>
+                        <th>Measure</th>
+                        <th>Owner</th>
+                        <th>Making</th>
+                        <th>Packing</th>
+                        <th>Common Area</th>
+                        <th class="remark-supplychain">Remarks</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr class="scdds-target">
+                        <td rowspan="3" class="scdds-DMS">
+                            HS&E
+                        </td>
+                        <td>
+                            Target
+                        </td>
+                        <td></td>
+                        <td class="" id="" colspan="3">
+                            <span>@Model.SupplyChainHSE[0].Making</span>
+                            <input class="editinline hide input-edit-value-result" value="@Model.SupplyChainHSE[0].Making" type="text" id="hse-target" />
+                        </td>
+                        <td class="remark-float" id=""><span>@Html.Raw(Model.SupplyChainHSE[0].Remarks.Replace("\n", "<br />"))</span> <textarea class="input-edit-value-result" value="@Model.SupplyChainHSE[0].Remarks" type="text">@Model.SupplyChainHSE[0].Remarks</textarea></td>
+                    </tr>
+                    <tr id="BOS-Completetion">
+                        <td>
+                            @Model.SupplyChainHSE[1].MeasureName
+                        </td>
+                        <td>
+                            <span>@Model.SupplyChainHSE[1].Owner</span>
+                            @{
+                                var userService1 = DependencyResolver.Current.GetService<IUserService>();
+                                var listUsername1 = userService1.GetAllUsersAsync();
+                                var userAdmin = userService1.GetUserByUsernameAsync("Admin").Result;
+                                if (userAdmin != null)
+                                {
+                                    listUsername1.Remove(userAdmin);
+                                }
+                            }
+                            <select id="Owner1">
+                                @foreach (var user in listUsername1)
+                                {
+                                    if (user.Username == Model.SupplyChainHSE[1].Owner)
+                                    {
+                                        <option value="@user.Username" selected>@user.Username</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="@user.Username">@user.Username</option>
+                                    }
+
+                                }
+                            </select>
+                        </td>
+                        <td class="line-edit-hse" colspan="3">
+                            <div class="boss-today">
+                                <label class="text-strong-underline">BOS today:</label> <span>@Model.SupplyChainHSE[1].Making</span> <input id="boss-today" type="text" class="editinline input-edit-value-result" value="@Model.SupplyChainHSE[1].Making" />
+                            </div>
+                            <div class="boss-jun">
+                                <label class="text-strong-underline">BOS done yesterday:</label> <span>@Model.SupplyChainHSE[1].Packing</span> <input id="boss-jun" type="text" class="editinline input-edit-value-result" value="@Model.SupplyChainHSE[1].Packing" />
+                            </div>
+                        </td>
+                        <td class="line-edit-hse completion-remarks not-enter remark-float"><span>@Html.Raw(Model.SupplyChainHSE[1].Remarks)</span> <textarea id="completion-remarks" value="@Model.SupplyChainHSE[1].Remarks" type="text" class="editinline input-edit-value-result not-enter">@Model.SupplyChainHSE[1].Remarks </textarea></td>
+                    </tr>
+                    <tr>
+                        <td class="sc-measure line-edit-hse">
+                            @Model.SupplyChainHSE[2].MeasureName
+                        </td>
+                        <td class="sc-owner ">
+                            <span>@Model.SupplyChainHSE[2].Owner</span>
+                            <select id="Owner2">
+                                @foreach (var user in listUsername1)
+                                {
+                                    if (user.Username == Model.SupplyChainHSE[2].Owner)
+                                    {
+                                        <option value="@user.Username" selected>@user.Username</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="@user.Username">@user.Username</option>
+                                    }
+                                }
+                            </select>
+
+
+
+                        </td>
+                        <td class="sc-hse-making line-edit-hse"><span>@Model.SupplyChainHSE[2].Making</span> <input class="input-edit-value-result behaviour behaviour-making editinline" value="@Model.SupplyChainHSE[2].Making" type="text" /></td>
+                        <td class="sc-hse-packing line-edit-hse"><span>@Model.SupplyChainHSE[2].Packing</span> <input class="input-edit-value-result behaviour behaviour-packing editinline " value="@Model.SupplyChainHSE[2].Packing" type="text" /></td>
+                        <td class="sc-hse-common line-edit-hse"><span>@Model.SupplyChainHSE[2].CommonArea</span> <input class="input-edit-value-result behaviour behaviour-common editinline" value="@Model.SupplyChainHSE[2].CommonArea" type="text" /></td>
+                        <td class="sc-remark line-edit-hse not-enter remark-float"><span>@Html.Raw(Model.SupplyChainHSE[2].Remarks.Replace("\n", "<br />"))</span> <textarea class="input-edit-value-result behaviour behaviour-remark not-enter editinline" value="@Model.SupplyChainHSE[2].Remarks" type="text">@Model.SupplyChainHSE[2].Remarks</textarea></td>
+                    </tr>
+
+
+                </tbody>
+            </table>
+
+        </div>
+
+    </div>
+</div>
+
+
+<script src="@Url.Content("~/Scripts/kendo/2014.1.318/kendo.web.min.js")"></script>
+<script>
+    var isEdittingHSE = false;
+    var currentDate;
+    var oldval = 0;
+    $(document).ready(function () {
+
+
+        // gird supply chain\
+        //$("#tabresult td .input-edit-value-result ").addClass("hide");
+        //$("#tabresult td select ").addClass("hide");
+        $("#tabresult-dms-hse td .input-edit-value-result ").addClass("hide");
+        $("#tabresult-dms-hse td select ").addClass("hide");
+        var isEdittingHSE = false;
+
+        function activeEditHSE(e) {
+            $(e).children(".input-edit-value-result").removeClass("hide");
+            $(e).children("span").addClass("hide");
+            $(e).children(".input-edit-value-result").select();
+            $(e).children(".input-edit-value-result").focus();
+
+            $(e).children("#Owner1").removeClass("hide");
+            $(e).children("#Owner2").removeClass("hide");
+            $(e).children("#Owner2").focus();
+            $(e).children("#Owner1").focus();
+            oldval = $(e).children('input').val();
+            setTimeout(function () {
+                isEdittingHSE = true;
+            }, 100);
+            
+        }
+
+        function activeEditdivHSE(e) {
+            $(e).children("span").addClass("hide");
+            $(e).children(".input-edit-value-result").removeClass("hide");
+            
+             $(e).children(".input-edit-value-result").select();
+            $(e).children(".input-edit-value-result").focus();
+            oldval = $(e).children('input').val();
+            setTimeout(function () {
+                isEdittingHSE = true;
+            }, 100);
+            
+        }
+
+        function editvalueHSEtarget(e) {
+            var $input = jQuery(e);
+            var remarks = jQuery("#remark-target").children(".input-edit-value-result").val();
+            //if input exist and on edit mode
+            if ($input.length > 0 //if textbox is on active
+                    && isEdittingHSE //if on edit mode
+            ) {
+
+                var newVal = $input.val();
+                if ( newVal != oldval) { //validate new value
+                    $.ajax({
+                        url: '/SupplyChain/UpdateHSE',
+                        type: 'POST',
+                        dataType: 'json',
+                        data: {
+                            measureCode: 1,
+                            Making: newVal,
+                            Remarks: remarks
+                        },
+                        success: function (data) {
+                            if (data.status == "success") {
+
+                                $input.parent().children('span').removeClass("hide"); //show span
+                                $input.parent().children('span').html(newVal.replace(/\n/g, "<br />"));
+                                $input.addClass("hide");
+                            }
+                        }
+                    });
+                } else {
+                    //if value not change
+
+
+                    $input.parent().children('span').removeClass("hide"); //show span
+                    $input.addClass("hide");
+                }
+
+            } else {
+
+            }
+            isEdittingHSE = false; //remove edit mode
+        }
+
+        function editvalueHSEremarktarget(e) {
+            var $input = jQuery(e);
+            var making = jQuery("#target").children(".input-edit-value-result").val();
+            //if input exist and on edit mode
+            if ($input.length > 0 //if textbox is on active
+                    && isEdittingHSE //if on edit mode
+            ) {
+
+                var newVal = $input.val();
+                if (newVal != "" && newVal != oldval) { //validate new value
+                    $.ajax({
+                        url: '/SupplyChain/UpdateHSE',
+                        type: 'POST',
+                        dataType: 'json',
+                        data: {
+                            measureCode: 1,
+                            Remarks: newVal,
+                            Making: making
+                        },
+                        success: function (data) {
+                            if (data.status == "success") {
+
+                                $input.parent().children('span').removeClass("hide"); //show span
+                                $input.parent().children('span').html(newVal.replace(/\n/g, "<br />"));
+                                $input.addClass("hide");
+                            }
+                        }
+                    });
+                } else {
+                    //if value not change
+
+
+                    $input.parent().children('span').removeClass("hide"); //show span
+                    $input.addClass("hide");
+                }
+
+            } else {
+
+            }
+            isEdittingHSE = false; //remove edit mode
+        }
+
+        function editvalueHSEbosstoday(e) {
+            var $input = jQuery(e);
+            //if input exist and on edit mode
+            if ($input.length > 0 //if textbox is on active
+                    && isEdittingHSE //if on edit mode
+            ) {
+                var owner = jQuery("#Owner1").parent().children('span').html();
+                var newVal = $input.val();
+                var making = newVal;
+                var packing = $("#boss-jun").parent().children('span').html();
+                var remark = $("#completion-remarks").val();
+                if (newVal != "" && newVal != oldval) { //validate new value
+                    $.ajax({
+                        url: '/SupplyChain/UpdateHSE',
+                        type: 'POST',
+                        dataType: 'json',
+                        data: {
+                            Owner: owner,
+                            measureCode: 2,
+                            Making: making,
+                            Packing: packing,
+                            Remarks: remark
+
+                        },
+                        success: function (data) {
+                            if (data.status == "success") {
+
+                                $input.parent().children('span').removeClass("hide"); //show span
+                                $input.parent().children('span').html(newVal.replace(/\n/g, "<br />"));
+                                $input.addClass("hide");
+
+                            }
+                        }
+                    });
+                } else {
+                    //if value not change
+
+
+                    $input.parent().children('span').removeClass("hide"); //show span
+                    $input.addClass("hide");
+                }
+
+            } else {
+
+            }
+            isEdittingHSE = false; //remove edit mode
+        }
+
+        function editvalueHSEbossjun(e) {
+            var $input = jQuery(e);
+            //if input exist and on edit mode
+            if ($input.length > 0 //if textbox is on active
+                    && isEdittingHSE //if on edit mode
+            ) {
+                var owner = jQuery("#Owner1").parent().children('span').html();
+                var newVal = $input.val();
+                var packing = newVal;
+                var making = $("#boss-today").parent().children('span').html();
+                var remark = $("#completion-remarks").val();
+                if (newVal != "" && newVal != oldval) { //validate new value
+                    $.ajax({
+                        url: '/SupplyChain/UpdateHSE',
+                        type: 'POST',
+                        dataType: 'json',
+                        data: {
+                            Owner: owner,
+                            measureCode: 2,
+                            Making: making,
+                            Packing: packing,
+                            Remarks: remark
+
+                        },
+                        success: function (data) {
+                            if (data.status == "success") {
+
+                                $input.parent().children('span').removeClass("hide"); //show span
+                                $input.parent().children('span').html(newVal.replace(/\n/g, "<br />"));
+                                $input.addClass("hide");
+                            }
+                        }
+                    });
+                } else {
+                    //if value not change
+
+                    $input.parent().children('span').removeClass("hide"); //show span
+                    $input.addClass("hide");
+                }
+
+            } else {
+
+            }
+            isEdittingHSE = false; //remove edit mode
+        }
+
+        function editvalueHSEcompletionremarks(e) {
+            var $input = jQuery(e);
+            //if input exist and on edit mode
+            if ($input.length > 0 //if textbox is on active
+                    && isEdittingHSE //if on edit mode
+            ) {
+                var owner = jQuery("#Owner1").parent().children('span').html();
+                var newVal = $input.val();
+                var packing = $("#boss-jun").parent().children('span').html();
+                var making = $("#boss-today").parent().children('span').html();
+                var remark = newVal;
+                if (newVal != "" && newVal != oldval) { //validate new value
+                    $.ajax({
+                        url: '/SupplyChain/UpdateHSE',
+                        type: 'POST',
+                        dataType: 'json',
+                        data: {
+                            Owner: owner,
+                            measureCode: 2,
+                            Making: making,
+                            Packing: packing,
+                            Remarks: remark
+
+                        },
+                        success: function (data) {
+                            if (data.status == "success") {
+
+                                $input.parent().children('span').removeClass("hide"); //show span
+                                $input.parent().children('span').html(newVal.replace(/\n/g, "<br />"));
+                                $input.addClass("hide");
+                            }
+                        }
+                    });
+                } else {
+                    //if value not change
+
+
+                    $input.parent().children('span').removeClass("hide"); //show span
+                    $input.addClass("hide");
+                }
+
+            } else {
+
+            }
+            isEdittingHSE = false; //remove edit mode
+        }
+
+        function editvalueHSEbehaviour(e) {
+            var $input = jQuery(e);
+            //if input exist and on edit mode
+            if ($input.length > 0 //if textbox is on active
+                    && isEdittingHSE //if on edit mode
+            ) {
+                var owner = jQuery("#Owner2").parent().children('span').html();
+                var newVal = $input.val();
+                var making = $(".behaviour-making").val();
+                var packing = $(".behaviour-packing").val();
+                var common = $(".behaviour-common").val();
+                var remark = $(".behaviour-remark").val();
+                if (newVal != "" && newVal != oldval) { //validate new value
+                    $.ajax({
+                        url: '/SupplyChain/UpdateHSE',
+                        type: 'POST',
+                        dataType: 'json',
+                        data: {
+                            Owner: owner,
+                            measureCode: 3,
+                            Making: making,
+                            Packing: packing,
+                            CommonArea: common,
+                            Remarks: remark
+
+                        },
+                        success: function (data) {
+                            if (data.status == "success") {
+
+                                $input.parent().children('span').removeClass("hide"); //show span
+                                $input.parent().children('span').html(newVal.replace(/\n/g, "<br />"));
+                                $input.addClass("hide");
+                            }
+                        }
+                    });
+                } else {
+                    //if value not change
+                    $input.parent().children('span').removeClass("hide"); //show span
+                    $input.addClass("hide");
+                }
+
+            } else {
+
+            }
+            isEdittingHSE = false; //remove edit mode
+        }
+
+        $(".line-edit-hse").children("div").click(function () {// target
+            if (isEdittingHSE == false) {
+                activeEditdivHSE(this);
+            }
+        });
+
+        $(".line-edit-hse").click(function () {// target
+            if (isEdittingHSE == false) {
+                activeEditHSE(this);
+            }
+        });
+
+        // target
+        jQuery("#target").children(".input-edit-value-result")
+            .keypress(function (event) {
+                var charCode = event.which || event.keyCode;
+                if (charCode == 13) {
+                    editvalueHSEtarget(this);
+                    isEdittingHSE = false;
+                }
+
+
+            }).blur(function () {
+                editvalueHSEtarget(this);
+            });
+
+        jQuery("#remark-target")
+            .keypress(function (event) {
+                var charCode = event.which || event.keyCode;
+                if (charCode == 13) {
+                    editvalueHSEremarktarget(this);
+                    isEdittingHSE = false;
+                }
+
+
+            }).blur(function () {
+                editvalueHSEremarktarget(this);
+            });
+
+        //BOS-Completetion
+
+        jQuery("#boss-today")
+            .keypress(function (event) {
+                var charCode = event.which || event.keyCode;
+                if (charCode == 13) {
+                    editvalueHSEbosstoday(this);
+                    isEdittingHSE = false;
+                    $(".line-edit-hse").children("div").last().click();
+                }
+
+
+            }).blur(function () {
+                editvalueHSEbosstoday(this);
+                $(".line-edit-hse").children(".boss-jun").click();
+            });
+
+
+        jQuery("#boss-jun")
+            .keypress(function (event) {
+                var charCode = event.which || event.keyCode;
+                if (charCode == 13) {
+                    editvalueHSEbossjun(this);
+                    isEdittingHSE = false;
+                    $(".completion-remarks").click();
+                }
+
+
+            }).blur(function () {
+                editvalueHSEbossjun(this);
+            });
+
+
+        jQuery("#completion-remarks").blur(function () {
+            editvalueHSEcompletionremarks(this);
+        });
+
+        jQuery("#Owner1").blur(function () {
+
+            var $input = jQuery(this);
+            oldval = $input.parent().children('span').html();
+            var packing = $("#boss-jun").parent().children('span').html();
+            var making = $("#boss-today").parent().children('span').html();
+            var remark = $("#completion-remarks").val();
+            //if input exist and on edit mode
+            if ($input.length > 0 //if textbox is on active
+                    && isEdittingHSE //if on edit mode
+            ) {
+
+                var newVal = $('#Owner1 option:selected').val();
+                if (newVal != "" && newVal != oldval) { //validate new value
+                    $.ajax({
+                        url: '/SupplyChain/UpdateHSE',
+                        type: 'POST',
+                        dataType: 'json',
+                        data: {
+                            Owner: newVal,
+                            measureCode: 2,
+                            Making: making,
+                            Packing: packing,
+                            Remarks: remark
+                        },
+                        success: function (data) {
+                            if (data.status == "success") {
+                                isEdittingHSE = false; //remove edit mode
+                                $input.parent().children('span').removeClass("hide"); //show span
+                                $input.parent().children('span').html(newVal.replace(/\n/g, "<br />"));
+                                $input.addClass("hide");
+                            }
+                        }
+                    });
+                } else {
+                    //if value not change
+
+                    isEdittingHSE = false; //remove edit mode
+                    $input.parent().children('span').removeClass("hide"); //show span
+                    $input.addClass("hide");
+                }
+
+            } else {
+
+            }
+
+        });
+
+        // Boss top unsafe behaviour
+        jQuery("#Owner2").blur(function () {
+
+            var $input = jQuery(this);
+            oldval = $input.parent().children('span').html();
+            var making = $(".behaviour-making").val();
+            var packing = $(".behaviour-packing").val();
+            var common = $(".behaviour-common").val();
+            var remark = $(".behaviour-remark").val();
+            //if input exist and on edit mode
+            if ($input.length > 0 //if textbox is on active
+                    && isEdittingHSE //if on edit mode
+            ) {
+
+                var newVal = $('#Owner2 option:selected').val();
+                if (newVal != "" && newVal != oldval) { //validate new value
+                    $.ajax({
+                        url: '/SupplyChain/UpdateHSE',
+                        type: 'POST',
+                        dataType: 'json',
+                        data: {
+                            Owner: newVal,
+                            measureCode: 3,
+                            Making: making,
+                            Packing: packing,
+                            CommonArea: common,
+                            Remarks: remark
+                        },
+                        success: function (data) {
+                            if (data.status == "success") {
+                                isEdittingHSE = false; //remove edit mode
+                                $input.parent().children('span').removeClass("hide"); //show span
+                                $input.parent().children('span').html(newVal.replace(/\n/g, "<br />"));
+                                $input.addClass("hide");
+                            }
+                        }
+                    });
+                } else {
+                    //if value not change
+
+                    isEdittingHSE = false; //remove edit mode
+                    $input.parent().children('span').removeClass("hide"); //show span
+                    $input.addClass("hide");
+                }
+
+            } else {
+
+            }
+
+        });
+
+        jQuery(".behaviour").keypress(function (event) {
+            var charCode = event.which || event.keyCode;
+            if (charCode == 13) {
+                if(!$(this).hasClass("not-enter"))
+                editvalueHSEbehaviour(this);
+                isEdittingHSE = false;
+                $(this).parent().next().click();
+            }
+        }).blur(function () {
+            editvalueHSEbehaviour(this);
+        });
+        //end gird supply chain
+
+
+
+
+    });
+
+</script>
+

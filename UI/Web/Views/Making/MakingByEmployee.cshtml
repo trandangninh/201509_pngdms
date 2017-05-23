@@ -1,0 +1,1437 @@
+﻿@using Entities.Domain
+@using Microsoft.Ajax.Utilities
+@using Service.Common
+@using Service.Departments
+@using Service.Implement
+@using Service.Interface
+@using Service.Users
+@model Web.Models.Packing.MeetModel
+
+@*List<web.models.packing.meetingresultmodel>*@
+@{
+    ViewBag.Title = "Making Department DDS";
+    Layout = "~/Views/Shared/_KendoUILayout.cshtml";
+    var dmsCodes = Model.ListMeetingResultModel.Select(t => t.DmsCode).Distinct().ToList();
+    var listResults = new List<Web.Models.Packing.LineResult>();
+    var listLineName = new List<string>();
+    foreach (var result in Model.ListMeetingResultModel.Select(t => t.ListResult))
+    {
+        listResults.AddRange(result);
+        listLineName.AddRange(result.Select(lineResult => lineResult.LineName));
+    }
+    // hear
+    listResults = listResults.DistinctBy(x => x.LineCode).Where(p => p.LineCode != "DeedmacOperation").ToList();
+    listLineName = listLineName.Where(p => p != "DeedmacOperation").Distinct().ToList();
+    var _dmsService = DependencyResolver.Current.GetService<IDmsService>();
+    var _report = DependencyResolver.Current.GetService<IReportService>();
+   
+}
+
+@if (listResults.Count > 0)
+{
+    <div class="form-group">
+
+        <div class="pull-right" style="padding-right:0; margin-bottom:5px">
+            <input id="datepicker"  class="datepicker-fullscreen" style="width: 150px;" />
+        </div>
+
+    </div>
+    <div class="row">
+        <div class="col-md-12">
+            <!-- BOX -->
+            <div class="box border blue">
+                <div class="box-title">
+                    <h4><i class="fa fa-user"></i><span class="hidden-inline-mobile">  </span></h4>
+                </div>
+                <div class="box-body">
+
+
+                    <div class="tabbable header-tabs">
+                        <ul class="nav nav-tabs">
+                            <li><a href="#tabattendance" data-toggle="tab"><i class="fa fa-dot-circle-o"></i> <span class="hidden-inline-mobile">Attendance</span></a></li>
+                            <li><a href="#tabissue" data-toggle="tab"><i class="fa fa-edit"></i> <span class="hidden-inline-mobile">Issue daily</span></a></li>
+
+                            <li class="active"><a href="#tabresult" data-toggle="tab"><i class="fa fa-question"></i> <span class="hidden-inline-mobile">Result daily </span></a></li>
+
+                        </ul>
+                        <div class="tab-content">
+
+                            <!-- Result -->
+
+                            <div class="tab-pane fade in active" id="tabresult">
+
+                                <div class="form-group">
+                                    @if (Model.AttendanceModel != null && Model.permissionAttendance)
+                                    {
+
+                                        <div class="pull-left " style="padding-right:0; margin-bottom:5px">
+                                            <button class="btn btn-info btn-info-custom" id="send-mail" title="Send Mail">Send Mail</button>
+                                        </div>
+
+                                    }
+                                    <div class="pull-right" style="margin-bottom: 5px">
+                                        Line <input id="drpLine" value="" />
+                                    </div>
+                                </div>
+                                <div class="box border orange">
+
+                                    <table class="table" id="resultMaking">
+                                        <thead>
+                                            <tr>
+                                                <th>DMS</th>
+                                                <th>IP/OP</th>
+                                                <th>Measure</th>
+                                                <th>Owner</th>
+                                                <th>Target</th>
+                                                <th>Unit</th>
+                                               @foreach (var str in listResults)
+                                               {
+                                                   var linec = str.LineCode.Replace("(", "").Replace(")", "");
+                                                   LineHardCodeType lc;
+                                                   Enum.TryParse(linec, out lc);
+                                                   var lci = (int)lc;
+
+
+    <th class="linename  th-popup" title="@str.Remark" data-linecode="@lci">@str.LineName</th>
+}
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @{
+                                                var evenRow = 0;
+                                            }
+                                            @foreach (var dmsCode in dmsCodes)
+                                            {
+                                                var currentRow = 0;
+                                                var totalDmsMeasures = 0;
+                                                evenRow++;
+                                                var data = Model.ListMeetingResultModel.Where(t => t.DmsCode == dmsCode);
+
+                                                totalDmsMeasures = data.Count();
+                                                if (totalDmsMeasures < 1)
+                                                {
+                                                    totalDmsMeasures = 1;
+                                                }
+                                                foreach (var meetingResultModel in data)
+                                                {
+
+                                                    currentRow++;
+                                                    if (evenRow % 2 != 0)
+                                                    {
+                                                        <text>
+                                                            <tr class="eventRow tr-edit">
+                                                        </text>
+                                                    }
+                                                    else
+                                                    {
+                                                        <text>
+                                                            <tr class="tr-edit">
+                                                        </text>
+                                                    }
+
+
+                                                    if (currentRow == 1)
+                                                    {
+                                                        <text>
+                                                            <td rowspan="@totalDmsMeasures" class="rol-pan dms-code-col depart-DMS" data="dms-code">@_dmsService.GetDmsByDmsCode(dmsCode).Result.Description</td>
+                                                        </text>
+                                                    }
+
+                                                    switch (meetingResultModel.MeasureType)
+                                                    {
+                                                        case "Null":
+                                                            <text>
+                                                                <td data="MeasureMeasureType" class="measure-type-col"></td></text>
+                                                            break;
+                                                        case "IPorOP":
+                                                            <text>
+                                                                <td data="MeasureMeasureType" class="measure-type-col">IP/OP</td></text>
+                                                            break;
+                                                        default:
+                                                            <text>
+                                                                <td data="MeasureMeasureType" class="measure-type-col">@meetingResultModel.MeasureType</td></text>
+                                                            break;
+                                                    }
+                                                    <text>
+                                                        <td data="MeasureName">@meetingResultModel.MeasureName</td>
+                                                        <td data="Owner" class="owner-col">@meetingResultModel.Owner</td>
+                                                        <td data="Target" class="target-col">@meetingResultModel.Target</td>
+                                                        <td data="Unit" class="unit-col">@meetingResultModel.Unit</td>
+                                                    </text>
+
+                                                    if (meetingResultModel.DmsCode != DmsCode.DeedmacOperation.ToString())
+                                                    {
+
+
+                                                        foreach (var str in listResults)
+                                                        {
+                                                            var lineValue = meetingResultModel.ListResult.FirstOrDefault(s => s.LineCode == str.LineCode);
+                                                            DmsCode dmsc;
+                                                            Enum.TryParse(dmsCode, out dmsc);
+                                                            var dmsci = (int)dmsc;
+
+                                                            var measurec = meetingResultModel.MeasureCode;
+                                                            NoisMainMeasureType mc;
+                                                            Enum.TryParse(measurec, out mc);
+                                                            var mci = (int)mc;
+
+                                                            var linec = str.LineCode.Replace("(", "").Replace(")", "");
+                                                            LineHardCodeType lc;
+                                                            Enum.TryParse(linec, out lc);
+                                                            var lci = (int)lc;
+                                                            <td class="line-editable @lineValue.ReadOnlyClassCss @_report.checkColorPacking(meetingResultModel.Target, lineValue.Result) line-check-edit " data-mscode="@mci-@lci" data-linename="@str.LineName" title="">
+                                                                <div class="line-edit-span">@lineValue.Result</div>
+                                                                <input value="@lineValue.Result" required type="text" class="hide line-edit-value" data-dmscode="@dmsci" data-measurecode="@mci" data-linecode="@lci" data-target="@meetingResultModel.Target" />
+                                                            </td>
+                                                        }
+                                                    }
+                                                    else
+                                                    {
+
+                                                        var measurec = meetingResultModel.MeasureCode;
+                                                        NoisMainMeasureType mc;
+                                                        Enum.TryParse(measurec, out mc);
+                                                        var mci = (int)mc;
+                                                        var lineValue = meetingResultModel.ListResult.FirstOrDefault(s => s.LineCode == LineHardCodeType.DeedmacOperation.ToString());
+
+                                                        <td class="line-editable @lineValue.ReadOnlyClassCss not-fitter line-check-edit exception-target" colspan="@listLineName.Count" data-mscode="@((int) DmsCode.DeedmacOperation)" data-linename="@(LineHardCodeType.DeedmacOperation.ToString())" title="">
+                                                            <div class="line-edit-span">@lineValue.Result</div>
+                                                            <input value="@lineValue.Result" required type="text" class="hide line-edit-value" data-dmscode="@((int) DmsCode.DeedmacOperation)" data-measurecode="@mci" data-linecode="@((int)LineHardCodeType.DeedmacOperation)" data-target="@meetingResultModel.Target" />
+                                                        </td>
+                                                    }
+                                                    @:</tr>
+                                                }
+                                            }
+
+                                        </tbody>
+                                    </table>
+                                    <div id="bottom_anchor"></div>
+                                </div>
+                            </div>
+                            <!-- /Result -->
+                            <!-- Issue -->
+                            <div class="tab-pane fade" id="tabissue">
+                                <div id="issuegrid"></div>
+                            </div>
+                            <!-- /Issue -->
+                            <!-- Attendance -->
+                            @if (Model.permissionAttendance)
+                            {
+                                <div class="tab-pane fade" id="tabattendance">
+                                    
+                                    <div class="validation-summary-errors">
+                                        <ul id="ResultInfo" style="list-style: none" class="pull-left"></ul>
+                                    </div>
+
+                                    <div>
+                                        @*if don't have meeting, admin can create*@
+                                        @if (Model.AttendanceModel != null)
+                                        {
+                                            <span style="display: none" id="hiddenIdOfAttandence">@Model.AttendanceModel.Id</span>
+                                        }
+
+                                        <div class="box border orange">
+                                            <div class="box-title">
+                                                <h4><i class="fa fa-gear"></i>Attendance Manage</h4>
+                                                <div class="tools">
+                                                    <input type="submit" id="createAttendance" name="save" value="Save" class="btn btn-info btn-info-custom" />
+                                                </div>
+                                            </div>
+                                            <div class="box-body">
+                                                @{
+                                                    var userService = DependencyResolver.Current.GetService<IUserService>();
+                                                    var userAllowInMeetingService = DependencyResolver.Current.GetService<Service.Interface.IUserAllowInMeetingService>();
+                                                    var listUsername = userAllowInMeetingService.GetByMeetingType(MeetingType.Making).Result;
+                                                }
+                                                @if (listUsername.Count == 0)
+                                                {
+                                                    <text>No permissions defined</text>
+                                                }
+                                                else
+                                                {
+                                                    <script type="text/javascript">
+                                                        $(document).ready(function () {
+
+
+                                                            $('#selectall').click(function () {
+
+                                                                $('.allow').prop('checked', $(this).is(':checked')).change();
+                                                            });
+
+
+                                                        });
+                                                    </script>
+                                                    <table class="table table-hover permission">
+                                                        <thead>
+                                                            <tr>
+                                                                <th scope="col">
+                                                                    @*<strong>Admin.Configuration.ACL.Permission</strong>*@
+                                                                    <strong>User</strong>
+                                                                </th>
+
+                                                                <th scope="col">
+                                                                    <input type="checkbox" id="selectall" />
+                                                                    <strong>Attendance</strong>
+
+                                                                </th>
+
+                                                            </tr>
+                                                        </thead>
+                                                        @{
+                                                            bool altRow = true;
+                                                        }
+                                                        <tbody>
+                                                            @foreach (var pr in listUsername)
+                                                            {
+                                                                altRow = !altRow;
+                                                                <tr>
+                                                                    <td>
+                                                                        <span>@userService.GetUserByIdAsync(pr.UserId).Result.Username</span>
+                                                                    </td>
+
+                                                                    <td>
+                                                                        @{
+                                                                            var allowed = false;
+                                                                            if (Model.AttendanceModel != null)
+                                                                            {
+                                                                                allowed = Model.AttendanceModel.ListUserIdInAttendance.Any(u => u == pr.UserId);
+                                                                            }
+
+                                                                        }
+                                                                        <input class="allow" type="checkbox" value="@(pr.UserId)" name="Username" @(allowed ? " checked=checked" : null) />
+                                                                    </td>
+
+                                                                </tr>
+                                                            }
+                                                        </tbody>
+                                                    </table>
+                                                }
+                                            </div>
+                                        </div>
+
+
+
+                                        @*admin edit*@
+
+
+                                    </div>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="tab-pane fade" id="tabattendance">
+
+                                    @if (Model.AttendanceModel != null)
+                                    {
+                                        <table>
+                                            <tr>
+                                                <td>
+                                                    User Created :
+                                                </td>
+                                                <td>
+                                                    <span>@Model.AttendanceModel.UserCreated</span>
+                                                </td>
+                                            </tr>
+
+                                            <tr>
+                                                <td>
+                                                    Meeting date:
+                                                </td>
+                                                <td>
+                                                    @Html.DisplayTextFor(p => p.AttendanceModel.CreatedDate)
+
+                                                </td>
+                                            </tr>
+                                      
+                                            <tr>
+                                                <td>
+                                                    Attendance users:
+                                                </td>
+                                                <td>
+                                                    @String.Join(",", Model.AttendanceModel.ListUsernameInAttendance);
+
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td>
+                                                    Absent users:
+                                                </td>
+                                                <td>
+                                                    @String.Join(",", Model.AttendanceModel.ListUsernameNotInAttendance);
+
+                                                </td>
+                                            </tr>
+
+                                       
+                                        </table>
+                                    }
+                                    else
+                                    {
+                                        <span>There's no meeting in this day</span>
+                                    }
+                                </div>
+                            }
+                            
+                            <!-- /Attendance -->
+                        </div>
+                        <div class="modal fade " id="line-popup" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+                            <div class="modal-dialog">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+                                        <h4 class="modal-title" id="myModalLabel">Line Remark</h4>
+                                    </div>
+                                    <div class="modal-body">
+                                        <form class="form-horizontal" role="form">
+                                            <div class="form-group">
+                                                <label class="col-sm-3 control-label">Remark</label>
+                                                <div class="col-sm-8">
+                                                    <textarea type="text" class="form-control input-line-remark" placeholder="Remark"></textarea>
+                                                </div>
+                                            </div>
+                                        </form>
+
+                                        <input id="line-popup-code" type="hidden" value="" />
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-default btn-line-close" data-dismiss="modal">Close</button>
+                                        <button type="button" class="btn btn-primary btn-line-save">Save</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+}
+else
+{
+    <div>
+        Opp! Admin didn’t assign any line for you so that you can update information.Please contact admin for it!!!
+    </div>
+}
+@section bottomjs{
+    <script src="@Url.Content("~/Scripts/kendo/2014.1.318/kendo.web.min.js")"></script>
+    <script>
+    var isEditting = false;
+    var currentDate;
+    var oldval = 0;
+    $(document).ready(function() {
+
+        function getURLParameter(name) {
+            return decodeURIComponent(
+                (location.search.match(RegExp("[?|&]" + name + '=(.+?)(&|$)')) || [, null])[1]
+            );
+        }
+
+        var date = getURLParameter('date');
+        if (date != "null") {
+            currentDate = date;
+            $("#datepicker").val(date);
+        } else {
+            $("#datepicker").val($.datepicker.formatDate('mm/dd/yy', new Date()));
+            currentDate = $.datepicker.formatDate('mm/dd/yy', new Date());
+
+        }
+
+        function activeEdit(e) {
+            console.log("active edit hey");
+            console.log(e);
+            if ($(e).hasClass('allowEditResult')) {
+                $(e).children('.line-edit-span').hide();
+                $(e).children('input').removeClass('hide');
+                $(e).children('input').addClass('input-editting');
+                $(e).children('input').select();
+                $(e).children('input').focus();
+
+                oldval = $(e).children('input').val();
+                setTimeout(function() {
+                    isEditting = true;
+                }, 100);
+            }  if ($(e).hasClass('avoidEditResult')) {
+
+                $table.trigger("tr.td.next", e.children("input"));
+            }
+        }
+
+
+        $(".line-editable").click(function() {
+            if (isEditting == false) {
+                activeEdit(this);
+            }
+        });
+        var $table = jQuery("#resultMaking");
+
+
+        $table.on("tr.td.next", function (e, $input) {
+            $input = $($input);
+            var $nextInRowTd = $input.parent(".line-check-edit").next();
+            if ($nextInRowTd.length > 0   ) {
+                if (!$nextInRowTd.hasClass("hide")) {
+                    activeEdit($nextInRowTd);
+                } else {
+                    var currentTdIndex = $input.parent(".line-check-edit").index();
+                    var totalCurrentTd = $input.parents("tr").children("td").length;
+                    var totalNesTd = $input.parents("tr").next().children("td").length;
+                    if (totalCurrentTd > totalNesTd) {
+                        currentTdIndex -= 1;
+                    } if (totalCurrentTd < totalNesTd) {
+                        currentTdIndex += 1;
+                    }
+                    var $nextTr = $input.parents("tr").next();
+                  
+                    if ($nextTr.length > 0 && $nextTr.hasClass("tr-edit")   ) {
+                        $nextTd = $nextTr.children("td").eq(currentTdIndex);
+                        if ($nextTd.length > 0) {
+                            activeEdit($nextTd);
+                        }
+                        else {
+                            $nextTr = $input.parents("tr").next().next().next();
+                            var $nextTd = $nextTr.children("td").eq(currentTdIndex);
+                            if ($nextTd.length > 0) {
+                                activeEdit($nextTd);
+                            }
+                        }
+                    }
+
+                }
+
+
+            } else {
+
+                var $trParent = $input.parents("tr");
+
+                var $nextTr = $trParent.next();
+                var currentTdIndex = $input.parent(".line-check-edit").index();
+                var totalCurrentTd = $input.parents("tr").children("td").length;
+                var totalNesTd = $input.parents("tr").next().children("td").length;
+
+                if (totalCurrentTd > totalNesTd) {
+                    currentTdIndex -= 1;
+                } if (totalCurrentTd < totalNesTd) {
+                    currentTdIndex += 1;
+                }
+                if (!$nextTr.children(".line-check-edit").first().hasClass("hide")) {
+                    currentTdIndex = $nextTr.children(".line-check-edit").first().index();
+                }
+                console.log(currentTdIndex);
+                console.log($nextTr);
+                if ($nextTr.length > 0 && $nextTr.hasClass("tr-edit")   ) {
+
+                    var $nextTd = $nextTr.children("td").eq(currentTdIndex);
+                    console.log($nextTd);
+                    if ($nextTd.length > 0) {
+                        activeEdit($nextTd);
+                    }
+                } else {
+                    $nextTr = $input.parents("tr").next().next();
+                    var $nextTd = $nextTr.children("td").eq(currentTdIndex);
+                    console.log($nextTd);
+                    if ($nextTd.length > 0) {
+                        activeEdit($nextTd);
+                    }
+                }
+            }
+
+        });
+
+        var formatNewTargetBackground = function() {
+            var $input = jQuery(".input-editting");
+            //if input exist and on edit mode
+            if ($input.length > 0 //if textbox is on active
+                    && isEditting //if on edit mode
+            ) {
+
+                var newVal = $input.val();
+                var target = $input.data('target').toString(); //get tartet
+                var dmsCode = $input.data('dmscode'); //get dmsCode
+                var measureCode = $input.data('measurecode'); //get measure code
+                var lineCode = $input.data('linecode'); //get line code
+                if ( newVal != oldval) { //validate new value
+                    if (measureCode == 26) {
+                        updateSupplyChainDDS(2,lineCode,newVal);
+                    }
+                    if (measureCode == 27) {
+                        updateSupplyChainDDS(3,lineCode,newVal);
+                    }
+                    $.ajax({
+                        url: '/Making/UpdateMeetingResult',
+                        type: 'POST',
+                        dataType: 'json',
+                        data: {
+                            dmscode: dmsCode,
+                            lineCode: lineCode,
+                            measureCode: measureCode,
+                            result: newVal,
+                            date:currentDate
+                        },
+                        success: function(data) {
+                            if (data.status == "success") {
+
+                                $input.parent().children('.line-edit-span').show(); //show span
+                                $input.parent().children('.line-edit-span').html(newVal); // update new value to span
+                                $input.addClass('hide'); //hide the textbox
+                                $input.removeClass('input-editting'); //remove edit class to the textbox
+                                //add color
+                                // TARGET DON'T CONTAIN CALCULATIONS: target.indexOf(">")<0 && target.indexOf("<") < 0
+                                if (target.indexOf(">") >= 0) {
+
+                                    target = parseFloat(target.replace(">=", ""));
+                                    newVal = parseFloat(newVal);
+                                    if (!isNaN(target)) {
+                                        if (target <= newVal) {
+                                            $input.parent().removeClass("no-match-target");
+                                            $input.parent().removeClass("exception-target").addClass("match-target");
+                                        } else {
+                                            $input.parent().removeClass("no-match-target");
+                                            $input.parent().removeClass("exception-target").addClass("no-match-target");
+                                        }
+                                    }
+                                } else if (target.indexOf("<") >= 0) {
+                                    //    console.log("index-<"+target.indexOf("<"));
+                                    target = parseFloat(target.replace("<=", ""));
+                                    newVal = parseFloat(newVal);
+
+                                    if (target >= newVal) {
+                                        //   console.log(2.1);
+                                        $input.parent().removeClass("no-match-target");
+                                        $input.parent().removeClass("exception-target").addClass("match-target");
+                                    } else {
+                                        //  console.log(2.2);
+                                        $input.parent().removeClass("match-target");
+                                        $input.parent().removeClass("exception-target").addClass("no-match-target");
+                                    }
+
+                                } else { //no calculations
+
+                                }
+
+                            }
+                        }
+                    });
+                } else {
+                    //if value not change
+                    $input.parent().children('.line-edit-span').show(); //show the span
+                    $input.addClass('hide'); //hide the textbox
+                    $input.removeClass('input-editting'); //remove edit class
+
+                }
+
+            }
+            isEditting = false; //remove edit mode
+        };
+
+        
+        function updateSupplyChainDDS(measureCode,lineCode,value) {
+            $.ajax({
+                url: '/SupplyChain/UpdateDDSFromMaking',
+                type: 'POST',
+                data: JSON.stringify({
+                    value: value,
+                    MeasureCode: measureCode,
+                    LineCode: lineCode,
+                    date:currentDate
+                }),
+                contentType: 'application/json',
+                dataType: 'json',
+                success: function(data) {
+                        
+                }
+            });
+        }
+
+        jQuery(".line-edit-value")
+            .keypress(function(event) {
+
+                var charCode = event.which || event.keyCode;
+                if (charCode == 13) {
+
+                    event.preventDefault();
+                    formatNewTargetBackground();
+                    isEditting = false;
+                    $table.trigger("tr.td.next", this);
+
+                }
+
+            })
+            .blur(function() {
+
+                formatNewTargetBackground();
+                isEditting = false;
+
+            });
+
+
+        //data for drplist
+        var allLineAttributes = [
+            @for (int i = 0; i < listLineName.Count; i++)
+                {
+
+                    <text>
+{
+    Id: "@listLineName[i]",
+    Name: "@listLineName[i]"
+}
+            </text>
+                    if (i != listLineName.Count - 1)
+                    {
+                        <text>,</text>
+                    }
+                }
+        ];
+        // dropdownlist drpLine
+        $("#drpLine").kendoDropDownList({
+            dataTextField: "Name",
+            dataValueField: "Id",
+            dataSource: allLineAttributes,
+            index: 0,
+            change: onChange,
+            optionLabel: "--- Any Line ---",
+        });
+
+        function onChange() {
+            var th = $("#tabresult").find(".table").find(".linename");
+            var td = $("#tabresult").find(".table").find(".line-editable"); // find all td with class .line-edittable
+            var selectedvalue = $("#drpLine").val(); // get select value dopdownlist line
+            console.log(selectedvalue);
+
+
+            if (selectedvalue == "") { // if select first value
+                $(td).removeClass("hide");
+                $(th).removeClass("hide");
+            } else { // if select a line
+                $(td).addClass("hide"); // hide all td with class .line-edittable
+                $(th).addClass("hide");
+                for (var j = 0; j < th.length; j++) {
+                    if ($(th[j]).html() == selectedvalue) {
+                        $(th[j]).removeClass("hide"); // show td with line choosen
+                    }
+                }
+                for (var i = 0; i < td.length; i++) {
+                    if ($(td[i]).data('linename') == selectedvalue) {
+                        $(td[i]).removeClass("hide"); // show td with line choosen
+                    }
+                }
+            }
+            $(".not-fitter").removeClass("hide");
+        };
+
+        //end dropdownlist drpLine
+        // date picker
+     
+
+        $(".datepicker-fullscreen").kendoDatePicker({
+            origin: "top right",
+            position: "bottom right",
+            change: function() {
+                window.location.href = "/Making/Index?date="+
+                kendo.toString(this.value(), 'd');
+            }
+
+        });
+
+        // scroll table
+
+        function moveScroll() {
+            var scroll = $(window).scrollTop();
+            var anchor_top = $("#resultMaking").offset().top;
+            var anchor_bottom = $("#bottom_anchor").offset().top;
+            if (scroll > anchor_top && scroll < anchor_bottom) {
+                clone_table = $("#clone");
+                if (clone_table.length == 0) {
+                    clone_table = $("#resultMaking").clone();
+                    clone_table.attr('id', 'clone');
+                    clone_table.css({
+                        position: 'fixed',
+                        'pointer-events': 'none',
+                        top: 0
+                    });
+                    clone_table.width($(".table").width());
+                    $(".orange").append(clone_table);
+                    $("#clone tbody").css({ visibility: 'collapse' });
+                    $("#clone thead").css({ visibility: 'visible', 'pointer-events': 'auto' });
+                }
+            } else {
+                $("#clone").remove();
+            }
+        }
+
+        $(window).scroll(moveScroll);
+
+        //end scroll table
+
+
+        var alluserAttributes = [
+            @{
+                    var userService = DependencyResolver.Current.GetService<IUserService>();
+                    var listUsername = userService.GetAllUsersAsync().ToList();
+                    var userAdmin = userService.GetUserByUsernameAsync("Admin").Result;
+                    if (userAdmin != null)
+                    {
+                        listUsername.Remove(userAdmin);
+                    }
+                }
+
+            @for (int i = 0; i < listUsername.Count; i++)
+                {
+                    var type = listUsername[i];
+                    <text>
+{
+    Id: "@type.Id.ToString()",
+    Name: "@(Html.Raw(HttpUtility.JavaScriptStringEncode(type.Username)))"
+}
+</text>
+                    if (i != listUsername.Count - 1)
+                    {
+                        <text>,</text>
+                    }
+                }
+        ];
+
+
+        var allStatusAttributes = [
+            @{
+                    var listType = new List<IssueStatus>()
+                                   {
+                                       IssueStatus.Open,
+                                       IssueStatus.Delayed,
+                                       IssueStatus.Closed
+                                   };
+                }
+
+            @for (int i = 0; i < listType.Count; i++)
+                {
+                    var type = listType[i];
+                    <text>
+    {
+        Id: @((int) type),
+        Name: "@(Html.Raw(HttpUtility.JavaScriptStringEncode(type.ToString())))"
+    }
+            </text>
+                    if (i != listType.Count - 1)
+                    {
+                        <text>,</text>
+                    }
+                }
+        ];
+
+        function userDropDownEditor(container, options) {
+            $('<input required data-text-field="Name" data-value-field="Id" data-bind="value:UserAssignedId"/>')
+                .appendTo(container)
+                .kendoDropDownList({
+                    dataTextField: "Name",
+                    dataValueField: "Id",
+                    dataSource: alluserAttributes
+
+                });
+        }
+
+        //search
+        ////search
+        //$('#SearchKeyword').bind("input", function (e) {
+        //    if (this.value.length >= 3 || e.keyCode == 13 || e.keyCode == 8 || e.keyCode == 46 || this.value.length == 0) {
+        //        var grid = $("#issuegrid").data('kendoGrid');
+        //        grid.dataSource.page(1); //new search. Set page size to 1
+        //        grid.dataSource.read();
+
+        //    }
+        //    return false;
+        //});
+        ////function additionalData() {
+        ////    return {
+        ////        SearchKeyword: $('#SearchKeyword').val()
+        ////    };
+        ////}
+        function additionalData() {
+            return {
+                //SearchKeyword: $('#SearchKeyword').val(),
+                Datetime: currentDate,
+                Type: "@((int) IssueType.Making)"
+            };
+        }
+
+
+        function display_kendoui_grid_error(e) {
+            if (e.errors) {
+                if ((typeof e.errors) == 'string') {
+                    //single error
+                    //display the message
+                    alert(e.errors);
+                } else {
+                    //array of errors
+                    var message = "The following errors have occurred:";
+                    //create a message containing all errors.
+                    $.each(e.errors, function(key, value) {
+                        if (value.errors) {
+                            message += "\n";
+                            message += value.errors.join("\n");
+                        }
+                    });
+                    //display the message
+                    alert(message);
+                }
+            } else {
+                alert('Error happened');
+            }
+        }
+
+        var TypeIssue = '@((int) IssueType.Making)', a;
+
+            function serialize(data) {
+                data["date"] = currentDate;
+                data["TypeId"] = TypeIssue;
+                for (var property in data) {
+                    if ($.isArray(data[property])) {
+                        serializeArray(property, data[property], data);
+                    }
+                    if (data[property] == null) {
+                        data[property] = " ";
+                    }
+                }
+            }
+
+            function serializeArray(prefix, array, result) {
+                for (var i = 0; i < array.length; i++) {
+                    if ($.isPlainObject(array[i])) {
+                        for (var property in array[i]) {
+                            result[prefix + "[" + i + "]." + property] = array[i][property];
+                        }
+                    } else {
+                        result[prefix + "[" + i + "]"] = array[i];
+                    }
+
+
+                }
+            }
+
+            function statusDropDownEditor(container, options) {
+                $('<input required data-text-field="Name" data-value-field="Id" data-bind="value:StatusId"/>')
+                    .appendTo(container)
+                    .kendoDropDownList({
+                        autoBind: false,
+                        dataSource: allStatusAttributes,
+
+                    });
+            }
+
+            var datasource = new kendo.data.DataSource({
+                type: "json",
+                transport: {
+                    read: {
+                        url: "@Html.Raw(Url.Action("List", "Issue"))",
+                        type: "POST",
+                        dataType: "json",
+                        data: additionalData
+                    },
+                    destroy: {
+                        url: "@Html.Raw(Url.Action("Delete", "Issue"))",
+                        type: "POST",
+                        dataType: "json"
+                    },
+                    create: {
+                        url: "@Html.Raw(Url.Action("ManageCreate", "Issue"))",
+                        type: "POST",
+                        dataType: "json",
+                        data: serialize
+                    },
+                    update: {
+                        url: "@Html.Raw(Url.Action("Update", "Issue"))",
+                        type: "POST",
+                        dataType: "json",
+                        data: serialize
+                    }
+                },
+                schema: {
+                    data: "Data",
+                    total: "Total",
+                    errors: "Errors",
+                    model: {
+                        id: "Id",
+                        fields: {
+                            Index: {
+                                editable: false,
+                            },
+                            CreatedDate: {
+                                editable: false,
+                            },
+                            UpdatedDate: {
+                                editable: false,
+                            },
+                            Content: {
+                                editable: false,
+                                validation:
+                                {
+                                    required: true,
+                                    min: 1
+                                }
+                            },
+                            NextStep: {
+                                editable: false,
+
+                                validation:
+                                {
+                                    required: true,
+                                }
+                            },
+
+                            UserAssigned: {
+                                editable: false,
+                                type: "string",
+                                validation:
+                                {
+                                    required: true,
+                                }
+                            },
+
+                            UserAssignedId: { editable: false, type: "string" },
+
+                            Status: {
+                                editable: true,
+                                type: "string",
+                                validation:
+                                {
+                                    required: true,
+                                }
+                            },
+                            StatusId: { editable: true, type: "number" },
+
+                            Type: {
+                                editable: false,
+                                type: "string",
+                                validation:
+                                {
+                                    required: true,
+                                }
+                            },
+                            TypeId: {
+                                type: "number",
+
+                            },
+
+                            date: {
+                                type: "string",
+                                editable: false,
+                                validation:
+                                {
+                                    required: true,
+                                }
+                            },
+
+                            ActionPlan: {
+                                editable: false,
+                                type: "string",
+                                validation:
+                                {
+                                    required: false,
+                                }
+                            },
+                            IssuesPriority: {
+                                editable: false,
+                                type: "string",
+                                validation:
+                                {
+                                    required: false,
+                                }
+                            },
+                            WhenDue: {
+                                editable: false,
+                                type: "string",
+                                validation:
+                                {
+                                    required: true,
+                                }
+                            },
+                            When: {
+                                editable: false,
+                                type: "string",
+                                validation:
+                                {
+                                    required: true,
+                                }
+                            },
+                            Note: {
+                                editable: false,
+                                type: "string",
+                                validation:
+                                {
+                                    required: false,
+                                }
+                            },
+                            SystemFixDMSLinkage: {
+                                editable: false,
+                                type: "string",
+                                validation:
+                                {
+                                    required: false,
+                                }
+                            }
+                        }
+                    }
+                },
+                requestEnd: function(e) {
+                    if (e.type == "create" || e.type == "update") {
+                        this.read();
+                    }
+                },
+                error: function(e) {
+                    display_kendoui_grid_error(e);
+                    // Cancel the changes
+                    this.cancelChanges();
+                },
+
+                pageSize: 10,
+                serverPaging: true,
+                serverFiltering: true,
+                serverSorting: true
+            });
+
+            function dateTimeEditorWhenDue(container, options) {
+                $('<input data-text-field="' + options.field + '" data-value-field="' + options.field + '" data-bind="value:' + options.field + '" data-format="' + options.format + '"/>')
+                    .appendTo(container)
+                    .kendoDatePicker({});
+            }
+            function dateTimeEditor(container, options) {
+                $('<input data-text-field="' + options.field + '" data-value-field="' + options.field + '" data-bind="value:' + options.field + '" data-format="' + options.format + '"/>')
+                    .appendTo(container)
+                    .kendoDatePicker({});
+            }
+            function textEditorInitialize(container, options) {
+                $('<textarea name="' + options.field + '"  cols="50" rows="2" style="width: ' + container.width() + 'px;height:auto" />')
+                 .appendTo(container);
+            };
+            function textEditorNoteInitialize(container, options) {
+                $('<textarea name="' + options.field + '"  cols="40" rows="2" style="width: ' + container.width() + 'px;height:auto" />')
+                 .appendTo(container);
+            };
+
+
+            $("#issuegrid").kendoGrid({
+                dataSource: datasource,
+                pageable: {
+                    refresh: true,
+                },
+
+                edit: function(e) {
+                    if (e.model.Id == "") {
+
+                        //little hack here
+                        //pre-select the first value of kendoui dropdownlist datasource
+                        //for some reasons (maybe, bug) it always sends 0
+                        ////if no value has been selected (changed) in the dropdownlist
+                        if (alluserAttributes.length > 0) {
+                            //e.model.MeasureTypeId = allMeasureTypeAttributes[0].Name;
+
+                            e.model.UserAssignedId = alluserAttributes[0].Id;
+
+                        }
+
+                        if (allStatusAttributes.length > 0) {
+                            e.model.StatusId = allStatusAttributes[0].Id;
+                        }
+
+
+                    }
+                },
+                editable: {
+                    confirmation: true,
+                    mode: "inline"
+                },
+                scrollable: true,
+                height: 'auto !important',
+               
+                columns: [
+                   @if (Model.permissionIssue)
+                     {
+                         <text>  
+                          {
+                              command: [
+                                  {
+                                      name: "edit",
+                                      text: "",
+                                      template: "<a class='k-button k-grid-edit' href='' style='min-width:16px;'><span class='k-icon k-edit'></span></a>"
+                                  }
+
+                              ],
+                              width: 50,  
+                              attributes: {
+                                  style:"text-align:center"
+                              }
+                          }
+                          </text>
+                     }
+                    ,
+                    {
+                        field: "Content",
+                        title: "Issues",
+                        width: 250,
+                        template: "#=(Content == null) ? ' ' : Content #",
+                        editor: textEditorNoteInitialize  
+                    },
+                    {
+                        field: "ActionPlan",
+                        title: "Follow up action",
+                        width: 250,
+                        template: "#=(ActionPlan == null) ? ' ' : ActionPlan #",
+                        editor: textEditorInitialize  
+                    },
+                    {
+                        field: "UserAssignedId",
+                        title: "Owner",
+                        width: 150,
+                        editor: userDropDownEditor,
+                        template: "#:UserAssigned#"
+
+                    }, {
+                        field: "WhenDue",
+                        title: "When",
+                        width: 50,  
+                        attributes: {
+                            style:"text-align:center"
+                        },
+                        editor: dateTimeEditorWhenDue,
+                        format: '{0:MM/dd/yyyy}',
+                    },
+                    {
+                        field: "StatusId",
+                        title: "Status",
+                        width: 100,
+                        editor: statusDropDownEditor,
+                        template: "#:Status#"
+                    },
+                    {
+                        field: "Note",
+                        title: "Note",
+                        width: 250,
+                        template: "#=(Note == null) ? ' ' : Note #",
+                        editor: textEditorNoteInitialize  
+                    },
+                    {
+                        field: "SystemFixDMSLinkage",
+                        title: "System Fix <br/>DMS Linkage",
+                        width: 250,
+                        template: "#=(SystemFixDMSLinkage == null) ? ' ' : SystemFixDMSLinkage #"
+                    },
+
+                    {
+                        field: "When",
+                        title: "When",
+                        width: 120,  
+                        attributes: {
+                            style:"text-align:center"
+                        },
+                        format: '{0:MM/dd/yyyy}',
+                        editor: dateTimeEditor,
+                    },
+                    {
+                        field: "CreatedDate",
+                        title: "Create Date",
+                        width: 100,
+                        template: '#:CreatedDate#'
+                    },
+                         @if (Model.permissionIssue)
+                {
+                         <text>  
+                          {
+                              command: [                               
+                                   {
+                                       name: "destroy",
+                                       text: ""
+                                   }
+                              ],
+                              width: 50,  
+                              attributes: {
+                                  style:"text-align:center"
+                              }
+                          }
+                          </text>
+            }
+                ]
+                    }).on("click", ".k-grid-edit", function(){
+                        $(".k-grid-update").html("<span class='k-icon k-update'></span>").css("min-width","16px").removeClass("k-button-icontext");
+                        $(".k-grid-cancel").html("<span class='k-icon k-cancel'></span>").css("min-width","16px").removeClass("k-button-icontext");
+                    }).on("click", ".k-grid-add", function() {
+                        $(".k-grid-update").html("<span class='k-icon k-update'></span>").css("min-width","16px").removeClass("k-button-icontext");
+                        $(".k-grid-cancel").html("<span class='k-icon k-cancel'></span>").css("min-width","16px").removeClass("k-button-icontext");
+                    });
+            //attendance
+            //attendance
+            var listUserId = [
+                @{
+
+                    var UserId = Model.AttendanceModel != null ? Model.AttendanceModel.ListUserIdInAttendance : new List<int>();
+        }
+
+@for (int i = 0; i < UserId.Count; i++)
+        {
+            var MeasureType = UserId[i];
+            <text>
+
+"@Html.Raw(HttpUtility.JavaScriptStringEncode(MeasureType.ToString()))"
+
+</text>
+            if (i != UserId.Count - 1)
+            {
+                <text>,</text>
+            }
+        }
+    ];
+
+
+    $("#createAttendance").click(function() {
+        var checkbox = $(":checkbox:checked").map(function() {
+            return this.value;
+        }).get();
+
+        var note = $("#notemeeting").val();
+        var idAttendance = $("#hiddenIdOfAttandence").html();
+        var listUserIdInAttendance = checkbox;
+
+        if (listUserIdInAttendance.length > 0) {
+            $.ajax({
+                type: 'Post',
+                url: "@Url.Action("CreateAttendance", "Attendance")",
+                data: JSON.stringify({
+                    id: idAttendance,
+                    listUserIdInAttendance: listUserIdInAttendance,
+                    note: note,
+                    typeId: 1,
+                    userCreated: '@*Khang Comment @User.Identity.GetUsername()*@',
+                }),
+                contentType: 'application/json',
+                dataType: 'json',
+                beforeSend: function() {
+                    $("#createAttendance").attr("disabled", "disabled");
+                    $("#createAttendance").attr("value", "save");
+                },
+                success: function(data) {
+                    if (data.status == "success") {
+                        $('#ResultInfo').append("<li class='messageinfo has-success'><h2 class='control-label pull-left'>Create successful!</h2></li>");
+
+                        setTimeout(function() {
+                            $('.messageinfo').remove();
+                            $('#createAttendance').hide();
+                            window.location.href = "/Making/";
+                        }, 2000);
+
+                    } else {
+                        $('#ResultInfo').append("<li class='messageinfo has-success'><h2 class='control-label pull-left'>Error</h2></li>");
+                        $("#updateAttendance").attr("value", "Update ");
+                        setTimeout(function() {
+                            $('.messageinfo').remove();
+                            $('#createAttendance').removeAttr("disabled");
+                            $("#createAttendance").attr("value", "creat");
+                            window.location.href = "/Making/";
+                        }, 2000);
+                    }
+
+                }
+            });
+        } else {
+            alert("Please choose user attend");
+        }
+    });
+
+    //send mail
+    $("#send-mail").on('click', function() {
+        var id = $("#hiddenIdOfAttandence").html();
+
+        $.ajax({
+            url: '/Attendance/SendMailPacking',
+            type: 'POST',
+            data: JSON.stringify({
+                attendaceId:id,
+                type:1
+            }),
+            contentType: 'application/json',
+            dataType: 'json',
+            beforeSend: function() {
+                $("#send-mail").attr("disabled", "disabled");
+                $("#send-mail").attr('value', 'Sending Mail');
+            },
+            success: function(data) {
+                if (data.status == "success") {
+                    $('#send-mail').removeAttr("disabled");
+                    $("#send-mail").attr('value', 'Send Mail');
+                    alert('send email successfully');
+                }if (data.status == "error") {
+                    $('#send-mail').removeAttr("disabled");
+                    $("#send-mail").attr('value', 'Send Mail');
+                    alert("can't send email");
+                }
+            }
+        });
+    });
+
+
+    $("#nav-meeting").addClass("active");
+    $(".meeting-making").addClass("active");
+
+
+        //open popup
+    $(".th-popup").click(function() {
+        var lineCode = $(this).data('linecode');
+        $("#line-popup-code").val(lineCode);
+        $("#line-popup").modal('show');
+        $(this).addClass("th-editing");
+              
+
+        $.ajax({
+            url: '/LineRemark/GetRemarkByDateAndLineCode',
+            type: 'GET',
+            data: {
+                lineCode: lineCode,
+                typeCode:1,
+                
+                    date:currentDate
+                       
+            },
+
+            success: function(data) {
+
+                console.log(data);
+                $(".input-line-remark").val(data);
+
+
+            }
+        });
+
+    });
+    $(".btn-line-save").click(function() {
+        console.log($("#line-popup-code"));
+        var remark = $(".input-line-remark").val();
+
+        var lineCode = $("#line-popup-code").val();
+
+        $.ajax({
+            url: '/LineRemark/Update',
+            type: 'POST',
+            data: {
+                lineCode: lineCode,
+                remark: remark,
+                typeCode:1
+            },
+
+            success: function(data) {
+
+                       
+                $(".th-editing").attr('title',remark);
+                $("#line-popup").modal('hide');
+                $(".th-editing").removeClass("th-editing");
+
+
+            }
+        });
+
+    });
+
+
+        //set readonly date picker 
+    $('.datepicker-fullscreen').prop('readonly', true);
+    });
+
+    </script>
+}
+

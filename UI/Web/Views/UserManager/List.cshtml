@@ -1,0 +1,554 @@
+﻿@using Service.Departments
+@using Service.Users
+@{
+
+    //page title
+    ViewBag.Title = "User Management";
+    Layout = "~/Views/Shared/_KendoUILayout.cshtml";
+}
+<script src="@Url.Content("~/Scripts/kendo/2014.1.318/kendo.web.min.js")"></script>
+
+<div id="usermanager-grid"></div>
+<script id="tooltip-template" type="text/x-kendo-template">
+    <!--<span class = "k-widget k-tooltip k-tooltip-validation k-invalid-msg" > <span class = "k-icon k-warning" > </span>#=message#</span>-->
+    <span class="k-invalid-msg">#=message#</span>
+</script>
+<script id="usermanager-searchusername-template" type="text/x-kendo-template">
+    <a class="btn btn-info btn-info-custom" id="export-all-excel" title="Export to Excel">
+        <i class="glyphicon glyphicon-export"></i>
+        Export to Excel
+    </a>
+    <div style="float:right">
+        <input type="text" id="SearchKeyword" placeholder="Search" class="k-textbox" style="width: 350px; border-radius: 5px;" />
+    </div>
+</script>
+@*template of popup editor*@
+<script class="k-popup" id="popup_editor_usermanager" type="text/x-kendo-template">
+    <div id="abc">
+        <div class="popup-editor-attribute-usermanager">
+            <label>User Name</label>
+            <input id="popupeditor-username-attribute-usermanager"
+                   class="k-textbox"
+                   type="text"
+                   name="UserName"
+                   data-bind="value:UserName"
+                   required />
+            <div style="clear: both;"></div>
+        </div>
+        <div class="popup-editor-attribute-usermanager">
+            <label>Password</label>
+            <input id="popupeditor-password-attribute-usermanager"
+                   class="k-textbox"
+                   type="password"
+                   name="Password"
+                   data-bind="value:Password"
+                   required />
+            <div style="clear: both;"></div>
+        </div>
+        <div style="clear: both;"></div>
+        <div class="popup-editor-attribute-usermanager">
+            <label>Confirm Password</label>
+            <input id="popupeditor-confirmpassword-attribute-usermanager"
+                   class="k-textbox"
+                   type="password"
+                   name="ConfirmPassword"
+                   data-bind="value:ConfirmPassword" required />
+            <div style="clear: both;"></div>
+        </div>
+        <div class="popup-editor-attribute-usermanager">
+            <label>Email</label>
+            <input class="k-textbox" name="Email" data-bind="value:Email" required />
+            <div style="clear: both;"></div>
+        </div>
+        <div class="popup-editor-attribute-usermanager">
+            <label>First Name</label>
+            <input class="k-textbox" type="text" name="FirstName" data-bind="value:FirstName" required />
+            <div style="clear: both;"></div>
+        </div>
+        <div class="popup-editor-attribute-usermanager">
+            <label>Last Name</label>
+            <input class="k-textbox" type="text" name="LastName" data-bind="value:LastName" required />
+            <div style="clear: both;"></div>
+        </div>
+        <div class="popup-editor-attribute-usermanager">
+            <label>Phone Number</label>
+            <input id="popupeditor-phonenumber-attribute-usermanager"
+                   class="k-textbox"
+                   type="text"
+                   name="PhoneNumber"
+                   data-bind="value:PhoneNumber" />
+            <div style="clear: both;"></div>
+        </div>
+        <div class="popup-editor-attribute-usermanager" id="popupeditor-role-attribute-usermanager">
+            <label>Roles</label>
+            <select id="roleCbx"
+                   type="text"
+                   name="Role"
+                   data-role="multiselect"
+                   data-value-field="Id"
+                   data-text-field="Name"
+                   data-bind="value:Roles"
+                   data-source="dataSourceUserRole"
+                   placeholder="---  Choose Role ---"
+                   style="width: 50%;"
+                   required />
+            <div style="clear: both;"></div>
+        </div>
+        <div class="popup-editor-attribute-usermanager" id="popupeditor-department-attribute-usermanager">
+            <label>Department</label>
+            <input id="departmentCbx"
+                   type="text"
+                   name="Department"
+                   data-role="multiselect"
+                   data-value-field="Id"
+                   data-text-field="Name"
+                   data-bind="value:Departments"
+                   data-source="dataSourceUserDepartment"
+                   placeholder="---  Choose Department ---"
+                   style="width: 50%;"
+                   />
+            <div style="clear: both;"></div>
+        </div>
+        <div class="popup-editor-attribute-usermanager">
+            <label>Active</label>
+            <input type="checkbox" name="Active" data-bind="value:Active" />
+            <div style="clear: both;"></div>
+        </div>
+        <div class="popup-editor-attribute-usermanager">
+            <a id="reset-password">Reset Password</a>
+            <input id="input-reset-password" class="k-textbox" type="text" name="ResetPassword" data-bind="value:ResetPassword" />
+            <div style="clear: both;"></div>
+        </div>
+
+    </div>
+</script>
+
+<script>
+    function randomString(len, charSet) {
+        //charSet = charSet || 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+        //var randomString = '';
+        //for (var i = 0; i < len; i++) {
+        //    var randomPoz = Math.floor(Math.random() * charSet.length);
+        //    randomString += charSet.substring(randomPoz, randomPoz + 1);
+        //}
+        //return randomString;
+        return $('#popupeditor-username-attribute-usermanager').val().toLowerCase();       
+    }
+
+    //$('#reset-password').click(function () {
+    //    $('#input-reset-password').val(randomString(6));
+    //});
+    var dataSourceUserRole = new kendo.data.DataSource({
+        transport: {
+            read: {
+                dataType: "json",
+                type: "POST",
+                url: "@Html.Raw(Url.Action("GetAllUserRole", "UserManager"))"
+            }
+        }
+        //,
+        //schema: {
+        //    parse: function (data) {
+        //        data.unshift({ Id: "0", Name: "--  Choose UserRole  --" });
+        //        return data;
+        //    }
+        //}
+    });
+
+    var dataSourceUserDepartment = new kendo.data.DataSource({
+        transport: {
+            read: {
+                dataType: "json",
+                type: "POST",
+                url: "@Html.Raw(Url.Action("GetAllDepartment", "UserManager"))"
+            }
+        }
+        //,
+        //schema: {
+        //    parse: function (data) {
+        //        data.unshift({ Id: "0", Name: "--  Choose Department  --" });
+        //        return data;
+        //    }
+        //}
+    });
+
+    var ListRole = [ @{
+        var userRoleService = DependencyResolver.Current.GetService<IUserRoleService>();
+        var listUserRole = userRoleService.GetAllUserRolesAsync().Result.Where(r => r.IsActive).ToList();
+
+    }
+    @for (var i = 0; i < listUserRole.Count(); i++)
+    {
+        var username = listUserRole[i];
+        <text>
+
+         { "Id": "@(Html.Raw(HttpUtility.JavaScriptStringEncode(username.Id.ToString())))", "Name": "@(Html.Raw(HttpUtility.JavaScriptStringEncode(username.Name)))" }
+                </text>
+        if (i != listUserRole.Count - 1)
+        {
+            <text>,</text>
+        }
+    }
+    ];
+    var ListDepartment = [ @{
+        var departmentService = DependencyResolver.Current.GetService<IDepartmentService>();
+    var listDepartment = departmentService.GetAllAsync().Result.Where(r => r.Active).ToList();
+
+    }
+    @for (var i = 0; i < listDepartment.Count(); i++)
+    {
+        var department = listDepartment[i];
+        <text>
+
+         { "Id": "@(Html.Raw(HttpUtility.JavaScriptStringEncode(department.Id.ToString())))", "Name": "@(Html.Raw(HttpUtility.JavaScriptStringEncode(department.Name)))" }
+                </text>
+        if (i != listDepartment.Count - 1)
+        {
+            <text>,</text>
+        }
+    }
+    ];
+    function ownerDisplay(data) {
+        if (data.Roles != "")
+        {
+            var listRoleName = [];
+            data.Roles.forEach(function (role) {
+                listRoleName.push(role.Name);
+            });
+            return listRoleName.join(', ');
+        }          
+        else return '';
+    }
+    function departmentDisplay(data) {
+        if (data.Departments != "") {
+            var listDepartmentName = [];
+            data.Departments.forEach(function (d) {
+                listDepartmentName.push(d.Name);
+            });
+            return listDepartmentName.join(', ');
+        }
+        else return '';
+    }
+    var grid = $("#usermanager-grid").kendoGrid({
+        dataSource: {
+            type: "json",
+            transport: {
+                read: {
+                    url: "@Html.Raw(Url.Action("List", "UserManager"))",
+                    type: "POST",
+                    dataType: "json",
+                    data: additionalData
+                },
+                update: {
+                    url: "@Html.Raw(Url.Action("Update", "UserManager"))",
+                    type: "POST",
+                    dataType: "json",
+                    complete: function (e) {
+                        if (e.responseJSON != undefined && e.responseJSON.status == "success")
+                            $("#usermanager-grid").data("kendoGrid").dataSource.read();
+                    }
+                },
+                destroy: {
+                    url: "@Html.Raw(Url.Action("Delete", "UserManager"))",
+                    type: "POST",
+                    dataType: "json"
+                },
+                create: {
+                    url: "@Html.Raw(Url.Action("Create", "UserManager"))",
+                    type: "POST",
+                    dataType: "json",
+                    complete: function (e) {
+                        if (e.responseJSON != undefined && e.responseJSON.status == "success")
+                            $("#usermanager-grid").data("kendoGrid").dataSource.read();
+                    }
+                }
+            },
+            schema: {
+                data: "Data",
+                total: "Total",
+                errors: "Errors",
+                model: {
+                    id: "Id",
+                    fields: {
+                        Id: { editable: false, defaultValue: 0 },
+                        UserId: { editable: false, defaultValue: 0 },
+                        UserName: {
+                            editable: true
+                        },
+                        Password: {
+                            editable: true,
+                            validation: {
+                                validatePassword: function (input) {
+                                    if (input.is("[name=Password]")) {
+                                        $('#popupeditor-password-attribute-usermanager').parent().children('span').remove();
+                                        if (input.val().length < 6) {
+                                            input.attr("data-validatePassword-msg", "Enter least 6 character");
+                                            return false
+                                        }
+                                        else {
+                                            if ($('#popupeditor-confirmpassword-attribute-usermanager').val().length == 0)
+                                                return true;                                            
+                                            input.attr("data-validatePassword-msg", "Not match with Confirm Password");
+                                            return (input.val() === $('#popupeditor-confirmpassword-attribute-usermanager').val());
+                                        }
+                                    }
+                                    return true;
+                                }
+                            }
+                        },
+                        ConfirmPassword: {
+                            editable: true,
+                            validation: {
+                                validateConfirmPassword: function (input) {
+                                    if (input.is("[name=ConfirmPassword]")) {
+                                        if (input.val().length < 6) {
+                                            input.attr("data-validateConfirmPassword-msg", "Enter least 6 character");
+                                            return false
+                                        }
+                                        else {
+                                            if ($('#popupeditor-password-attribute-usermanager').val().length == 0)
+                                                return true;
+                                            //console.log($(input.val(), $('#popupeditor-password-attribute-usermanager').val()));
+                                            input.attr("data-validateConfirmPassword-msg", "Not match with Password");
+                                            return (input.val() === $('#popupeditor-password-attribute-usermanager').val());
+                                        }
+                                    }
+                                    return true;
+                                }
+                            }
+                        },
+                        Email: {
+                            editable: true,
+                            validation: {
+                                validateEmail: function (input) {
+                                    if (input.is("[name=Email]")) {
+                                        var emailReg = new RegExp(/^(("[\w-\s]+")|([\w-]+(?:\.[\w-]+)*)|("[\w-\s]+")([\w-]+(?:\.[\w-]+)*))(@@((?:[\w-]+\.)*\w[\w-]{0,66})\.([a-z]{2,6}(?:\.[a-z]{2})?)$)|(@@\[?((25[0-5]\.|2[0-4][0-9]\.|1[0-9]{2}\.|[0-9]{1,2}\.))((25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})\.){2}(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[0-9]{1,2})\]?$)/i);
+                                        var valid = emailReg.test(input.val());
+                                        if (!valid)
+                                        {
+                                            input.attr("data-validateEmail-msg", "Invalid Email");
+                                        }
+                                        //console.log(valid);
+                                        return valid;
+                                    }
+                                    return true;
+                                }
+                            }
+                        },
+                        LastName: { editable: true },
+                        FirstName: { editable: true },
+                        PhoneNumber: { editable: true },
+                        Active: { editable: true, type: "boolean" , defaultValue: true },
+                        Roles: {
+                            editable: true,
+                            //defaultValue: { Name: '', Id: '' },
+                            //validation: {
+                            //    validateUserRole: function (input) {
+                            //        if (input.is("[name=Role]")) {
+                            //            if (input.val() === "0")
+                            //            {
+                            //                input.attr("data-validateUserRole-msg", "Invalid User Role");
+                            //                return false;
+                            //            }
+                            //            //console.log(valid);
+                            //            return true;
+                            //        }
+                            //        return true;
+                            //    }
+                            //}
+                        },
+                        Departments: {
+                            editable: true,
+                            //defaultValue: { Name: '', Id: '0' },
+                            //validation: {
+                            //    validateUserDepartment: function (input) {
+                            //        if (input.is("[name=Department]")) {
+                            //            if (input.val() === "0") {
+                            //                input.attr("data-validateUserDepartment-msg", "Invalid Department");
+                            //                return false;
+                            //            }
+                            //            //console.log(valid);
+                            //            return true;
+                            //        }
+                            //        return true;
+                            //    }
+                            //}
+                        },
+                    }
+                }
+            },
+            error: function (e) {
+                display_kendoui_grid_error(e);
+                //this.cancelChanges();
+            },
+            pageSize: 15,
+            serverPaging: true,
+            serverFiltering: true,
+            serverSorting: true
+        },
+        columns: [
+        {
+            field: "UserName",
+            title: "User Name",
+            width: 150
+        },
+        {
+            field: "Email",
+            title: "Email",
+            width: 100
+        },
+        {
+            field: "FirstName",
+            title: "First Name",
+            width: 100
+        },
+        {
+            field: "LastName",
+            title: "Last Name",
+            width: 100
+        },
+        {
+            field: "Roles",
+            title: "Roles",
+            width: 300,
+            //template: "#=Role.Name#"
+            template: ownerDisplay,
+            values: ListRole
+        },
+        {
+            field: "Department",
+            title: "Departments",
+            width: 200,
+            template: departmentDisplay,
+            values: ListDepartment
+        },
+        {
+            field: "Active",
+            title: "Active",
+            width: 40,
+            template: '<img src="@Url.Content("~/Content/img/")active-#=Active#.gif" />'
+        },
+
+        {
+            command: [
+            {
+                name: "edit",
+                text: { update: "Save Changes", cancel: "Cancel" }
+            }
+            ],
+            title: "&nbsp;",
+            width: "80px"
+        }
+        ],
+        pageable: {
+            refresh: true,
+            pageSizes: ["5", "10", "15", "20"]
+        },
+        editable: {
+            mode: "popup",
+            //default title of popup editor
+            window: {
+                title: "Modify User",
+            },
+            //template of custom popup editor
+            template: kendo.template($("#popup_editor_usermanager").html())
+        },
+        edit: editorFunction,
+        toolbar: ["create", { template: $("#usermanager-searchusername-template").html() }],
+        scrollable: false,
+        filterable: false
+    }).data("kendoGrid");
+
+
+    function editorFunction(e) {
+        //custom validate message
+        e.sender.editable.validatable._errorTemplate = kendo.template($('#tooltip-template').html());
+        if (e.model.Id != '') {
+            userId = e.model.Id;
+            $("#popupeditor-password-attribute-usermanager").parent().remove();
+            $("#popupeditor-confirmpassword-attribute-usermanager").parent().remove();
+            $('#popupeditor-username-attribute-usermanager').prop('disabled', true);
+
+            $('#input-reset-password').prop('readonly', true);         
+
+            //not allow choose department because role is admin or chua chon role
+            //if (e.model.Roles.length == 0)
+            //{
+            //    $('#departmentCbx').data("kendoComboBox").enable(false);//disable department cbx               
+            //}
+            //else
+            //{
+            //    e.model.Roles.forEach(function (role) {
+            //        if (role.Name == "Administrators") {
+            //            $('#departmentCbx').data("kendoComboBox").enable(false);//disable department cbx 
+            //        }
+            //    });
+            //}
+                
+
+        }
+        else//event create button
+        {
+            //change title popup editor
+            e.container.kendoWindow("title", "Create New User");
+            //change tex (save changes --> create) popup editor
+            $(".k-grid-update").contents().filter(function () {
+                return this.nodeType == 3;
+            })[0].nodeValue = "Create";
+
+            $("#reset-password").parent().remove();
+            //disable department because must choose role before choose department
+            //$('#departmentCbx').data("kendoComboBox").enable(false);
+        }
+        //disable typing
+        $("#popupeditor-role-attribute-usermanager > span > span > input").attr("readonly", "readonly");
+
+        $('#reset-password').click(function () {
+            $('#input-reset-password').val(randomString(6)).change();
+        });
+    }
+
+    //search
+    $('#SearchKeyword').bind("input", function (e) {
+        if (this.value.length >= 3 || e.keyCode == 13 || e.keyCode == 8 || e.keyCode == 46 || this.value.length == 0) {
+            var grid = $('#usermanager-grid').data('kendoGrid');
+            grid.dataSource.page(1); //new search. Set page size to 1
+            grid.dataSource.read();
+
+        }
+        return false;
+    });
+
+    function additionalData() {
+        return {
+            SearchKeyword: $('#SearchKeyword').val()
+        };
+    }
+    $('#export-all-excel').click(function () {
+        window.location.href = "/UserManager/ExportToExcel";
+    });
+    //function changeRole(e) {
+    //    var departmentCbx = $('#departmentCbx').data("kendoComboBox");
+    //    if ($.inArray("1", $('#roleCbx').val()) != -1 || $('#roleCbx').val() == null) {
+    //        departmentCbx.enable(false);//disable department cbx
+            
+    //        //set text to show
+    //        departmentCbx.value(0)
+    //        $('.k-invalid-msg[data-for="Department"]').hide();
+    //        //dataSource = $("#usermanager-grid").data("kendoGrid").dataSource;
+    //        //set model value
+    //        //if choose role is admin --> departmentid = 0(user not is in any department)
+    //        //for (var i = 0; i < dataSource.data().length; i++) {
+    //        //    if (dataSource.data()[i].Id == userId)
+    //        //    {
+    //        //        dataSource.data()[i].Department.set("Id", 0);
+    //        //        dataSource.data()[i].Department.set("Name", "");
+    //        //    }
+    //        //}
+    //    }
+    //    else
+    //        departmentCbx.enable(true);
+    //}
+
+</script>
+

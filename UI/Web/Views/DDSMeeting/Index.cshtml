@@ -1,0 +1,168 @@
+﻿@using RepositoryPattern.Infrastructure
+@using Service.Security
+@using Utils
+@using Entities.Domain.Users;
+@model Web.Models.DdsMeeting.DdsMeetingModel
+@{
+    //page title
+    ViewBag.Title = Model.DepartmentName + " Department DDS";
+    Layout = "~/Views/Shared/_KendoUILayout.cshtml";
+
+    var permissionService = EngineContext.Current.Resolve<IPermissionService>();
+    var workContext = EngineContext.Current.Resolve<IWorkContext>();
+}
+
+<script src="@Url.Content("~/Scripts/kendo/2014.1.318/kendo.web.min.js")"></script>
+<script src="@Url.Content("~/Scripts/kendo/2014.1.318/cultures/kendo.culture.ar-EG.min.js")"></script>
+<div class="form-group">
+
+    <div class="pull-right " style="padding-right:0; margin-bottom:5px">
+
+        <input id="datepicker" class="datepicker-fullscreen" style="width: 150px;" />
+    </div>
+
+</div>
+
+<div class="row">
+    <div class="col-md-12">
+        <!-- BOX -->
+        <div class="box border blue">
+            <div class="box-title">
+                <h4><i class="fa fa-user"></i><span class="hidden-inline-mobile">  </span></h4>
+            </div>
+            <div class="box-body">
+
+
+                <div class="tabbable header-tabs">
+
+                    <ul class="nav nav-tabs">
+                        @if ((workContext.CurrentUser != null && ((workContext.CurrentUser.Departments.Any(d=>d.Id == Model.DepartmentId)) || workContext.CurrentUser.IsAdmin())))
+                        {
+                            if (permissionService.Authorize(PermissionProvider.ViewAttendance) || permissionService.Authorize(PermissionProvider.WriteAttendance))
+                            {
+                                <text>
+                                    <li>
+                                        <a href = "#tabattendance" data-toggle = "tab" >
+                                            <i class="fa fa-dot-circle-o" ></i > 
+                                            <span class="hidden-inline-mobile" > Attendance </span >
+                                        </a >
+                                     </li >
+                                </text>
+                            }
+                            if (permissionService.Authorize(PermissionProvider.ViewIssues) || permissionService.Authorize(PermissionProvider.WriteIssues))
+                            {
+                                <text >
+                                    <li >
+                                        <a href = "#tabissue" data-toggle="tab" >
+                                            <i class="fa fa-edit" ></i > 
+                                            <span class="hidden-inline-mobile" > Issue daily </span >
+                                        </a >
+                                     </li >
+                                </text>
+                            }
+                        }
+                        <li class="active"><a href="#tabresult" data-toggle="tab"><i class="fa fa-question"></i> <span class="hidden-inline-mobile">Result daily </span></a></li>   
+                        </ul>
+
+                    <div class="tab-content">
+                        <div class="tab-pane fade in active" id="tabresult">
+                            @Html.Action("Result", new { departmentId = Model.DepartmentId, date = Model.Date, lineId = Model.LineId })
+                        </div>
+                        @if ((workContext.CurrentUser != null && ((workContext.CurrentUser.Departments.Any(d=>d.Id == Model.DepartmentId)) || workContext.CurrentUser.IsAdmin())))
+                        {
+                            if (permissionService.Authorize(PermissionProvider.ViewIssues) || permissionService.Authorize(PermissionProvider.WriteIssues))
+                            {
+                                <text>
+                                <div class="tab-pane fade" id="tabissue">
+                                    @Html.Action("Issue", new { departmentId = Model.DepartmentId, date = Model.Date })
+                                </div>
+                                </text>
+                            }
+                            if (permissionService.Authorize(PermissionProvider.ViewAttendance) || permissionService.Authorize(PermissionProvider.WriteAttendance))
+                            {
+                                <text>
+                                <div class="tab-pane fade" id="tabattendance">
+                                    @Html.Action("Attendance", new { departmentId = Model.DepartmentId, date = Model.Date })
+                                </div>
+                                </text>
+                            }
+}
+                    </div>
+                    <div class="modal fade " id="line-popup" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+                                    <h4 class="modal-title" id="myModalLabel">Line Remark</h4>
+                                </div>
+                                <div class="modal-body">
+                                    <form class="form-horizontal" role="form">
+                                        <div class="form-group">
+                                            <label class="col-sm-3 control-label">Remark</label>
+                                            <div class="col-sm-8">
+                                                <textarea type="text" class="form-control input-line-remark" placeholder="Remark"></textarea>
+                                            </div>
+                                        </div>
+                                    </form>
+
+                                    <input id="line-popup-code" type="hidden" value="" />
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-default btn-line-close" data-dismiss="modal">Close</button>
+                                    <button type="button" class="btn btn-primary btn-line-save">Save</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    kendo.culture("en-EG");
+    function getURLParameter(name) {
+        return decodeURIComponent(
+            (location.search.match(RegExp("[?|&]" + name + '=(.+?)(&|$)')) || [, null])[1]
+        );
+    }
+
+    var date = getURLParameter('date'); // Get value of param date
+
+    if (date != "null") {
+        $("#datepicker").val(date);
+    } else {
+        $("#datepicker").val($.datepicker.formatDate('mm/dd/yy', new Date()));
+    }
+
+    $(".datepicker-fullscreen").kendoDatePicker({
+        origin: "top right",
+        position: "bottom right",
+        change: function () {
+            window.location.href = "/DdsMeeting/Index?id=" + @Model.DepartmentId + "&date=" +
+                kendo.toString(this.value(), 'd');
+            @*$.ajax({
+                type: 'Get',
+                url: "@Url.Action("Index", "DdsMeeting")",
+                data: {
+                    id: 3,
+                    day: kendo.toString(this.value(), 'd'),
+                }
+            });*@
+        }
+    });
+    function issueAdditionalData() {
+        return {
+            Date: "@Model.Date",
+            DepartmentId: "@Model.DepartmentId",
+        };
+    }
+
+    function issueCreationData() {
+        return {
+            departmentId: "@Model.DepartmentId"
+        };
+    }
+</script>

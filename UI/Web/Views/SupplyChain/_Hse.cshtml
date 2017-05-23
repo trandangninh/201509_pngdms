@@ -1,0 +1,474 @@
+﻿@model Web.Models.Supplychain.HseModel
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="box border orange">
+            <table id="supplychaingrid" class="table">
+                <thead>
+                    <tr>
+                        <th>DMS</th>
+                        <th>Measure</th>
+                        <th>Owner</th>
+                        @foreach (var dep in Model.BosUnsafeDeps)
+                        {
+                            <text>
+                                <th>@dep.DepartmentName</th>
+                            </text>
+                        }
+                        <th>Common Area</th>
+                        <th class="remark-supplychain">Remarks</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr class="scdds-target">
+                        <td rowspan="3" class="scdds-DMS">HS&E</td>
+                        <td>Target</td>
+                        <td></td>
+                        <td class="line-edit-hse" id="target" colspan="@(Model.BosUnsafeDeps.Count + 1)">
+                            <span>@Model.Target</span>
+                            <input class="input-edit-value-result line-edit-hse editinline hide" value="@Model.Target" type="text" id="hse-target" />
+                        </td>
+                        <td class="line-edit-hse not-enter remark-float" id="remark-target">
+                            <span>@Html.Raw(Model.TargetRemark)</span>
+                            <textarea class="input-edit-value-result not-enter" value="@Model.TargetRemark" type="text">@Model.TargetRemark</textarea>
+                        </td>
+                    </tr>
+                    <tr id="BOS-Completetion">
+                        <td>
+                            @Model.BosComplete
+                        </td>
+                        <td class="line-edit-hse">
+                            <input id="bos-complete-owner" value="@Model.BosCompleteOwnerId" style="width: 100%;" />
+                            @*<span>@Model[1].Owner</span>
+                            @{
+                                var userService1 = DependencyResolver.Current.GetService<IUserService>();
+                                var listUsername1 = userService1.GetAllUsersAsync().ToList();
+                                var userAdmin = userService1.GetUserByUsernameAsync("Admin").Result;
+                                if (userAdmin != null)
+                                {
+                                    listUsername1.Remove(userAdmin);
+                                }
+                            }
+                            <select id="Owner1">
+                                @foreach (var user in listUsername1)
+                                {
+                                    if (user.Username == Model[1].Owner)
+                                    {
+                                        <option value="@user.Username" selected>@user.Username</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="@user.Username">@user.Username</option>
+                                    }
+
+                                }
+                            </select>*@
+                        </td>
+
+                        <td class="line-edit-hse" colspan="@(Model.BosUnsafeDeps.Count + 1)">
+                            <div class="boss-today">
+                                <label class="text-strong-underline">BOS today:</label>
+                                <span>@Model.BosToday</span>
+                                <input id="boss-today" type="text" value="@Model.BosToday" class="editinline input-edit-value-result" />
+                            </div>
+                            <div class="boss-jun">
+                                <label class="text-strong-underline">BOS done yesterday:</label>
+                                <span>@Model.BosDone</span>
+                                <input id="boss-jun" type="text" value="@Model.BosDone" class="editinline input-edit-value-result" />
+                            </div>
+                        </td>
+                        <td class="line-edit-hse completion-remarks not-enter remark-float">
+                            <span>@Html.Raw(Model.BosCompleteRemark)</span>
+                            <textarea id="completion-remarks" value="@Model.BosCompleteRemark" type="text" class="editinline input-edit-value-result not-enter">@Model.BosCompleteRemark</textarea>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="sc-measure line-edit-hse">
+                            @Model.BosUnsafe
+                        </td>
+                        <td class="sc-owner line-edit-hse">
+                            <input id="bos-unsafe-owner" value="@Model.BosUnsafeOwnerId" style="width: 100%;" />
+                            @*<span>@Model[2].Owner</span>
+                            <select id="Owner2">
+                                @foreach (var user in listUsername1)
+                                {
+                                    if (user.Username == Model[2].Owner)
+                                    {
+                                        <option value="@user.Username" selected>@user.Username</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="@user.Username">@user.Username</option>
+                                    }
+                                }
+                            </select>*@
+                        </td>
+                        @foreach (var dep in Model.BosUnsafeDeps)
+                        {
+                            <text>
+                            <td class="sc-hse-making line-edit-hse">
+                                <span>@dep.Value</span>
+                                <input class="behaviour behaviour-making editinline input-edit-value-result" value="@dep.Value" type="text" />
+                            </td>
+                            </text>
+                        }
+                        <td class="sc-hse-common line-edit-hse">
+                            <span>@Model.BosUnsafeCommon</span>
+                            <input class="behaviour behaviour-common editinline  input-edit-value-result" value="@Model.BosUnsafeCommon" type="text" />
+                        </td>
+                        <td class="sc-remark line-edit-hse not-enter remark-float">
+                            <span>@Html.Raw(Model.BosUnsafeRemark)</span>
+                            <textarea class="behaviour behaviour-remark editinline not-enter  input-edit-value-result" value="@Model.BosUnsafeRemark" type="text">@Model.BosUnsafeRemark</textarea>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+    $(document).ready(function () {
+        var alluserAttributes = new kendo.data.DataSource({
+            transport: {
+                read: {
+                    dataType: "json",
+                    type: "POST",
+                    url: "@Html.Raw(Url.Action("GetAllUser", "UserManager"))"
+                }
+            }
+        });
+
+        // create DropDownList from input HTML element
+        $("#bos-complete-owner").kendoDropDownList({
+            dataTextField: "Name",
+            dataValueField: "Id",
+            dataSource: alluserAttributes,
+            //change: onChange
+        });
+        $("#bos-unsafe-owner").kendoDropDownList({
+            dataTextField: "Name",
+            dataValueField: "Id",
+            dataSource: alluserAttributes,
+            //change: onChange
+        });
+    });
+</script>
+<script>
+
+    $(document).ready(function () {
+        var isEdittingDDS = false;
+
+        var oldval = 0;
+
+        function CheckColorDDS(target, number) {
+            if (typeof target != "undefined") {
+
+                target = target.replace("%", "");
+                number = number.replace("%", "");
+                if ($.isNumeric(target) && $.isNumeric(number)) {
+                    if (parseFloat(target) > parseFloat(number))
+                        return "no-match-target";
+                    else return "match-target";
+                }
+                else {
+
+                    return "";
+                }
+            }
+        }
+
+        var $tabledds = jQuery("#supplychaingriddds");
+
+        $tabledds.on("tr.td.next", function (e, $input) {
+            $input = $($input);
+            var $nextInRowTd = $input.parent(".line-check-edit").next();
+
+            if ($nextInRowTd.length > 0) {
+                activeEdit($nextInRowTd);
+            } else {
+                var currentTdIndex = 2;
+                var $trParent = $input.parents("tr");
+                var $nextTr = $trParent.next();
+                if ($nextTr.length > 0 && $nextTr.hasClass("tr-edit")) {
+                    var $nextTd = $nextTr.children("td").eq(currentTdIndex);
+                    if ($nextTd.length > 0) {
+                        activeEdit($nextTd);
+                    }
+                } else {
+                    $nextTr = $input.parents("tr").next().next().next();
+                    var $nextTd = $nextTr.children("td").eq(currentTdIndex);
+                    if ($nextTd.length > 0) {
+                        activeEdit($nextTd);
+                    }
+                }
+            }
+
+        });
+
+
+        function activeEdit(e) {
+            var inputEditInline = e.children(".input-edit-value-result");
+            inputEditInline.removeClass("hide");
+            var isReadonly = $(inputEditInline).prop("readonly");
+            if (isReadonly) {
+                var nextRow = e.parent("tr").next();
+                GoToNextRow(nextRow, 2);
+                inputEditInline.addClass("hide");
+                return;
+            }
+            else {
+                e.children("span").addClass("hide");
+                e.children(".input-edit-value-result").select();
+                e.children(".input-edit-value-result").focus();
+
+                e.children("select").removeClass("hide");
+                e.children("select").focus();
+                oldval = $(e).children('.input-edit-value-result').val();
+                setTimeout(function () {
+                    isEdittingDDS = true;
+                }, 100);
+
+            }
+        }
+
+        function GoToNextRow($newRow, startTdIndex) {
+            if ($newRow.length > 0 && $newRow.hasClass("tr-edit")) {
+                var $nextTd = $newRow.children("td").eq(startTdIndex);
+                if ($nextTd.length > 0) {
+                    activeEdit($nextTd);
+                }
+            } else {
+                $newRow = $input.parents("tr").next().next().next();
+                var $nextTd = $newRow.children("td").eq(startTdIndex);
+                if ($nextTd.length > 0) {
+                    activeEdit($nextTd);
+                }
+            }
+        }
+
+        // gird supply chain\
+        $("#tabresult td .input-edit-value-result ").addClass("hide");
+
+        $("#tabresult td select ").addClass("hide");
+
+        $(".line-edit-dds").click(function () {// target
+
+            if (isEdittingDDS == false) {
+                activeEdit(jQuery(this));
+            }
+        });
+
+        function editvalueDDS(e) {
+            var $input = jQuery(e);
+            var $tr = jQuery($input.parent().parent());
+
+
+            //if input exist and on edit mode
+            if ($input.length > 0 //if textbox is on active
+                    && isEdittingDDS //if on edit mode
+            ) {
+                var newVal = $input.val();
+                if (newVal != oldval) { //validate new value
+                    var owner = $tr.children(".owner").children("span").html();
+                    var type = $tr.data('MeasureType');
+                    var measureCode = $tr.data('measurecode');
+                    var lpd1 = $tr.children(".lpd1").children(".input-edit-value-result").val();
+                    var lpd2 = $tr.children(".lpd2").children(".input-edit-value-result").val();
+                    var lpd3 = $tr.children(".lpd3").children(".input-edit-value-result").val();
+                    var batch = $tr.children(".batch").children(".input-edit-value-result").val();
+                    var frmk = $tr.children(".frmk").children(".input-edit-value-result").val();
+                    var bottle = $tr.children(".bottle").children(".input-edit-value-result").val();
+                    var sachet = $tr.children(".sachet").children(".input-edit-value-result").val();
+                    var pouch = $tr.children(".pouch").children(".input-edit-value-result").val();
+                    var frpk = $tr.children(".frpk").children(".input-edit-value-result").val();
+                    var fe = $tr.children(".fe").children(".input-edit-value-result").val();
+                    var remark = $tr.children(".remark ").children(".input-edit-value-result").val();
+                    $.ajax({
+                        url: '/SupplyChain/UpdateDDS',
+                        type: 'POST',
+                        dataType: 'json',
+                        data: {
+                            Owner: owner,
+                            type: type,
+                            MeasureCode: measureCode,
+                            LPD1: lpd1,
+                            LPD2: lpd2,
+                            LPD3: lpd3,
+                            Batch: batch,
+                            FRMK: frmk,
+                            Bottle: bottle,
+                            Sachet: sachet,
+                            Pouch: pouch,
+                            FRPK: frpk,
+                            FE: fe,
+                            Remark: remark,
+                            Date: currentDate
+                        },
+                        success: function (data) {
+
+                            if (data.status == "success") {
+
+                                var regexNewVal = newVal.replace(/\n/g, "<br />");
+                                //isEdittingDDS = false; //remove edit mode
+                                $input.parent().children('span').removeClass("hide"); //show span
+                                $input.parent().children('span').html(regexNewVal);
+                                $input.addClass("hide");
+                                var $currentTd = $input.parents("td");
+
+                                if ($currentTd.hasClass("making-dds")) { // set color for td making
+
+                                    if (!$currentTd.hasClass("target-making-dds")) {
+                                        var $currentIndexId = $currentTd.index() - 2; // get index current target over
+                                        var inputTarget = $(".target-making-dds").eq($currentIndexId).children("span").html(); // get value span
+                                        var color = CheckColorDDS(inputTarget, regexNewVal); // calular color
+                                        $currentTd.removeClass("no-match-target"); // remove class css
+                                        $currentTd.removeClass("match-target");// remove class css
+                                        $currentTd.addClass(color); // add  true class
+                                    }
+                                } else {// set color for td packing
+
+                                    if (!$currentTd.hasClass("target-packing-dds") && !$currentTd.hasClass("target-making-dds")) {
+                                        var $currentIndexId = $currentTd.index() - 2; // get index current target over
+                                        var inputTarget = $(".target-packing-dds").eq($currentIndexId).children("span").html(); // get value span
+                                        var color = CheckColorDDS(inputTarget, regexNewVal); // calular color
+                                        $currentTd.removeClass("no-match-target"); // remove class css
+                                        $currentTd.removeClass("match-target");// remove class css
+                                        //console.log($currentIndexId + " " + inputTarget + " " + color);
+                                        $currentTd.addClass(color); // add  true class
+                                    }
+                                }
+
+                            }
+                        }
+                    });
+                } else {
+                    //if value not change
+
+                    isEdittingDDS = false; //remove edit mode
+                    $input.parent().children('span').removeClass("hide"); //show span
+                    $input.addClass("hide");
+                }
+
+            } else {
+
+            }
+
+        }
+
+        function validateDecimal(e) {
+
+            if (e.value.length > 0) {
+                var RE = /^[+-]?\d+(\.\d+)?$/;
+                if (RE.test(e.value)) {
+                    return true;
+                } else {
+                    return false;
+                }
+            } else {
+                return true;
+            }
+        }
+
+        jQuery(".line-edit-dds").children(".input-edit-value-result")
+                .keypress(function (event) {
+
+                    var charCode = event.which || event.keyCode;
+                    if (charCode == 13) {
+                        var td = $(this).parent("td");
+                        if (!td.hasClass("line-remark")) {
+
+                            event.preventDefault();
+                            editvalueDDS(this);
+                            isEdittingDDS = false;
+                            $tabledds.trigger("tr.td.next", this);
+                        }
+
+                    }
+
+                })
+                .blur(function () {
+
+
+                    editvalueDDS(this);
+                    isEdittingDDS = false;
+
+                });
+
+        //end gird supply chain
+        jQuery(".line-edit-dds").children("select").blur(function () {
+            var $input = jQuery(this);
+
+            var $tr = jQuery($input.parent().parent());
+
+
+            //if input exist and on edit mode
+            if ($input.length > 0 //if textbox is on active
+                    && isEdittingDDS //if on edit mode
+            ) {
+
+                var newVal = $input.val();
+                if (newVal != "" && newVal != oldval) { //validate new value
+                    var owner = this.value;
+                    var type = $tr.data('MeasureType');
+                    var measureCode = $tr.data('measurecode');
+                    var lpd1 = $tr.children(".lpd1").children(".input-edit-value-result").val();
+                    var lpd2 = $tr.children(".lpd2").children(".input-edit-value-result").val();
+                    var lpd3 = $tr.children(".lpd3").children(".input-edit-value-result").val();
+                    var batch = $tr.children(".batch").children(".input-edit-value-result").val();
+                    var frmk = $tr.children(".frmk").children(".input-edit-value-result").val();
+                    var bottle = $tr.children(".bottle").children(".input-edit-value-result").val();
+                    var sachet = $tr.children(".sachet").children(".input-edit-value-result").val();
+                    var pouch = $tr.children(".pouch").children(".input-edit-value-result").val();
+                    var frpk = $tr.children(".frpk").children(".input-edit-value-result").val();
+                    var fe = $tr.children(".fe").children(".input-edit-value-result").val();
+                    var remark = $tr.children(".remark ").children(".input-edit-value-result").val();
+                    $.ajax({
+                        url: '/SupplyChain/UpdateDDS',
+                        type: 'POST',
+                        dataType: 'json',
+                        data: {
+                            Owner: owner,
+                            type: type,
+                            MeasureCode: measureCode,
+                            LPD1: lpd1,
+                            LPD2: lpd2,
+                            LPD3: lpd3,
+                            Batch: batch,
+                            FRMK: frmk,
+                            Bottle: bottle,
+                            Sachet: sachet,
+                            Pouch: pouch,
+                            FRPK: frpk,
+                            FE: fe,
+                            Remark: remark,
+                            Date: currentDate
+                        },
+                        success: function (data) {
+                            if (data.status == "success") {
+                                isEdittingDDS = false; //remove edit mode
+                                $input.parent().children('span').removeClass("hide"); //show span
+                                $input.parent().children('span').html(owner);
+                                $input.addClass("hide");
+                            }
+                        }
+                    });
+                } else {
+                    //if value not change
+
+                    isEdittingDDS = false; //remove edit mode
+                    $input.parent().children('span').removeClass("hide"); //show span
+                    $input.addClass("hide");
+                }
+
+            } else {
+
+            }
+
+        });
+
+        // date picker
+
+    });
+
+</script>

@@ -1,0 +1,1 @@
+insert into PermissionRecord values('QA Edit Status','QAEditStatus','QualityAlert',26)

@@ -1,0 +1,1082 @@
+﻿@using Entities.Domain
+@using Microsoft.Ajax.Utilities
+@using Service.Common
+@using Service.Departments
+@using Service.Interface
+@using Service.Users
+@model Web.Models.Packing.MeetModel
+@{
+    ViewBag.Title = "Packing Department DDS";
+    Layout = "~/Views/Shared/_KendoUILayout.cshtml";
+    var dmsCodes = Model.ListMeetingResultModel.Select(t => t.DmsCode).Distinct().ToList();
+    var listResults = new List<Web.Models.Packing.LineResult>();
+    var listLineName = new List<string>();
+    foreach (var result in Model.ListMeetingResultModel.Select(t => t.ListResult))
+    {
+        listResults.AddRange(result);
+        listLineName.AddRange(result.Select(lineResult => lineResult.LineName));
+    }
+    listResults = listResults.DistinctBy(x => x.LineCode).ToList();
+    listLineName = listLineName.Distinct().ToList();
+    var _report = DependencyResolver.Current.GetService<IReportService>();
+    var _dmsService = DependencyResolver.Current.GetService<IDmsService>();
+}
+@if (listResults.Count > 0)
+{
+    <div class="form-group">
+
+        <div class="pull-right " style="padding-right:0; margin-bottom:5px">
+            <input id="datepicker"  class="datepicker-fullscreen" style="width: 150px;" />
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-12">
+            <!-- BOX -->
+            <div class="box border blue">
+                <div class="box-title">
+                    <h4><i class="fa fa-user"></i><span class="hidden-inline-mobile">  </span></h4>
+                </div>
+                <div class="box-body">
+
+
+                    <div class="tabbable header-tabs">
+                        <ul class="nav nav-tabs">
+                            <li><a href="#tabattendance" data-toggle="tab"><i class="fa fa-dot-circle-o"></i> <span class="hidden-inline-mobile">Attendance</span></a></li>
+                            <li><a href="#tabtracking" data-toggle="tab"><i class="fa fa-edit"></i> <span class="hidden-inline-mobile">Tracking</span></a></li>
+
+                            <li><a href="#tabissue" data-toggle="tab"><i class="fa fa-edit"></i> <span class="hidden-inline-mobile">Issue daily</span></a></li>
+
+                            <li class="active"><a href="#tabresult" data-toggle="tab"><i class="fa fa-question"></i> <span class="hidden-inline-mobile">Result daily </span></a></li>
+
+                        </ul>
+                        <div class="tab-content">
+                            <!-- Result -->
+                            <div class="tab-pane fade in active" id="tabresult">
+                                <div class="form-group">
+                                    <div class="pull-right" style="margin-bottom: 5px">
+                                       Line <input id="drpLine" value="" />
+                                    </div>
+                                </div>
+                                <div class="box border orange">
+
+                                    <table class="table">
+                                        <thead>
+                                            <tr>
+                                                <th>DMS</th>
+                                                <th>IP/OP</th>
+                                                <th>Measure</th>
+                                                <th>Owner</th>
+                                                <th>Target</th>
+                                                <th>Unit</th>
+                                                @foreach (var str in listResults)
+                                                {
+                                                    var linec = str.LineCode.Replace("(", "").Replace(")", "");
+                                                    LineHardCodeType lc;
+                                                    Enum.TryParse(linec, out lc);
+                                                    var lci = (int)lc;
+
+
+                                                    <th class="linename  th-popup" title="@str.Remark" data-linecode="@lci">@str.LineName</th>
+                                                }
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @{
+                                                var evenRow = 0;
+                                            }
+                                            @foreach (var dmsCode in dmsCodes)
+                                            {
+                                                var currentRow = 0;
+                                                var totalDmsMeasures = 0;
+                                                evenRow ++;
+                                                var data = Model.ListMeetingResultModel.Where(t => t.DmsCode == dmsCode);
+
+                                                totalDmsMeasures = data.Count();
+                                                if(totalDmsMeasures < 1) 
+                                                {
+                                                    totalDmsMeasures = 1;
+                                                }
+                                                foreach (var meetingResultModel in data)
+                                                {
+                                                    currentRow++;
+                                                       if(evenRow%2 != 0 ){
+                                                             <text><tr class="eventRow"></text>
+                                                        }
+                                                        else{
+                                                             <text><tr>
+</text>
+                                                        }
+
+                                                       if (currentRow == 1)
+                                                       {
+                                                        <text>
+                                                            <td rowspan="@totalDmsMeasures" class="dms-code-col depart-DMS" data="dms-code">@_dmsService.GetDmsByDmsCode(dmsCode).Result.Description</td>
+                                                        </text>
+                                                       }
+                                                       switch (meetingResultModel.MeasureType)
+                                                       {
+                                                           case "Null":
+                                                            <text>
+                                                                <td data="MeasureMeasureType" class="measure-type-col"></td></text>
+                                                               break;
+                                                           case "IPorOP":
+                                                        <text>
+                                                            <td data="MeasureMeasureType" class="measure-type-col">IP/OP</td></text>
+                                                               break;
+                                                           default:
+                                                        <text>
+                                                            <td data="MeasureMeasureType" class="measure-type-col">@meetingResultModel.MeasureType</td></text>
+                                                               break;
+                                                       }
+                                                    <text>
+                                                        <td data="MeasureName">@meetingResultModel.MeasureName</td>
+                                                        <td data="Owner" class="owner-col">@meetingResultModel.Owner</td>
+                                                        <td data="Target" class="target-col">@meetingResultModel.Target</td>
+                                                        <td data="Unit" class="unit-col">@meetingResultModel.Unit</td>
+                                                    </text>
+
+                                                    foreach (var str in listResults)
+                                                    {
+
+
+                                                        var lineValue = meetingResultModel.ListResult.Single(s => s.LineCode == str.LineCode);
+                                                        DmsCode dmsc;
+                                                        Enum.TryParse(dmsCode, out dmsc);
+                                                        var dmsci = (int)dmsc;
+
+                                                        var measurec = meetingResultModel.MeasureCode;
+                                                        NoisMainMeasureType mc;
+                                                        Enum.TryParse(measurec, out mc);
+                                                        var mci = (int)mc;
+                                                        var linec = str.LineCode.Replace("(", "").Replace(")", "");
+                                                        LineHardCodeType lc;
+                                                        Enum.TryParse(linec, out lc);
+                                                        var lci = (int)lc;
+
+
+                                                        <td class="line-editable @_report.checkColorPacking(meetingResultModel.Target, lineValue.Result) line-check-edit " data-mscode="@mci-@lci" data-linename="@str.LineName" title="">
+                                                            <div class="line-edit-span">@lineValue.Result</div>
+                                                          
+                                                        </td>
+                                                    }
+                                                 @:</tr>
+                                                }
+                                            }
+
+                                        </tbody>
+                                    </table>
+                                    <div id="bottom_anchor"></div>
+                                </div>
+                                
+                            </div>
+                            <!-- /Result -->
+                            <!-- Issue -->
+                            <div class="tab-pane fade" id="tabissue">
+
+                                <div id="issuegrid" class="none-kendo-toolbar"></div>
+                            </div>
+                            <!-- /Issue -->
+                            
+                            <!-- Tracking -->
+                            <div class="tab-pane fade" id="tabtracking">
+                                <div class="form-group" style="height: 22px">
+                                    <div class="pull-right" style="margin-bottom: 5px">
+                                        Line <input id="drpLineTracking" value="" />
+                                    </div>
+                                </div>
+                                <div id="trackinggrid"></div>
+                            </div>
+                            <!-- /Tracking -->
+                            <!-- Attendance -->
+                            <div class="tab-pane fade" id="tabattendance">
+                                @if (Model.AttendanceModel != null)
+                                {
+                                    <table>
+                                        <tr>
+                                            <td>
+                                                User Created :
+                                            </td>
+                                            <td>
+                                                <span>@Model.AttendanceModel.UserCreated</span>
+                                            </td>
+                                        </tr>
+
+                                        <tr>
+                                            <td>
+                                                Meeting date:
+                                            </td>
+                                            <td>
+                                                @Html.DisplayTextFor(p => p.AttendanceModel.CreatedDate)
+
+                                            </td>
+                                        </tr>
+                                      
+
+                                        <tr>
+                                            <td>
+                                                Attendance users:
+                                            </td>
+                                            <td>
+                                                @String.Join(",", Model.AttendanceModel.ListUsernameInAttendance);
+
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>
+                                                Absent users:
+                                            </td>
+                                            <td>
+                                                @String.Join(",", Model.AttendanceModel.ListUsernameNotInAttendance);
+
+                                            </td>
+                                        </tr>
+
+                                      
+                                    </table>
+                                }
+                                else
+                                {
+                                    <span>There's no meeting in this day</span>
+                                }
+                            </div>
+                            <!-- /Attendance -->
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+}
+else
+{
+    <div>
+        Opp! Admin didn’t assign any line for you so that you can update information.Please contact admin for it!
+    </div>
+}
+
+@section bottomjs{
+
+    <script src="@Url.Content("~/Scripts/kendo/2014.1.318/kendo.web.min.js")"></script>
+    <script>
+        var IsEditting = false;
+        var oldval = 0;
+        var currentDate;
+        $(document).ready(function() {
+            function getURLParameter(name) {
+                return decodeURIComponent(
+                    (location.search.match(RegExp("[?|&]" + name + '=(.+?)(&|$)')) || [, null])[1]
+                );
+            }
+
+            var date = getURLParameter('date');
+            if (date != "null") {
+                currentDate = date;
+                $("#datepicker").val(date);
+            } else {
+                $("#datepicker").val($.datepicker.formatDate('mm/dd/yy', new Date()));
+                currentDate = $.datepicker.formatDate('mm/dd/yy', new Date());
+
+            }
+            //data for drpLine
+            var allLineAttributes = [
+                @for (int i = 0; i < listLineName.Count; i++)
+                {
+
+                    <text>
+{
+    Id: "@listLineName[i]",
+    Name: "@listLineName[i]"
+}
+            </text>
+                    if (i != listLineName.Count - 1)
+                    {
+                        <text>,</text>
+                    }
+                }
+            ];
+            // dropdownlist drpLine
+            $("#drpLine").kendoDropDownList({
+                dataTextField: "Name",
+                dataValueField: "Id",
+                dataSource: allLineAttributes,
+                index: 0,
+                change: onChange,
+                optionLabel: "--- Any Line ---",
+            });
+
+            function onChange() {
+                var th = $("#tabresult").find(".table").find(".linename");
+                var td = $("#tabresult").find(".table").find(".line-editable"); // find all td with class .line-edittable
+                var selectedvalue = $("#drpLine").val(); // get select value dopdownlist line
+                if (selectedvalue == "") { // if select first value
+                    $(td).show();
+                    $(th).show();
+                } else { // if select a line
+                    $(td).hide(); // hide all td with class .line-edittable
+                    $(th).hide();
+                    for (var j = 0; j < th.length; j++) {
+                        if ($(th[j]).html() == selectedvalue) {
+                            $(th[j]).show(); // show td with line choosen
+                        }
+                    }
+                    for (var i = 0; i < td.length; i++) {
+                        if ($(td[i]).data('linename') == selectedvalue) {
+                            $(td[i]).show(); // show td with line choosen
+                        }
+                    }
+                }
+            };
+
+//end dropdownlist drpLine
+            //date picker
+            $(".datepicker-fullscreen").kendoDatePicker({
+                origin: "top right",
+                position: "bottom right",
+                change: function() {
+                    window.location.href = "/Packing/Index?date=" +
+                        kendo.toString(this.value(), 'd');
+                }
+
+            });
+
+// scroll mouse
+            function moveScroll() {
+                var scroll = $(window).scrollTop();
+                var anchor_top = $(".table").offset().top;
+                var anchor_bottom = $("#bottom_anchor").offset().top;
+                if (scroll > anchor_top && scroll < anchor_bottom) {
+                    clone_table = $("#clone");
+                    if (clone_table.length == 0) {
+                        clone_table = $(".table").clone();
+                        clone_table.attr('id', 'clone');
+                        clone_table.css({
+                            position: 'fixed',
+                            'pointer-events': 'none',
+                            top: 0
+                        });
+                        clone_table.width($(".table").width());
+                        $(".orange").append(clone_table);
+                        $("#clone tbody").css({ visibility: 'collapse' });
+                        $("#clone thead").css({ visibility: 'visible', 'pointer-events': 'auto' });
+                    }
+                } else {
+                    $("#clone").remove();
+                }
+            }
+
+            $(window).scroll(moveScroll);
+
+
+            var alluserAttributes = [
+                @{
+                    var userService = DependencyResolver.Current.GetService<IUserService>();
+                    var listUsername = userService.GetAllUsersAsync().ToList();
+                }
+
+                @for (int i = 0; i < listUsername.Count; i++)
+                {
+                    var type = listUsername[i];
+                    <text>
+{
+    Id: "@type.Id.ToString()",
+    Name: "@(Html.Raw(HttpUtility.JavaScriptStringEncode(type.Username)))"
+}
+    </text>
+                    if (i != listUsername.Count - 1)
+                    {
+                        <text>,</text>
+                    }
+                }
+            ];
+
+
+            var allStatusAttributes = [
+                @{
+                    var listType = new List<IssueStatus>()
+                    {
+                        IssueStatus.Open,
+                        IssueStatus.Delayed,
+                        IssueStatus.Closed
+                    };
+                }
+
+                @for (int i = 0; i < listType.Count; i++)
+                {
+                    var MeasureType = listType[i];
+                    <text>
+        {
+            Id: @((int) MeasureType),
+            Name: "@(Html.Raw(HttpUtility.JavaScriptStringEncode(MeasureType.ToString())))"
+        }
+                </text>
+                    if (i != listType.Count - 1)
+                    {
+                        <text>,</text>
+                    }
+                }
+            ];
+
+            function userDropDownEditor(container, options) {
+                $('<input required data-text-field="Name" data-value-field="Id" data-bind="value:UserAssignedId"/>')
+                    .appendTo(container)
+                    .kendoDropDownList({
+                        autoBind: false,
+                        dataSource: alluserAttributes
+                    });
+            }
+
+            function additionalData() {
+                return {
+                    Datetime: currentDate,
+                    Type: "@((int) IssueType.Packing)"
+                };
+            }
+
+
+            function display_kendoui_grid_error(e) {
+                if (e.errors) {
+                    if ((typeof e.errors) == 'string') {
+                        //single error
+                        //display the message
+                        alert(e.errors);
+                    } else {
+                        //array of errors
+                        var message = "The following errors have occurred:";
+                        //create a message containing all errors.
+                        $.each(e.errors, function(key, value) {
+                            if (value.errors) {
+                                message += "\n";
+                                message += value.errors.join("\n");
+                            }
+                        });
+                        //display the message
+                        alert(message);
+                    }
+                } else {
+                    alert('Error happened');
+                }
+            }
+
+            var TypeIssue = '@((int) IssueType.Packing)', a;
+
+            function serialize(data) {
+                data["date"] = currentDate;
+                data["TypeId"] = TypeIssue;
+                for (var property in data) {
+                    if ($.isArray(data[property])) {
+                        serializeArray(property, data[property], data);
+                    }
+                    if (data[property] == null) {
+                        data[property] = " ";
+                    }
+                }
+            }
+
+            function serializeArray(prefix, array, result) {
+                for (var i = 0; i < array.length; i++) {
+                    if ($.isPlainObject(array[i])) {
+                        for (var property in array[i]) {
+                            result[prefix + "[" + i + "]." + property] = array[i][property];
+                        }
+                    } else {
+                        result[prefix + "[" + i + "]"] = array[i];
+                    }
+
+
+                }
+            }
+
+            function statusDropDownEditor(container, options) {
+                $('<input required data-text-field="Name" data-value-field="Id" data-bind="value:StatusId"/>')
+                    .appendTo(container)
+                    .kendoDropDownList({
+                        autoBind: false,
+                        dataSource: allStatusAttributes
+                    });
+            }
+
+            var datasource = new kendo.data.DataSource({
+                type: "json",
+                transport: {
+                    read: {
+                        url: "@Html.Raw(Url.Action("List", "Issue"))",
+                        type: "POST",
+                        dataType: "json",
+                        data: additionalData
+                    },
+                    destroy: {
+                        url: "@Html.Raw(Url.Action("Delete", "Issue"))",
+                        type: "POST",
+                        dataType: "json"
+                    },
+                    create: {
+                        url: "@Html.Raw(Url.Action("Create", "Issue"))",
+                        type: "POST",
+                        dataType: "json",
+                        data: serialize
+                    },
+                    update: {
+                        url: "@Html.Raw(Url.Action("UpdateByEmployee", "Issue"))",
+                        type: "POST",
+                        dataType: "json",
+                        data: serialize
+                    }
+                },
+                schema: {
+                    data: "Data",
+                    total: "Total",
+                    errors: "Errors",
+                    model: {
+                        id: "Id",
+                        fields: {
+                            CreatedDate: {
+                                editable: false,
+                            },
+                            Content: {
+                                editable: false,
+                                validation:
+                                {
+                                    required: true,
+                                    min: 1
+                                }
+                            },
+                            NextStep: {
+                                editable: false,
+
+                                validation:
+                                {
+                                    required: true,
+                                }
+                            },
+                            UserAssigned: {
+                                editable: false,
+                                type: "string",
+                                validation:
+                                {
+                                    required: true,
+                                }
+                            },
+                            TypeId: {
+                                editable: false,
+                                type: "string",
+
+                            },
+                            UserAssignedId: { editable: false, type: "string" },
+
+                            Status: {
+                                editable: true,
+                                type: "string",
+                                validation:
+                                {
+                                    required: true,
+                                }
+                            },
+                            StatusId: { editable: true, type: "number" },
+                            date: {
+                                type: "string",
+                            }
+                        },
+                        ActionPlan: {
+                            editable: false,
+                            type: "string",
+                            validation:
+                            {
+                                required: false,
+                            }
+                        },
+                        When: {
+                            editable: false,
+                            type: "string",
+                            validation:
+                            {
+                                required: false,
+                            }
+                        },
+                        Note: {
+                            editable: false,
+                            type: "string",
+                            validation:
+                            {
+                                required: false,
+                            }
+                        },
+                        SystemFixDMSLinkage: {
+                            editable: false,
+                            type: "string",
+                            validation:
+                            {
+                                required: false,
+                            }
+                        }
+                    }
+                },
+                requestEnd: function(e) {
+                    if (e.type == "create" || e.type == "update") {
+                        this.read();
+                    }
+                },
+                error: function(e) {
+                    display_kendoui_grid_error(e);
+                    // Cancel the changes
+                    this.cancelChanges();
+                },
+
+                pageSize: 10,
+                serverPaging: true,
+                serverFiltering: true,
+                serverSorting: true
+            });
+
+
+            $("#issuegrid").kendoGrid({
+                dataSource: datasource,
+                pageable: {
+                    refresh: true,
+                },
+                height: 'auto',
+                edit: function(e) {
+
+                    //little hack here
+                    //pre-select the first value of kendoui dropdownlist datasource
+                    //for some reasons (maybe, bug) it always sends 0
+                    ////if no value has been selected (changed) in the dropdownlist
+                    if (e.model.Id == "") {
+                        if (alluserAttributes.length > 0) {
+                            //e.model.MeasureTypeId = allMeasureTypeAttributes[0].Name;
+                            e.model.UserAssignedId = alluserAttributes[0].Id;
+                        }
+
+                        if (allStatusAttributes.length > 0) {
+                            e.model.StatusId = allStatusAttributes[0].Id;
+                        }
+                    }
+                },
+                editable: {
+                    confirmation: true,
+                    mode: "inline"
+                },
+                scrollable: false,
+                toolbar: [],
+                columns: [
+                    {
+                        field: "Content",
+                        title: "Issues",
+                        width: 250,
+                        template: "#=(Content == null) ? ' ' : Content #",
+
+                    },
+                    {
+                        field: "ActionPlan",
+                        title: "Follow up action",
+                        width: 250,
+                        template: "#=(ActionPlan == null) ? ' ' : ActionPlan #",
+
+                    },
+                    {
+                        field: "UserAssignedId",
+                        title: "Owner",
+                        width: 150,
+                        editor: userDropDownEditor,
+                        template: "#:UserAssigned#"
+
+                    }, {
+                        field: "WhenDue",
+                        title: "When",
+                        width: 120,  
+                        attributes: {
+                            style:"text-align:center"
+                        },
+
+                        format: '{0:MM/dd/yyyy}',
+                    },
+                    {
+                        field: "StatusId",
+                        title: "Status",
+                        width: 250,
+                        editor: statusDropDownEditor,
+                        template: "#:Status#"
+                    },
+                    {
+                        field: "Note",
+                        title: "Note",
+                        width: 250,
+                        template: "#=(Note == null) ? ' ' : Note #",
+
+                    },
+                    {
+                        field: "SystemFixDMSLinkage",
+                        title: "System Fix <br/>DMS Linkage",
+                        width: 250,
+                        template: "#=(SystemFixDMSLinkage == null) ? ' ' : SystemFixDMSLinkage #"
+                    },
+                    {
+                        field: "When",
+                        title: "When",
+                        width: 120,
+                        
+                        attributes: {
+                            style:"text-align:center"
+                        },
+                        format: '{0:MM/dd/yyyy}',
+
+                    },
+                    {
+                        field: "CreatedDate",
+                        title: "Create Date",
+                        width: 120,  
+                        attributes: {
+                            style:"text-align:center"
+                        },
+                        template: '#:CreatedDate#'
+                    }
+                ]
+            }).on("click", ".k-grid-edit", function() {
+                $(".k-grid-update").html("<span class='k-icon k-update'></span>").css("min-width", "16px").removeClass("k-button-icontext");
+                $(".k-grid-cancel").html("<span class='k-icon k-cancel'></span>").css("min-width", "16px").removeClass("k-button-icontext");
+            }).on("click", ".k-grid-add", function() {
+                $(".k-grid-update").html("<span class='k-icon k-update'></span>").css("min-width", "16px").removeClass("k-button-icontext");
+                $(".k-grid-cancel").html("<span class='k-icon k-cancel'></span>").css("min-width", "16px").removeClass("k-button-icontext");
+            });
+            //start tracking
+
+            //data for drpLine tracking
+            var allLineAttributesTracing = [
+                @for (int i = 0; i < listResults.Count; i++)
+                {
+
+                    <text>
+{
+    Id: "@listResults[i].LineCode",
+    Name: "@listResults[i].LineName"
+}
+    </text>
+                    if (i != listResults.Count - 1)
+                    {
+                        <text>,</text>
+                    }
+                }
+            ];
+            // dropdownlist drpLine
+            $("#drpLineTracking").kendoDropDownList({
+                dataTextField: "Name",
+                dataValueField: "Id",
+                dataSource: allLineAttributesTracing,
+                index: 0,
+                change: onChange,
+                optionLabel: "--- Any Line ---",
+            });
+
+            $("#drpLineTracking").kendoDropDownList({
+                dataTextField: "Name",
+                dataValueField: "Id",
+                dataSource: allLineAttributesTracing,
+                index: 0,
+                change: onChangeLineTracking
+
+            });
+
+            function serializeTracking(data) {
+                data["CreatedDate"] = currentDate;
+                data["LineCode"] = $("#drpLineTracking").val();
+                for (var property in data) {
+                    if (data[property] == null) {
+                        data[property] = " ";
+                    }
+                }
+
+            }
+
+            function onChangeLineTracking() {
+                var grid = $("#trackinggrid").data('kendoGrid');
+                grid.dataSource.page(1);
+            };
+
+            function additionalDataTracking() {
+                return {
+                    Datetime: currentDate,
+                    LineCode: $("#drpLineTracking").val()
+                };
+            }
+
+            var datasourceTracking = new kendo.data.DataSource({
+                type: "json",
+                transport: {
+                    read: {
+                        url: "@Html.Raw(Url.Action("List", "Tracking"))",
+                        type: "POST",
+                        dataType: "json",
+                        data: additionalDataTracking,
+                        complete: function(jqXHR, textStatus) {
+                            console.log($(jqXHR)[0].responseJSON);
+                            if ($(jqXHR)[0].responseJSON != null) {
+                                if (typeof($(jqXHR)[0].responseJSON.Data[0]) != "undefined") {
+                                    var totalQuantity = $(jqXHR)[0].responseJSON.Data[0].TotalQuantity;
+                                    $(".total-tracking-quantity").html("Total: " + totalQuantity);
+                                }
+                            }
+                        }
+                    },
+                    destroy: {
+                        url: "@Html.Raw(Url.Action("Delete", "Tracking"))",
+                        type: "POST",
+                        dataType: "json",
+                        complete: function(jqXHR, textStatus) {
+                            $(".k-pager-refresh").click();
+                        }
+
+                    },
+                    create: {
+                        url: "@Html.Raw(Url.Action("Create", "Tracking"))",
+                        type: "POST",
+                        dataType: "json",
+                        data: serializeTracking,
+                        complete: function(jqXHR, textStatus) {
+                            console.log($(jqXHR)[0].responseJSON);
+                            if ($(jqXHR)[0].responseJSON != null) {
+                                if (typeof($(jqXHR)[0].responseJSON.Data[0]) != "undefined") {
+                                    var totalQuantity = $(jqXHR)[0].responseJSON.Data[0].TotalQuantity;
+                                    $(".total-tracking-quantity").html("Total: " + totalQuantity);
+                                }
+                            }
+                        }
+                    },
+                    update: {
+                        url: "@Html.Raw(Url.Action("Update", "Tracking"))",
+                        type: "POST",
+                        dataType: "json",
+                        data: serializeTracking,
+                        complete: function(jqXHR, textStatus) {
+                            console.log($(jqXHR)[0].responseJSON);
+                            if ($(jqXHR)[0].responseJSON != null) {
+                                if (typeof($(jqXHR)[0].responseJSON.Data[0]) != "undefined") {
+                                    var totalQuantity = $(jqXHR)[0].responseJSON.Data[0].TotalQuantity;
+                                    $(".total-tracking-quantity").html("Total: " + totalQuantity);
+                                }
+                            }
+                        }
+                    },
+                },
+                aggregate: [
+                    { field: "Quantity", aggregate: "sum" }
+                ],
+                schema: {
+                    data: "Data",
+                    total: "Total",
+                    errors: "Errors",
+
+                    model: {
+                        id: "Id",
+                        fields: {
+                            CreatedDate: {
+                                editable: false,
+                                type: "string",
+                            },
+                            FGCode: {
+                                editable: false,
+                                type: "string",
+                                validation:
+                                {
+                                    required: false,
+                                }
+                            },
+                            Variant: {
+                                editable: false,
+                                type: "string",
+                                validation:
+                                {
+                                    required: false,
+                                }
+                            },
+
+                            Size: {
+                                editable: false,
+                                type: "string",
+                                validation:
+                                {
+                                    required: false,
+                                }
+                            },
+                            Lot: {
+                                editable: false,
+                                type: "string",
+                                validation:
+                                {
+                                    required: false,
+                                }
+                            },
+                            Cause: {
+                                editable: false,
+                                type: "string",
+                                validation:
+                                {
+                                    required: false,
+                                }
+                            },
+                            Where: {
+                                editable: false,
+                                type: "string",
+                                validation:
+                                {
+                                    required: false,
+                                }
+                            },
+                            Quantity: {
+                                editable: false,
+                                type: "number",
+                                validation:
+                                {
+                                    required: false,
+                                }
+                            }
+
+                        }
+                    }
+                },
+                requestEnd: function(e) {
+                    if (e.type == "create" || e.type == "update") {
+                        this.read();
+                    }
+                    console.log(e.type);
+                    if (e.type == "read") {
+                        window.setTimeout(function() {
+
+
+                        }, 100);
+                    }
+                },
+                error: function(e) {
+                    display_kendoui_grid_error(e);
+                    // Cancel the changes
+                    this.cancelChanges();
+                },
+
+                pageSize: 10,
+                serverPaging: true,
+                serverFiltering: true,
+                serverSorting: true
+            });
+
+            $("#trackinggrid").kendoGrid({
+                dataSource: datasourceTracking,
+                pageable: {
+                    refresh: true,
+                },
+                height: 'auto',
+                edit: function(e) {
+                    //console.log("MeasureType" + e.MeasureType);
+                    //window.setTimeout(function() {
+
+                    //    var total = calc();
+
+                    //    $("#quantityTotal").html(total);
+                    //},100);
+                    //little hack here
+                    //pre-select the first value of kendoui dropdownlist datasource
+                    //for some reasons (maybe, bug) it always sends 0
+                    //if no value has been selected (changed) in the dropdownlist
+
+                },
+                editable: {
+                    confirmation: true,
+                    mode: "inline"
+                },
+                scrollable: false,
+
+                columns: [
+                    {
+                        field: "CreatedDate",
+                        title: "Create Date",
+                        width: 250,
+                        template: '#:CreatedDate#'
+                    },
+                    {
+                        field: "FGCode",
+                        title: "FGCode",
+                        width: 250,
+                        template: "#=(FGCode == null) ? ' ' : FGCode #"
+                    },
+                    {
+                        field: "Variant",
+                        title: "Variant",
+                        width: 250,
+                        template: "#=(Variant == null) ? ' ' : Variant #"
+                    },
+                    {
+                        field: "Size",
+                        title: "Size",
+                        width: 250,
+                        template: "#=(Size == null) ? ' ' : Size #"
+                    },
+                    {
+                        field: "Lot",
+                        title: "Lot",
+                        width: 250,
+                        template: "#=(Lot == null) ? ' ' : Lot #"
+                    },
+                    {
+                        field: "Cause",
+                        title: "Cause",
+                        width: 250,
+                        template: "#=(Cause == null) ? ' ' : Cause #"
+                    },
+                    {
+                        field: "Where",
+                        title: "Where",
+                        width: 250,
+                        template: "#=(Where == null) ? ' ' : Where #"
+                    },
+                    {
+                        field: "Quantity",
+                        title: "Quantity",
+                        width: 250,
+                        footerTemplate: "<div class=\"total-tracking-quantity\">Total: #= sum #</div>",
+
+                    },
+                    {
+                        //command: [
+                        //    {
+                        //        name: "edit",
+                        //        text: "",
+                        //        template: "<a class='k-button k-grid-edit' href='' style='min-width:16px;'><span class='k-icon k-edit'></span></a>"
+                        //    },
+                        //    {
+                        //        name: "destroy",
+                        //        text: "Delete"
+
+                        //    }
+                        //],
+                        //width: 100
+
+                    }
+                ]
+            }).on("click", ".k-grid-edit", function() {
+                var $updateButton = jQuery("<span class='k-icon k-update test'></span>").bind("click", cancelEdit);
+                $(".k-grid-update").empty();
+                $(".k-grid-update").append($updateButton).css("min-width", "16px").removeClass("k-button-icontext");
+                $(".k-grid-cancel").html("<span class='k-icon k-cancel'></span>").css("min-width", "16px").removeClass("k-button-icontext");
+            }).on("click", ".k-grid-add", function() {
+                $(".k-grid-update").html("<span class='k-icon k-update'></span>").css("min-width", "16px").removeClass("k-button-icontext");
+                $(".k-grid-cancel").html("<span class='k-icon k-cancel'></span>").css("min-width", "16px").removeClass("k-button-icontext");
+            });
+
+            function cancelEdit() {
+                $("#trackinggrid").data("kendoGrid").dataSource.read();
+            }
+
+//end tracking
+
+
+        });
+    </script>
+    <script>
+        $(document).ready(function() {
+            $("#nav-meeting").addClass("active");
+            $(".meeting-packing").addClass("active");
+            //set readonly datepicker
+
+            $('#datepicker').prop('readonly', true);
+        });
+    </script>
+
+}

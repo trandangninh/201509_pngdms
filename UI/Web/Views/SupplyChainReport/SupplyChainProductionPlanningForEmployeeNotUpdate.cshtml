@@ -1,0 +1,280 @@
+﻿@using Entities.Domain
+@using Nois.Web.Framework.Kendoui;
+@model List<Web.Models.SupplyChain.SupplyChainModel>
+@{
+
+    Layout = null;
+}
+
+
+<div class="row">
+    <div class="col-md-12">
+
+        <div class="box border orange scroll-x">
+
+            <table id="supplychaingrid" class="table production-result">
+                
+                <thead>
+                    <tr>
+                        <td></td>
+
+                        <td class="no-padding">
+                            <table class="table-producttionplanning-header-date">
+                                <tr>
+                                    <th class="header-ssc-pro-first"></th>
+                                    @foreach (var item in Model)
+                                    {
+                                        <th colspan="8">@item.SupplyChainProductionPlanning[0].CreatedDate</th>
+                                    }
+                                </tr>
+
+                            </table>
+                        </td>
+
+                    </tr>
+                </thead>
+                <tbody>
+                   
+
+                <tr>
+
+                    <td class="scdds-DMS">
+                        <table class="table" style="border: none !important">
+                            <thead>
+                                <tr>
+                                    <th>DMS</th>
+
+                                </tr>
+
+                            </thead>
+                            <tbody style="border: none !important">
+                                <tr style="height: 284px;" class="scdds-DMS">
+                                    <td style="border: none !important">Production Planning</td>
+
+                                </tr>
+
+                            </tbody>
+
+                        </table>
+                    </td>
+                    <td>
+                        <table id="making" class="table">
+                            <thead>
+                                <tr>
+                                    <th>Production Unit-Making</th>
+                                    <th>Owner</th>
+                                    @foreach (var item in Model)
+                                    {
+                                       
+                                        <th>Shift 2</th>
+                                        <th>Shift 3</th>
+                                        <th>Shift 1</th>
+
+                                      
+                                    }
+                                </tr>
+                            </thead>
+                            <tbody>
+
+                                @for (int i = 0; i < 6; i++)
+                                {
+                                    <tr data-type="1" data-measurecode="@(i + 1)">
+                                        <td class="measurecode">@Model[0].SupplyChainProductionPlanning[i].MeasureName </td>
+
+                                        <td class="owner ">
+                                            <span>@Model[0].SupplyChainProductionPlanning[i].Owner</span>
+
+                                        </td>
+                                         @foreach (var item in Model)
+                                        {
+
+                                            <td class="shift2  shift">
+                                                <span>@item.SupplyChainProductionPlanning[i].Shift2 </span>
+
+                                            </td>
+                                            <td class="shift3  shift">
+                                                <span>@item.SupplyChainProductionPlanning[i].Shift3 </span>
+
+                                            </td>
+                                            <td class="shift1  shift">
+                                                <span>@item.SupplyChainProductionPlanning[i].Shift1 </span>
+
+                                            </td>
+                                          
+                                        }
+                                    </tr>
+                                }
+
+                            </tbody>
+                        </table>
+
+                        <table id="packing" class="table">
+                            <thead>
+                                <tr>
+                                    <th class="firt-ssc-pro">Production Unit Pkg</th>
+                                    @foreach (var item in Model)
+                                    {
+
+                                        <th class="ssc-pro">Month Target</th>
+                                      <th class="ssc-pro">Today 's Plan</th>
+                                        <th class="ssc-pro">MTD</th>
+                                        <th class="ssc-pro">Gap</th>
+                                     
+                                    }
+
+                                </tr>
+                            </thead>
+                            <tbody>
+
+                                @for (int i = 6; i < 9; i++)
+                                {
+                                    <tr data-type="2" data-measurecode="@(i + 1)">
+                                        <td class="measurecode">@Model[0].SupplyChainProductionPlanning[i].MeasureName</td>
+                                        @foreach (var item in Model)
+                                        {
+                                            <td class="monthtarget @(item.SupplyChainProductionPlanning[i].MeasureName)0 colum0  production-val">
+                                                <span>@item.SupplyChainProductionPlanning[i].MonthTarget</span>
+                                            </td>
+                                            <td class="todayplan @(item.SupplyChainProductionPlanning[i].MeasureName)1 colum1  production-val">
+                                                <span>@item.SupplyChainProductionPlanning[i].TodayPlan</span>
+
+                                            </td>
+                                            <td class="mtd  @(item.SupplyChainProductionPlanning[i].MeasureName)2  colum2  production-val">
+                                                <span>@item.SupplyChainProductionPlanning[i].MTD</span>
+
+                                            </td>
+                                            <td class="gap gap@(i - 6)   colum3  production-val">
+                                                <span>
+                                                    @(item.SupplyChainProductionPlanning[i].MonthTarget
+                                                       
+                                                          - item.SupplyChainProductionPlanning[i].MTD)
+                                                </span>
+
+
+                                            </td>
+                                       
+                                        }
+                                    </tr>
+                                }
+                                <tr data-type="2" data-measurecode="10">
+                                    <td>FE</td>
+                                    @foreach (var item in Model)
+                                    {
+                                        <td class="FE0">
+
+                                            @(item.SupplyChainProductionPlanning[6].MonthTarget
+                                                  + item.SupplyChainProductionPlanning[7].MonthTarget
+                                                  + item.SupplyChainProductionPlanning[8].MonthTarget)
+
+
+                                        </td>
+                                        <td class="FE1">
+                                            @{ var feTodayPlan =
+                                                       item.SupplyChainProductionPlanning[6].TodayPlan
+                                                       + item.SupplyChainProductionPlanning[7].TodayPlan
+                                                       + item.SupplyChainProductionPlanning[8].TodayPlan; }
+                                            @feTodayPlan
+                                        </td>
+                                        <td class="FE2">
+                                            @{ var feMTD =
+                                                       item.SupplyChainProductionPlanning[6].MTD
+                                                       + item.SupplyChainProductionPlanning[7].MTD
+                                                       + item.SupplyChainProductionPlanning[8].MTD; }
+                                            @feMTD
+                                        </td>
+                                        <td class="FE3">
+                                            @(item.SupplyChainProductionPlanning[6].MonthTarget
+                                                  + item.SupplyChainProductionPlanning[7].MonthTarget
+                                                  + item.SupplyChainProductionPlanning[8].MonthTarget
+                                                  - item.SupplyChainProductionPlanning[6].MTD
+                                                       - item.SupplyChainProductionPlanning[7].MTD
+                                                       -item.SupplyChainProductionPlanning[8].MTD
+                                                  )
+                                        </td>
+                                     
+                                    }
+                                </tr>
+
+                                <tr data-type="2" data-measurecode="11">
+                                    <td>@Model[0].SupplyChainProductionPlanning[10].MeasureName</td>
+                                    @foreach (var item in Model)
+{
+    <td class="monthtarget FR0 colum0 production-val">
+        <span>@item.SupplyChainProductionPlanning[10].MonthTarget</span>
+    </td>
+    <td class="todayplan FR1 colum1 production-val">
+        <span>@item.SupplyChainProductionPlanning[10].TodayPlan</span>
+
+    </td>
+    <td class="mtd FR2 colum2 production-val">
+        <span>@item.SupplyChainProductionPlanning[10].MTD</span>
+
+    </td>
+    <td class=" production-val">
+        @(item.SupplyChainProductionPlanning[10].MonthTarget
+
+                                                          - item.SupplyChainProductionPlanning[10].MTD)
+    </td>
+
+}
+                                </tr>
+                                <tr data-type="2" data-measurecode="12">
+                                    <td>Total(Liquids)</td>
+                                    @foreach (var item in Model)
+{
+    <td class="totalMonthTarget production-val">
+
+        @(item.SupplyChainProductionPlanning[6].MonthTarget
+                                                  + item.SupplyChainProductionPlanning[7].MonthTarget
+                                                  + item.SupplyChainProductionPlanning[8].MonthTarget
+                                                  + item.SupplyChainProductionPlanning[10].MonthTarget
+        )
+
+
+    </td>
+    <td class="totaTodayPlan production-val">
+        @(
+ item.SupplyChainProductionPlanning[6].TodayPlan
+    + item.SupplyChainProductionPlanning[7].TodayPlan
+    + item.SupplyChainProductionPlanning[8].TodayPlan
+    + item.SupplyChainProductionPlanning[10].TodayPlan
+        )
+    </td>
+
+    <td class="totalMTD production-val">
+        @(
+ item.SupplyChainProductionPlanning[6].MTD
+    + item.SupplyChainProductionPlanning[7].MTD
+    + item.SupplyChainProductionPlanning[8].MTD
+    + item.SupplyChainProductionPlanning[10].MTD)
+    </td>
+    <td class="totalGrap production-val">
+        @{ var gap5 =
+
+                                                                           item.SupplyChainProductionPlanning[6].MonthTarget
+                                                                           + item.SupplyChainProductionPlanning[7].MonthTarget
+                                                                           + item.SupplyChainProductionPlanning[8].MonthTarget
+                                                                           + item.SupplyChainProductionPlanning[10].MonthTarget
+                                                                           - item.SupplyChainProductionPlanning[6].MTD
+                                                                           - item.SupplyChainProductionPlanning[7].MTD
+                                                                           - item.SupplyChainProductionPlanning[8].MTD
+                                                                           - item.SupplyChainProductionPlanning[10].MTD;
+        }
+        @gap5.ToString("F2")
+    </td>
+
+                                    }
+                                </tr>
+                            </tbody>
+                        </table>
+                    </td>
+                </tr>
+
+
+            </tbody>
+        </table>
+
+    </div>
+
+</div>
+</div>

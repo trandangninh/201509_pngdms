@@ -1,0 +1,621 @@
+﻿@using Service.Users
+@model Web.Models.Report.ReportViewModel
+
+@{
+    //page title
+    ViewBag.Title = Model.DepartmentName + " Report";
+    Layout = "~/Views/Shared/_KendoUILayout.cshtml";
+}
+@*<script src="@Url.Content("~/Scripts/kendo/2014.1.318/kendo.web.min.js")"></script>*@
+<script src="@Url.Content("~/Scripts/moment.min.js")"></script>
+<link href="~/Content/kendo.common.min.css" rel="stylesheet" />
+<script src="~/Scripts/kendo/2014.1.318/kendo.all.min.js"></script>
+
+<style>
+    #grid table thead tr th {
+        border: 1px solid #d5d5d5;
+        background-color: blue;
+        color: white;
+        height: 20px;
+        text-align: center;
+    }
+
+    #grid table tr td {
+        border-bottom: 1px solid #ddd;
+    }
+
+        #grid table tr td:nth-child(1) {
+            color: white;
+        }
+
+    /*#grid .k-grid-header {
+        padding: 0 !important;
+    }
+
+    #grid .k-grid-content {
+        overflow-y: visible;
+    }*/
+</style>
+
+
+
+
+<div class="form-group">
+
+    <div class="pull-left col-xs-2" style="padding-right:0;padding-top:7px; margin-bottom:5px">
+        <a class="btn btn-info btn-info-custom" id="export-excel" title="Export to Excel" href="/Report/ExportDdsMeetingToExcel">
+
+            Export to Excel
+        </a>
+
+    </div>
+    <input type="hidden" id="fromDate" name="fromDate" value="" />
+    <input type="hidden" id="toDate" name="toDate" value="" />
+    @if (User.Identity.Name != "")
+    {
+        <div class="pull-left col-xs-2" style="padding-right:0;padding-top:7px; margin-bottom:5px">
+
+            <button class="btn btn-info btn-info-custom" id="send-mail" title="Send Mail">Send Mail</button>
+
+        </div>
+        <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Cancel</span></button>
+                        <h4 class="modal-title" id="myModalLabel"> Send Mail</h4>
+                    </div>
+                    <div class="modal-body">
+                        <table style="width:100%">
+
+                            <tr>
+                                <td>Input Email</td>
+                                <td>
+                                    <select class="listEmail" multiple="multiple" name="listEmail" data-placeholder="Select owner..." style="width:250px !important">
+                                        @{
+        var ownerservice = DependencyResolver.Current.GetService<IUserService>();
+        var owner = ownerservice.GetAllUsersAsync();
+                                        }
+                                        @foreach (var user in owner)
+                                        {
+                                            <option>@ownerservice.GetUserByUsernameAsync(user.Username).Result.Email</option>
+                                        }
+
+                                    </select>
+                                </td>
+                            </tr>
+
+                        </table>
+
+                    </div>
+                    <div class="modal-footer">
+                        <button id="btn-close" type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                        <button id="btn-send" type="button" class="btn btn-primary">Send</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+
+    <div class="pull-right " style="padding-right:0; margin-bottom:5px">
+
+        <div style="float:left; padding:10px 30px">To</div>  <input type="text" id="toDatepicker" class="datepicker-fullscreen" style="width: 150px;" />
+
+    </div>
+
+    <div class="pull-right col-xs-3" style="padding-right:0; margin-bottom:5px">
+        <div style="float:left; padding:10px 30px">From</div>  <input type="text" id="fromDatepicker" class="datepicker-fullscreen" style="width: 150px;" />
+
+    </div>
+
+</div>
+<div class="row">
+    <div class="col-md-12">
+        <!-- BOX -->
+        <div class="box border blue">
+            <div class="box-title">
+                <h4><i class="fa fa-user"></i><span class="hidden-inline-mobile">  </span></h4>
+            </div>
+            <div class="box-body">
+
+
+                <div class="tabbable header-tabs">
+                    <ul class="nav nav-tabs">
+                        <li class="active"><a href="#tabresult" data-toggle="tab"><i class="fa fa-question"></i> <span class="hidden-inline-mobile">Result daily </span></a></li>
+                    </ul>
+                    <div class="tab-content">
+                        <!-- Result -->
+                        <div class="tab-pane fade in active" id="tabresult">
+
+                            <div class="form-group">
+
+                            </div>
+                            <div class="box border orange reportscroll">
+                                @if (Model.Lines.Count > 0)
+                                {
+                                    <div id="grid"></div>
+                                }
+                                else
+                                {
+                                    <div>
+                                        Opp! Admin didn’t assign any line for you so that you can update information.Please contact admin for it!
+                                    </div>
+                                }
+                                <div id="bottom_anchor"></div>
+                            </div>
+                            <!-- /Result -->
+
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<script>
+    $(document).ready(function () {
+        function resizeGrid() {
+            var gridElement = $("#grid");
+            var dataArea = gridElement.find(".k-grid-content");
+            var newHeight = gridElement.parent().innerHeight() - 2;
+            var diff = gridElement.innerHeight() - dataArea.innerHeight();
+            gridElement.height(newHeight);
+            dataArea.height(newHeight - diff);
+        }
+
+        $(window).resize(function () {
+            resizeGrid();
+        });
+
+        var ds = {
+            type: "json",
+            transport: {
+                read: {
+                    url: "@Html.Raw(Url.Action("List", "Report"))",
+                    type: "POST",
+                    dataType: "json",
+                    data: { departmentId: "@Model.DepartmentId", fromDate: "@Model.FromDate", toDate: "@Model.ToDate" }
+                }
+            },
+            //pageSize: 10,
+            schema: {
+                data: "Data",
+                total: "Total",
+                errors: "Errors",
+                model: {
+                    id: "Id",
+                    fields: {
+                        Id: { editable: false },
+                        MeasureId: { editable: false },
+                        Dms: {},
+                        IPorOP: {},
+                        MeasureName: {},
+                        Owner: {},
+                        Target: {},
+                        Unit: {},
+                        //Lines: {}
+                    }
+                }
+            }
+        };
+
+        var grid = $("#grid").kendoGrid({
+            dataSource: ds,
+            height: 600,
+            //pageable: true,
+            //filterable: false,
+            //navigatable: true,
+            //resizable: true,
+            //columnMenu: true,
+            //selectable: "cell",
+            scrollable: true,
+            columns: [
+                {
+                    field: "Dms", width: 100, title: "Dms", filterable: false,
+                    attributes: {
+                        "is-editable": "false"
+                    }
+                },
+                {
+                    field: "IPorOP", width: 55, title: "IP/OP", filterable: false,
+                    attributes: {
+                        "is-editable": "false"
+                    }
+                },
+                {
+                    field: "MeasureId", width: 75, title: "MeasureId", hidden: true,
+                    attributes: {
+                        "is-editable": "false"
+                    }
+                },
+                {
+                    field: "MeasureName", title: "Measure",width: 200, filterable: false,
+                    attributes: {
+                        "is-editable": "false"
+                    }
+                },
+                {
+                    field: "Owner", width: 150, title: "Owner", filterable: false,
+                    attributes: {
+                        "is-editable": "false"
+                    }
+                },
+                {
+                    field: "Target", width: 75, title: "Target", filterable: false,
+                    attributes: {
+                        "is-editable": "false"
+                    }
+                },
+                {
+                    field: "Unit", width: 50, title: "Unit", filterable: false,
+                    attributes: {
+                        "is-editable": "false"
+                    }
+                }
+                @foreach (var groupLine in Model.GroupLines)
+                {
+                <text>
+                ,
+                {
+                    title: "@groupLine.Date",
+                    columns: [
+                        @foreach (var line in Model.Lines)
+                        {
+                            if (line.DayIndex == groupLine.DayIndex)
+                        {
+                        <text>
+                           {
+                               field: "@line.Field",
+                               width: 75,
+                               title: "@line.Name",
+                               attributes: {
+                                   "is-editable": "#=!(@line.IsReadOnly)#",
+                                   "style": "#if(@line.IsHiddenForSpanColumns) { #display:none;# } if(@line.IsReadOnly) { #background-color:gray; color:white;# } if(@line.IsLastLineOfDay) { #border-right: 1px solid \\#d5d5d5;# } #",
+                                   "colspan": "#=@line.Colspan#",
+                                   "IsHiddenForSpanColumns": "#=(@line.IsHiddenForSpanColumns)#"
+                               },
+                           },
+                        </text>
+                        }
+                        }
+                    ]
+                }
+                </text>
+            }
+            ],
+            dataBound: onDataBound
+        }).data("kendoGrid");
+
+    });
+
+
+    //format css table
+    function onDataBound() {
+        $('#grid table').each(function (index, item) {
+            var dimension_col = 1;
+            var key = true;//set color for row
+            // First, scan first row of headers for the "Dimensions" column.
+            $('#grid table').find('th').each(function () {
+                if ($(this).text() == 'Dms') {
+
+                    // first_instance holds the first instance of identical td
+                    var first_instance = null;
+
+                    $(item).find('tr').each(function () {
+                        var row = $(this);
+                        // find the td of the correct column (determined by the colTitle)
+                        var dimension_td = $(this).find('td:nth-child(' + dimension_col + ')');
+
+                        if (first_instance == null) {
+                            first_instance = dimension_td;
+                            first_instance.css("background-color", 'white');
+                        } else if (dimension_td.text() == first_instance.text()) {
+                            var count = 0;
+                            row.children().each(function () {
+                                if (count < 7)
+                                    $(this).css('background-color', first_instance.css("background-color"));
+                                else {
+                                    if ($(this).attr('is-editable') == "true")
+                                        $(this).css('background-color', 'white');
+                                }
+
+                                count++;
+                            });
+                            // console.log(dimension_td.text(), first_instance.text());
+                            // if current td is identical to the previous
+                            // then remove the current td
+                            //dimension_td.remove();
+                            dimension_td.css('display', 'none');
+                            //console.log(dimension_td);
+                            // increment the rowspan attribute of the first instance
+                            first_instance.attr('rowspan', typeof first_instance.attr('rowspan') == "undefined" ? 2 : parseInt(first_instance.attr('rowspan')) + 1);
+                        } else {
+                            // this cell is different from the last
+                            first_instance = dimension_td;
+                            first_instance.css("background-color", key ? '#d7ffc1' : 'white');
+                            var count = 0;
+                            row.children().each(function () {
+                                if (count < 7)
+                                    $(this).css('background-color', first_instance.css("background-color"));
+                                else {
+                                    if ($(this).attr('is-editable') == "true")
+                                        $(this).css('background-color', 'white');
+                                }
+                                count++;
+                            });
+                            //console.log(first_instance.css("background-color"));
+                            key = !key;
+                        }
+                    });
+
+                    //format backround color for column dms
+                    $(item).find('tr').each(function () {
+                        $(this).find('td:nth-child(1)').css('background-color', '#eea236');
+                    });
+                }
+                dimension_col;
+            });
+        });
+
+
+        //css for td of table to show text center
+        $('#grid table').each(function (index, item) {
+            var count = 0;
+            $('#grid>.k-grid-header>.k-grid-header-wrap>table').find('th').each(function () {
+                if (count >= 7) {
+                    $('#grid table tr td:nth-child(' + (count + 1) + ')').css('text-align', 'center');
+                }
+                count++;
+            });
+        });
+
+
+        //set color for cell when loading with condition from target columns
+        $('#grid table tr').each(function () {
+            var index = 0;
+            $(this).find('td').each(function () {
+                if (index >= 7 && $(this).attr('is-editable') == "true") {
+                    var target = $(this).parent().children().eq(5).text();
+                    var result = $(this).text();
+                    if ((target.indexOf(">") >= 0 || target.indexOf("<") >= 0 || target.indexOf("=") >= 0) && (!isNaN(parseFloat(result)) && isFinite(result))) {
+                        var clause = "parseFloat(" + result + ")" + target;
+                        if (eval(clause)) {
+                            $(this).css('background-color', 'green');
+                            $(this).css('color', 'white');
+                        }
+                        else {
+                            $(this).css('background-color', 'red');
+                            $(this).css('color', 'white');
+                        }
+                    }
+                    else {
+                        $(this).css('background-color', 'white');
+                        $(this).css('color', '#787878');
+                    }
+                }
+                //do your stuff, you can use $(this) to get current cell
+                index++;
+            })
+        })
+
+        //
+        $('#grid table tr td:nth-child(7)').css('border-right', '1px solid #d5d5d5');
+
+
+        var diff = $("#grid").height() - $(".k-grid-content").height();
+        var windowHeight = window.screen.availHeight - $('.k-grid-header').height();
+        $("#grid").height(windowHeight);
+        $(".k-grid-content").height(windowHeight - diff);
+    }
+
+
+
+
+
+
+
+    function getURLParameter(name) { // get parameter url
+        return decodeURIComponent(
+            (location.search.match(RegExp("[?|&]" + name + '=(.+?)(&|$)')) || [, null])[1]
+        );
+    }
+
+    var fromDate = getURLParameter('fromDate'); // from date
+    if (fromDate != "null") { // get from date to url
+
+        $("#fromDatepicker").val(fromDate);
+        $("#fromDatepicker").val(fromDate);
+        $("#fromDate").val(fromDate);
+    } else {
+        $("#fromDatepicker").val($.datepicker.formatDate('mm/dd/yy', new Date())); // set current date for from day
+        fromDate = $.datepicker.formatDate('mm/dd/yy', new Date());
+        $("#fromDate").val($.datepicker.formatDate('mm/dd/yy', new Date()));
+    }
+
+    var toDate = getURLParameter('toDate'); // to date
+    if (toDate != "null") { // get to date to url
+        $("#toDatepicker").val(toDate);
+        $("#toDate").val(toDate);
+    } else {
+        $("#toDatepicker").val($.datepicker.formatDate('mm/dd/yy', new Date())); // set current date for from day
+        toDate = $.datepicker.formatDate('mm/dd/yy', new Date());
+        $("#toDate").val($.datepicker.formatDate('mm/dd/yy', new Date()));
+    }
+
+    $("#export-excel").attr("href", "/Report/ExportDdsMeetingToExcel?departmentId=" + @Model.DepartmentId + "&fromDate=" + fromDate + "&toDate=" + toDate); // set href for #export-excel to export excell
+
+    // date click
+    var currentDate = new Date();
+    $("#fromDatepicker").kendoDatePicker({
+        origin: "top right",
+        position: "bottom right",
+
+        max: new Date(),
+        change: function () {
+            $('.overlay-loading').show();
+            setTimeout(function () {
+                // Do something after 0.5 seconds
+
+                var fromDate = $('#fromDatepicker').data('kendoDatePicker').value();
+                var toDate = $('#toDatepicker').data('kendoDatePicker').value();
+                var maxDate = moment(fromDate);
+                maxDate.format('L');
+                maxDate.add('days', 30);
+
+                var checkDay = maxDate;
+                var checkMaxDate = Math.floor((currentDate - Date.parse(fromDate)) / 86400000); // check total day
+
+                if (checkMaxDate < 30) {
+                    checkDay = moment(new Date());
+                }
+                if (fromDate > toDate) {
+                    window.location.href = "/Report/Index?id=" + @Model.DepartmentId + "&fromDate=" + kendo.toString(fromDate, 'd') + "&toDate=" + checkDay.format('L');
+                    $("#export-excel").attr("href", "/Report/ExportDdsMeetingToExcel?departmentId=" + @Model.DepartmentId + "&fromDate=" + kendo.toString(fromDate, 'd') + "&toDate=" + checkDay.format('L'));
+                } else {
+                    if (checkDay < toDate) {
+                        window.location.href = "/Report/Index?id=" + @Model.DepartmentId + "&fromDate=" + kendo.toString(fromDate, 'd') + "&toDate=" + checkDay.format('L');
+                        $("#export-excel").attr("href", "/Report/ExportDdsMeetingToExcel?departmentId=" + @Model.DepartmentId + "&fromDate=" + kendo.toString(fromDate, 'd') + "&toDate=" + checkDay.format('L'));
+                    } else {
+                        window.location.href = "/Report/Index?id=" + @Model.DepartmentId + "&fromDate=" + kendo.toString(fromDate, 'd') + "&toDate=" + kendo.toString(toDate, 'd');
+                        $("#export-excel").attr("href", "/Report/ExportDdsMeetingToExcel?departmentId=" + @Model.DepartmentId + "&fromDate=" + kendo.toString(fromDate, 'd') + "&toDate=" + kendo.toString(toDate, 'd'));
+                    }
+
+                }
+            }, 500);
+
+        }
+    });
+
+
+
+
+
+
+    var maxDate = $('#fromDatepicker').data('kendoDatePicker').value();
+    var checkDay1 = moment(maxDate);
+    checkDay1.format('L');
+
+    var checkMaxDate1 = Math.floor((currentDate - Date.parse(fromDate)) / 86400000); // check total day
+
+    if (checkMaxDate1 < 30) {
+        checkDay1 = currentDate;
+    } else {
+        checkDay1.add('days', 30);
+    }
+
+    var minDate = $('#fromDatepicker').data('kendoDatePicker').value();
+    $("#toDatepicker").kendoDatePicker({
+        origin: "top right",
+        position: "bottom right",
+        min: minDate,
+        max: new Date(checkDay1),
+        change: function () {
+            $('.overlay-loading').show();
+            var fromDate = $('#fromDatepicker').data('kendoDatePicker').value();
+            var toDate = $('#toDatepicker').data('kendoDatePicker').value();
+            window.location.href = "/Report/Index?id=" + @Model.DepartmentId + "&fromDate=" + kendo.toString(fromDate, 'd') + "&toDate=" + kendo.toString(toDate, 'd');
+            $("#export-excel").attr("href", "/Report/ExportDdsMeetingToExcel?departmentId=" + @Model.DepartmentId + "&fromDate=" + kendo.toString(fromDate, 'd') + "&toDate=" + kendo.toString(toDate, 'd'));
+
+        }
+    });
+
+
+    //export to excel
+    @*$('#export-excel').click(function () {
+        window.location.href = "/Report/ExportDdsMeetingToExcel?departmentId=" + @Model.DepartmentId + "&fromDate=" + kendo.toString(fromDate, 'd') + "&toDate=" + kendo.toString(toDate, 'd');
+    });*@
+
+
+
+    //// send mail
+
+    $(".listEmail").kendoMultiSelect().data("kendoMultiSelect");
+
+    $(".sendmail-popup").hide();
+
+
+    $("#send-mail").click(function () {
+        $("#myModal").modal('show');
+
+    }); // open popup
+
+
+    $("#btn-send").on('click', function () {
+        var listEmail = "";
+
+        $(".listEmail option:selected").each(function () {
+            listEmail += $(this).text();
+            listEmail += ";";
+        });
+        $.ajax({
+            url: '/Report/SendMailWithAttachment',
+            type: 'POST',
+            data: JSON.stringify({
+                Email: listEmail,
+                fromDate: $("#fromDatepicker").val(),
+                toDate: $("#toDatepicker").val(),
+                type: 1,
+            }),
+            contentType: 'application/json',
+            dataType: 'json',
+            processData: false,
+            beforeSend: function () {
+                $("#btn-send").attr("disabled", "disabled");
+                $("#btn-send").attr('value', 'Sending Mail');
+            },
+            success: function (data) {
+                if (data.status == "success") {
+                    $('#btn-send').removeAttr("disabled");
+                    $("#btn-send").attr('value', 'Send Mail');
+                    alert('send email successfully');
+                }
+            }
+        });
+    });
+    //end send mail
+
+    $(document).ready(function () {
+        $("#nav-report").addClass("active");
+        $(".report-making").addClass("active");
+
+
+        //set readonly datepicker
+
+        $('#fromDatepicker').prop('readonly', true);
+        $('#toDatepicker').prop('readonly', true);
+    });
+</script>
+
+
+
+
+@*@foreach (var lineInDay in Model.LinesInDay)
+    {
+        <text>
+            ,
+            {
+            title: "Contact Info",
+            columns: [
+            @foreach (var line in lineInDay.Lines)
+            {
+                <text>
+                    {
+                    field: "@line.Field",
+                    /*width: 50,*/
+                    title: "@line.Name",
+                    @*attributes: {
+                            "is-editable": "#=!@line.IsReadOnly#",
+                            "style": "# if(@line.IsReadOnly) { #background-color:gray;# }#",
+                            "LineId": "@line.LineId"
+                        },
+                    },
+                </text>
+            }
+            ]
+            }
+        </text>
+    }*@            

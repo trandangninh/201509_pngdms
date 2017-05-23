@@ -1,0 +1,281 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{0CA71F45-5E58-443E-870D-C59667AA935F}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>Entities</RootNamespace>
+    <AssemblyName>Entities</AssemblyName>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\..\</SolutionDir>
+    <RestorePackages>true</RestorePackages>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>..\..\UI\Web\bin\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="EntityFramework, Version=6.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\EntityFramework.6.1.3\lib\net45\EntityFramework.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="EntityFramework.SqlServer, Version=6.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\EntityFramework.6.1.3\lib\net45\EntityFramework.SqlServer.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Microsoft.Web.Infrastructure, Version=1.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <Private>True</Private>
+      <HintPath>..\..\packages\Microsoft.Web.Infrastructure.1.0.0.0\lib\net40\Microsoft.Web.Infrastructure.dll</HintPath>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Activities" />
+    <Reference Include="System.ComponentModel.DataAnnotations" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Data.SqlServerCe, Version=4.0.0.0, Culture=neutral, PublicKeyToken=89845dcd8080cc91, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\UI\Web\bin\System.Data.SqlServerCe.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Transactions" />
+    <Reference Include="System.Web.Helpers, Version=3.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\Microsoft.AspNet.WebPages.3.2.3\lib\net45\System.Web.Helpers.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Web.Mvc, Version=5.2.3.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\Microsoft.AspNet.Mvc.5.2.3\lib\net45\System.Web.Mvc.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Web.Razor, Version=3.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\Microsoft.AspNet.Razor.3.2.3\lib\net45\System.Web.Razor.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Web.WebPages, Version=3.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\Microsoft.AspNet.WebPages.3.2.3\lib\net45\System.Web.WebPages.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Web.WebPages.Deployment, Version=3.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\Microsoft.AspNet.WebPages.3.2.3\lib\net45\System.Web.WebPages.Deployment.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Web.WebPages.Razor, Version=3.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\Microsoft.AspNet.WebPages.3.2.3\lib\net45\System.Web.WebPages.Razor.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Domain\Activity\ActivityLog.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Domain\Activity\ActivityLogType.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Domain\Categories\Category.cs" />
+    <Compile Include="Domain\ClassificationDefects\ClassificationDefect.cs" />
+    <Compile Include="Domain\ClassificationDefects\Material.cs" />
+    <Compile Include="Domain\Classifications\Classification.cs" />
+    <Compile Include="Domain\Dds\DdsConfig.cs" />
+    <Compile Include="Domain\Dds\DdsMeeting.cs" />
+    <Compile Include="Domain\Dds\DdsMeetingDetail.cs" />
+    <Compile Include="Domain\Dds\DdsMeetingPrDetail.cs" />
+    <Compile Include="Domain\Dds\DdsMeetingResult.cs" />
+    <Compile Include="Domain\Departments\Department.cs" />
+    <Compile Include="Domain\Dms.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Domain\FoundByFunction\FoundByFunction.cs" />
+    <Compile Include="Domain\Frequencys\Frequency.cs" />
+    <Compile Include="Domain\Issue.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Domain\Line.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Domain\LineRemark.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Domain\Logging\Log.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Domain\Logging\LogLevel.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Domain\Measure.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Domain\MeasureSupplyChain.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Domain\MeetingResult.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Domain\Meetings\Attendance.cs" />
+    <Compile Include="Domain\Meetings\Meeting.cs" />
+    <Compile Include="Domain\NoisMainMeasure.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Domain\ProductionPlanningColor.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Domain\ProductPlanning.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Domain\QualityAlerts\QualityAlert.cs" />
+    <Compile Include="Domain\QualityAlerts\QualityAlertFullObject.cs" />
+    <Compile Include="Domain\QualityAlerts\SubColumnFormula.cs" />
+    <Compile Include="Domain\QueuedEmail.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Domain\QueuedEmailAttachment.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Domain\Report.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Domain\ScheduleTask.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Domain\ScMeasures\MqsMeasure.cs" />
+    <Compile Include="Domain\ScMeasures\ScMeasure.cs" />
+    <Compile Include="Domain\ScoreCards\ScoreCardObject.cs" />
+    <Compile Include="Domain\ScoreCards\ScoreCardsPerYear.cs" />
+    <Compile Include="Domain\ShutdownRequest.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Domain\Suppliers\ScMeasureTarget.cs" />
+    <Compile Include="Domain\Suppliers\Supplier.cs" />
+    <Compile Include="Domain\SupplyChainDDS.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Domain\SupplyChainFPQ.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Domain\SupplyChainHSE.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Domain\SupplyChainMPSA.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Domain\SupplyChainProductionPlanning.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Domain\SupplyChainService.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Domain\SupplyChain\SupplyChainDetail.cs" />
+    <Compile Include="Domain\Tracking.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Domain\UserAllowInSupplyChain.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Domain\Meetings\UserInMeeting.cs" />
+    <Compile Include="Domain\UserInSupplyChainFpqs.cs" />
+    <Compile Include="Domain\Users\SystemUserRoleNames.cs" />
+    <Compile Include="Domain\Users\User.cs" />
+    <Compile Include="Domain\Users\UserExtensions.cs" />
+    <Compile Include="Domain\Users\UserLoginResults.cs" />
+    <Compile Include="Domain\Users\UserRole.cs" />
+    <Compile Include="EfStartUpTask.cs" />
+    <Compile Include="Mapping\Activity\ActivityLogMapping.cs" />
+    <Compile Include="Mapping\Categories\CategoryMap.cs" />
+    <Compile Include="Mapping\ClassificationDefects\ClassificationDefectMap.cs" />
+    <Compile Include="Mapping\Classifications\ClassificationMap.cs" />
+    <Compile Include="Mapping\Dds\DdsConfigMap.cs" />
+    <Compile Include="Mapping\Dds\DdsMeetingDetailMap.cs" />
+    <Compile Include="Mapping\Dds\DdsMeetingMap.cs" />
+    <Compile Include="Mapping\Dds\DdsMeetingPrDetailMap.cs" />
+    <Compile Include="Mapping\Dds\DdsMeetingResultMap.cs" />
+    <Compile Include="Mapping\Departments\DepartmentMap.cs" />
+    <Compile Include="Mapping\DmsMapping.cs" />
+    <Compile Include="Mapping\FoundByFunctions\FoundByFunctionMap.cs" />
+    <Compile Include="Mapping\Frequencys\FrequencyMap.cs" />
+    <Compile Include="Mapping\IssueMapping.cs" />
+    <Compile Include="Mapping\LineRemark.cs" />
+    <Compile Include="Mapping\LineMapping.cs" />
+    <Compile Include="Mapping\MeasureSupplyChainMapping.cs" />
+    <Compile Include="Mapping\MeasureMapping.cs" />
+    <Compile Include="Mapping\Meetings\AttendanceMap.cs" />
+    <Compile Include="Mapping\Meetings\MeetingMap.cs" />
+    <Compile Include="Mapping\ProductPlaningMapping.cs" />
+    <Compile Include="Mapping\QualityAlerts\QualityAlertMap.cs" />
+    <Compile Include="Mapping\QualityAlerts\SubColumnFormulaMap.cs" />
+    <Compile Include="Mapping\QueuedEmailAttachmentMapping.cs" />
+    <Compile Include="Mapping\QueuedEmailMapping.cs" />
+    <Compile Include="Mapping\ScheduleTaskMapping.cs" />
+    <Compile Include="Mapping\ScMeasures\MqsMeasureMap.cs" />
+    <Compile Include="Mapping\ScMeasures\ScMeasureMap.cs" />
+    <Compile Include="Mapping\Security\PermissionRecordMap.cs" />
+    <Compile Include="Mapping\ShutdownRequestMapping.cs" />
+    <Compile Include="Mapping\Suppliers\ScMeasureTargetMap.cs" />
+    <Compile Include="Mapping\Suppliers\SupplierMap.cs" />
+    <Compile Include="Mapping\SupplyChainDDSMapping.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Mapping\SupplyChainFPQEMapping.cs" />
+    <Compile Include="Mapping\SupplyChainHSEMapping.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Mapping\SupplyChainMPSAMapping.cs" />
+    <Compile Include="Mapping\SupplyChainProductionPlanningMapping.cs" />
+    <Compile Include="Mapping\SupplyChainServiceMapping.cs" />
+    <Compile Include="Mapping\SupplyChain\SupplyChainDetailMap.cs" />
+    <Compile Include="Mapping\UserAllowInSupplyChainMapping.cs" />
+    <Compile Include="Mapping\TrackingMapping.cs" />
+    <Compile Include="Mapping\Meetings\UserInMeetingMap.cs" />
+    <Compile Include="Mapping\UserInSupplyChainFpqMap.cs" />
+    <Compile Include="Mapping\UserInSupplyChainMPSAMap.cs" />
+    <Compile Include="Mapping\Users\UserMap.cs" />
+    <Compile Include="Mapping\Users\UserRoleMap.cs" />
+    <Compile Include="NoisObjectContext.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Domain\Security\DefaultPermissionRecord.cs" />
+    <Compile Include="Domain\Security\PermissionRecord.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\Framework\RepositoryPatternEF6\2.RepositoryPatternEF6.csproj">
+      <Project>{a6c5a991-35a8-421d-80ba-80a87ea25a54}</Project>
+      <Name>2.RepositoryPatternEF6</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Framework\RepositoryPattern\1.RepositoryPattern.csproj">
+      <Project>{7EFAA7C0-D715-446F-BBD9-51C44F72AF14}</Project>
+      <Name>1.RepositoryPattern</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Mapping\Logging\" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="App.config" />
+    <None Include="packages.config" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <Import Project="$(SolutionDir)\.nuget\NuGet.targets" Condition="Exists('$(SolutionDir)\.nuget\NuGet.targets')" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>

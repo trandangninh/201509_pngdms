@@ -1,0 +1,242 @@
+﻿@{
+
+    //page title
+    ViewBag.Title = "Classification";
+    Layout = "~/Views/Shared/_KendoUILayout.cshtml";
+}
+<script src="@Url.Content("~/Scripts/kendo/2014.1.318/kendo.web.min.js")"></script>
+
+<div id="classification-grid"></div>
+<script id="tooltip-template" type="text/x-kendo-template">
+    <!--<span class = "k-widget k-tooltip k-tooltip-validation k-invalid-msg" > <span class = "k-icon k-warning" > </span>#=message#</span>-->
+    <span class="k-invalid-msg">#=message#</span>
+</script>
+<script>
+    //get data FoundByFunction for combobox popup editor
+    var dataSourceFoundByFunction = new kendo.data.DataSource({
+        transport: {
+            read: {
+                dataType: "json",
+                type: "POST",
+                url: "@Html.Raw(Url.Action("GetAllFoundByFunction", "FoundByFunction"))"
+            }
+        },
+        schema: {
+            parse: function(data) {
+                data.unshift({ Id: "0", Name: "--  None  --" });
+                return data;
+            }
+        }
+    });
+    $(document).ready(function () {
+        isCreating = false;
+        //$("#classification-grid").kendoValidator();
+        $("#classification-grid").kendoGrid({
+            dataSource: {
+                type: "json",
+                transport: {
+                    read: {
+                        url: "@Html.Raw(Url.Action("List", "Classification"))",
+                        type: "POST",
+                        dataType: "json"
+                    },
+                    update: {
+                        url: "@Html.Raw(Url.Action("Update", "Classification"))",
+                        type: "POST",
+                        dataType: "json",
+                        complete: function (e) {
+                            if (e.responseJSON != undefined && e.responseJSON.status == "success")
+                                $("#classification-grid").data("kendoGrid").dataSource.read();
+                        }
+                    },
+                    destroy: {
+                        url: "@Html.Raw(Url.Action("Delete", "Classification"))",
+                        type: "POST",
+                        dataType: "json"
+                    },
+                    create: {
+                        url: "@Html.Raw(Url.Action("Create", "Classification"))",
+                        type: "POST",
+                        dataType: "json",
+                        complete: function (e) {
+                            if (e.responseJSON != undefined && e.responseJSON.status == "success")
+                                $("#classification-grid").data("kendoGrid").dataSource.read();
+                        }
+                    }
+                },
+                schema: {
+                    data: "Data",
+                    total: "Total",
+                    errors: "Errors",
+                    model: {
+                        id: "Id",
+                        fields: {
+                            Id:{ editable: false, type:'number' },
+                            Code: { editable: true },
+                            Name: { editable: true },
+                            Description: { editable: true },
+                            FoundByFunction: { editable: true, defaultValue: { Name: '', Id: '' } }
+                        }
+                    }
+                },
+                error: function (e) {
+                    display_kendoui_grid_error(e);
+                },
+                pageSize: 15,
+                serverPaging: true,
+                serverFiltering: true,
+                serverSorting: true
+            },
+            pageable: {
+                refresh: true,
+                pageSizes: ["5", "10", "15", "20"]
+            },
+            editable: {
+                mode: "popup",
+                //default title of popup editor
+                window: {
+                    title: "Modify Classification",
+                },
+                //template of custom popup editor
+              template: kendo.template($("#popup_editor").html())
+            },
+            edit: function (e) {
+                //custom validate message
+                e.sender.editable.validatable._errorTemplate = kendo.template($('#tooltip-template').html());
+                if (isCreating) {
+                    //change title popup editor
+                    e.container.kendoWindow("title", "Create New Classification");
+                    //change tex (save changes --> create) popup editor
+                    $(".k-grid-update").contents().filter(function () {
+                        return this.nodeType == 3;
+                    })[0].nodeValue = "Create";
+                    isCreating = false;
+                }
+            },
+            toolbar: ["create"],
+            scrollable: false,
+            columns: [
+                //{
+                //    field: "Id"
+                //},
+                {
+                    field: "Code",
+                    title: "Code",
+                    width: 400
+                },
+                {
+                    field: "Name",
+                    title: "Classification Name",
+                    width: 400
+                },                
+                {
+                    field: "Description",
+                    title: "Description",
+                    width: 400
+                },
+                {
+                    field: "Severity",
+                    title: "Severity",
+                    width: 200
+                },
+                {
+                    field: "Dectability",
+                    title: "Dectability",
+                    width: 200
+                },
+                {
+                    field: "FoundByFunctionName",
+                    title: "Found by Function",
+                    width: 150,
+                    template: "#=FoundByFunction.Name ? FoundByFunction.Name : '' #"
+                },
+                {
+                    command: [
+                        {
+                            name: "edit",
+                            text: { update: "Save Changes", cancel: "Cancel" }
+                        },
+                        "destroy"
+                    ],
+                    title: "&nbsp;",
+                    width: "250px"
+                }
+            ]
+        });
+        $(".k-grid-add").on("click", function () {
+            isCreating = true;
+        });
+        function display_kendoui_grid_error(e) {
+            if (e.errors) {
+                if ((typeof e.errors) == 'string') {
+                    //single error
+                    //display the message
+                    alert(e.errors);
+                } else {
+                    //array of errors
+                    //source: http://docs.kendoui.com/getting-started/using-kendo-with/aspnet-mvc/helpers/grid/faq#how-do-i-display-model-state-errors?
+                    var message = "The following errors have occurred:";
+                    //create a message containing all errors.
+                    $.each(e.errors, function (key, value) {
+                        if (value.errors) {
+                            message += "\n";
+                            message += value.errors.join("\n");
+                        }
+                    });
+                    //display the message
+                    alert(message);
+                }
+            } else {
+                alert(e.xhr.responseText);
+            }
+        }
+    });
+</script>
+
+
+@*template of popup edito*@
+<script class="k-popup" id="popup_editor" type="text/x-kendo-template">
+    <div id="abc">
+        <div class="popup-editor-attribute-classification">
+            <label>Code</label>
+            <input id="classification-code" class="k-textbox" type="text" name="Code" data-bind="value:Code" required />
+            <div style="clear: both;"></div>
+        </div>
+        <div class="popup-editor-attribute-classification">
+            <label>Name</label>
+            <input id="classification-name" class="k-textbox" type="text" name="Name" data-bind="value:Name" required />
+            <div style="clear: both;"></div>
+        </div>        
+        <div class="popup-editor-attribute-classification">
+            <label>Description</label>
+            <textarea class="k-textbox" cols="30" rows="3" name="Description" data-bind="value:Description"></textarea>
+            <div style="clear: both;"></div>
+        </div>   
+        <div class="popup-editor-attribute-classification">
+            <label>Severity</label>
+            <input id="classification-severity" class="k-textbox" type="number" name="Severity" data-bind="value:Severity" required />
+            <div style="clear: both;"></div>
+        </div>
+        <div class="popup-editor-attribute-classification">
+            <label>Dectability</label>
+            <input id="classification-dectability" class="k-textbox" type="number" name="Dectability" data-bind="value:Dectability" required />
+            <div style="clear: both;"></div>
+        </div>  
+        <div>
+            <label class="col-md-3 control-label  text-right" style="margin-right: 4px;">Found by Function</label>
+            
+                <input type="text"
+                       name="FoundByFunction"
+                       id="popup-editor-FoundByFunction-attribute-qualityalert"
+                       data-role="combobox"
+                       data-bind="value:FoundByFunction"
+                       data-value-field="Id"
+                       data-text-field="Name"
+                       data-source="dataSourceFoundByFunction"
+                       placeholder="Found by function"
+                       style="width:50%" />
+           
+        </div>        
+    </div>            
+</script>
+

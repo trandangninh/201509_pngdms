@@ -1,0 +1,567 @@
+﻿@using Entities.Domain
+@using Entities.Domain.Meetings
+@using RepositoryPattern.Infrastructure;
+@using Service.Security
+@using Service.Meetings
+@using Utils;
+@using Entities.Domain.Users;
+@model Web.Models.DdsMeeting.IssueListModel
+@{
+    var workContext = EngineContext.Current.Resolve<IWorkContext>();
+    var permissionService = EngineContext.Current.Resolve<IPermissionService>();
+    var meetingService = EngineContext.Current.Resolve<IMeetingService>();
+
+    var isLeader = false;
+    if (workContext.CurrentUser != null && !workContext.CurrentUser.IsAdmin())
+    {
+        isLeader = workContext.CurrentUser.Departments.Any(d => meetingService.CheckUserIsMeetingLeaderByDepartmentIdAndUserId(d.Id, workContext.CurrentUser.Id));
+    }
+}
+<div id="issue-grid">
+</div>
+<div id="scrollbar">
+    <div></div>
+</div>
+<script id="issue-delete-button-template" type="text/x-kendo-template">
+    <button id="delete-issue" class="k-button">Delete</button>
+</script>
+<script type="text/x-kendo-template" id="windowTemplateDeleteConfirm">
+    <p id="textOfDeleteConfirm">Are you sure you want to delete selected Issues. They will be deleted permently?</p>
+    <input class="k-button" id="yesBtnDeleteConfirm" type="button" value="Yes" />
+    <input class="k-button" id="noBtnDeleteConfirm" type="button" value="No" />
+</script>
+<script>
+    var departmentId = "@Model.DepartmentId";
+    @*@(Model.ShowDepartmentCbx ? "var departmentIdPopup;" : "var departmentIdPopup = " + Model.DepartmentId);*@
+    var departmentIdPopup = "@Model.DepartmentId";
+
+    function issueGetDepartmentIdPopup() {
+        return {
+            departmentId: departmentIdPopup
+        };
+    }
+
+
+
+    var allDepartmentAttributes = new kendo.data.DataSource({
+        transport: {
+            read: {
+                dataType: "json",
+                type: "POST",
+                url: "@Html.Raw(Url.Action("GetAllDepartment", "DdsMeeting"))"
+            }
+        }
+        ,
+        schema: {
+            parse: function (data) {
+                if (data[0].Id == 0)
+                    data.shift();
+                return data;
+            }
+        }
+    });
+
+    var alluserAttributes = new kendo.data.DataSource({
+        transport: {
+            read: {
+                dataType: "json",
+                type: "POST",
+                url: "@Html.Raw(Url.Action("GetAllUser", "DdsMeeting"))",
+                data: { departmentId: 0 },
+            }
+        }
+    });
+    var allStatusAttributes = new kendo.data.DataSource({
+        transport: {
+            read: {
+                dataType: "json",
+                type: "POST",
+                url: "@Html.Raw(Url.Action("GetAllIssueStatus", "DdsMeeting"))"
+            }
+        }
+    });
+
+    $(document).ready(function () {
+        var datasource = new kendo.data.DataSource({
+            type: "json",
+            transport: {
+                read: {
+                    url: "@Html.Raw(Url.Action("IssueList", "DdsMeeting"))",
+                    type: "POST",
+                    dataType: "json",
+                    data: issueAdditionalData
+                },
+                @*destroy: {
+                    url: "@Html.Raw(Url.Action("Delete", "DdsMeeting"))",
+                    type: "POST",
+                    dataType: "json"
+                },*@
+                create: {
+                    url: "@Html.Raw(Url.Action("Create", "DdsMeeting"))",
+                    type: "POST",
+                    dataType: "json",
+                    data: issueGetDepartmentIdPopup
+                },
+                update: {
+                    url: "@Html.Raw(Url.Action("Update", "DdsMeeting"))",
+                    type: "POST",
+                    dataType: "json",
+                    //data: serialize
+                }
+            },
+            schema: {
+                data: "Data",
+                total: "Total",
+                errors: "Errors",
+                model: {
+                    id: "Id",
+                    fields: {
+                        Index: { editable: false },
+                        DepartmentId: { editable: "@Model.ShowDepartmentCbx", type: "string", validation: { required: true } },
+                        DepartmentName: { editable: "@Model.ShowDepartmentCbx", type: "string", validation: { required: true } },
+                        CreatedDate: { editable: false },
+                        UpdatedDate: { editable: false },
+                        Content: { editable: true, validation: { required: true } },
+                        NextStep: { editable: true, validation: { required: true } },
+                        UserAssigned: { editable: true, type: "string", validation: { required: true } },
+                        UserAssignedId: { editable: true, type: "string", validation: { required: true } },
+                        Status: { editable: true, type: "string", validation: { required: true } },
+                        StatusId: { editable: true, type: "number" },
+                        Type: { editable: true, type: "string", validation: { required: true } },
+                        TypeId: { type: "number" },
+                        date: { type: "date", validation: { required: true } },
+                        ActionPlan: { editable: true, type: "string", validation: { required: false } },
+                        IssuesPriority: { editable: true, type: "string", validation: { required: false } },
+                        WhenDue: { editable: true, type: "date", validation: { required: true } },
+                        When: { editable: true, type: "date", validation: { required: true } },
+                        Note: { editable: true, type: "string", validation: { required: false } },
+                        SystemFixDMSLinkage: { editable: true, type: "string", validation: { required: false } },
+                        IsAllowEdit: { editable: false }
+                    }
+                }
+            },
+            requestEnd: function (e) {
+                if (e.type == "create" || e.type == "update") {
+
+                    this.read();
+                }
+            },
+            error: function (e) {
+                display_kendoui_grid_error(e);
+                // Cancel the changes
+                this.cancelChanges();
+            },
+
+            pageSize: 8,
+            serverPaging: true,
+            serverFiltering: true,
+            //serverSorting: true
+        });
+
+        function departmentDropDownEditor(container, options) {
+            $('<input required data-text-field="Name" data-value-field="Id" data-bind="value:' + options.field + '" style="width: 426px;" placeholder="Choose a department"/>')
+                .appendTo(container)
+                .kendoComboBox({
+                    dataTextField: "Name",
+                    dataValueField: "Id",
+                    dataSource: allDepartmentAttributes,
+                    change: function (e) {
+                        departmentIdPopup = e.sender._selectedValue;
+                        alluserAttributes.read();
+                    }
+                    ,
+                    dataBound: function (e) {
+                        //if ShowDepartmentCbx == true -> departmentCbx in Popup editor default choose making
+                        //else departmentCbx in Popup editor choose Deparment from dds meeting daparment
+                        @*@(Model.ShowDepartmentCbx ? "departmentIdPopup = e.sender._selectedValue" : "departmentIdPopup = " + Model.DepartmentId);*@
+                        departmentIdPopup = e.sender._selectedValue;
+                        alluserAttributes.read();
+
+                    }
+                });
+        }
+
+        function userDropDownEditor(container, options) {
+            $('<input required data-text-field="Name" data-value-field="Id" data-bind="value:' + options.field + '" style="width: 426px;" placeholder="Choose an owner"/>')
+                .appendTo(container)
+                .kendoComboBox({
+                    dataTextField: "Name",
+                    dataValueField: "Id",
+                    dataSource: alluserAttributes
+                });
+        }
+
+        function statusDropDownEditor(container, options) {
+            $('<input required data-text-field="Name" data-value-field="Id" data-bind="value:' + options.field + '" style="width: 426px;"/>')
+                .appendTo(container)
+                .kendoDropDownList({
+                    dataTextField: "Name",
+                    dataValueField: "Id",
+                    dataSource: allStatusAttributes,
+                });
+        }
+
+        function textEditorInitialize(container, options) {
+            //$('<textarea name="' + options.field + '"  cols="50" rows="2" style="width: ' + container.width() + 'px;height: auto" />')
+            //    .appendTo(container);
+            $('<textarea name="' + options.field + '"  cols="50" rows="5" style="width: 420px;" required/>')
+                .appendTo(container);
+        };
+
+        function textEditorFollowUpActionInitialize(container, options) {
+            $('<textarea name="' + options.field + '"  cols="50" rows="5" style="width: 420px;" required/>')
+                .appendTo(container);
+        }
+
+        function textEditorNoteInitialize(container, options) {
+            //$('<textarea name="' + options.field + '"  cols="40" rows="2" style="width: ' + container.width() + 'px;height:auto" />')
+            //    .appendTo(container);
+            $('<textarea name="' + options.field + '"  cols="50" rows="3" style="width: 420px;" />')
+                .appendTo(container);
+        }
+
+        ;
+
+        function textInputSystemFixDMSLinkage(container, options) {
+            //$('<textarea name="' + options.field + '"  cols="40" rows="2" style="width: ' + container.width() + 'px;height:auto" />')
+            //    .appendTo(container);
+            $('<input type="text" name="' + options.field + '" style="width: 422px; margin-top: 7px; height: 22px;" />')
+                .appendTo(container);
+        }
+
+        ;
+
+        function dateTimeEditorWhenDue(container, options) {
+            $('<input data-text-field="' + options.field + '" data-value-field="' + options.field + '" data-bind="value:' + options.field + '" data-format="' + options.format + '" style="width: 426px;" required/>')
+                .appendTo(container)
+                .kendoDatePicker({});
+        }
+
+        function dateTimeEditor(container, options) {
+            $('<input data-text-field="' + options.field + '" data-value-field="' + options.field + '" data-bind="value:' + options.field + '" data-format="' + options.format + '" style="width: 426px;"/>')
+                .appendTo(container)
+                .kendoDatePicker({
+                });
+        }
+        function setColor(container, options) {
+            if (container.Status == '@IssueStatus.Closed') {
+                return "<div class='issues-close'>" + container.Status + "</div>";
+            }
+            if (container.Status == '@IssueStatus.Delayed') {
+                return "<div class='issues-delay'>" + container.Status + "</div>";
+            } else
+                return "<div>" + container.Status + "</div>";
+        };
+
+        $("#issue-grid").kendoGrid({
+            dataSource: datasource,
+            pageable: {
+                refresh: true,
+                pageSizes: ["2", "4", "6", "8", "10", "15", "20"]
+            },
+            edit: function (e) {
+                //remove lable and input of check_row when edit or create
+                $('label[for=check_row]').parent().remove();
+                $('div[data-container-for=check_row]').remove();
+                $('input[data-text-field="When"]').attr("readonly", "true");
+                $('input[data-text-field="WhenDue"]').attr("readonly", "true");
+                if (e.model.Id == "") {
+                    $('input[data-text-field="WhenDue"]').val("");
+                    $('input[data-text-field="When"]').val("");
+                    alluserAttributes.fetch(function () {
+                        var view = alluserAttributes.view();
+                        if (view.length > 0) {
+                            e.model.UserAssignedId = view[0].Id;
+                        }
+                    });
+                    allStatusAttributes.fetch(function () {
+                        var view = allStatusAttributes.view();
+                        if (view.length > 0) {
+                            e.model.StatusId = view[0].Id;
+                        }
+                    });
+
+                    $('label[for="CreatedDate"]').parent().hide();
+                    e.model.When = null;
+                }
+                else {
+                    if (!e.model.IsAllowEdit) {
+                        alert("You don't have permission, please contact with Administrator to be supported");
+                        $("#issue-grid").data("kendoGrid").cancelRow();
+                    }
+                        
+                    //$('label[for="When"]').parent().hide();
+                    //$('div[data-container-for="When"]').hide();
+                    $('.k-edit-field:nth-child(20)').css('margin-top', '5px');
+                }
+                if (e.model.Id == "") {
+                    e.container.kendoWindow("title", "Add");
+                }
+                var editWindow = this.editable.element.data("kendoWindow");
+                editWindow.wrapper.css({ width: 600 });
+            },
+            editable: {
+                confirmation: true,
+                mode: "popup"
+            },
+            scrollable: true,
+            @if (workContext.CurrentUser != null && (workContext.CurrentUser.IsAdmin() || (permissionService.Authorize(PermissionProvider.WriteIssues))))
+            {
+                <text>
+            toolbar: ["create"
+                 @if (workContext.CurrentUser != null && (workContext.CurrentUser.IsAdmin() && (permissionService.Authorize(PermissionProvider.WriteIssues))))
+                {
+                    <text>
+                   , { template: $("#issue-delete-button-template").html() }
+                   </text>
+                }
+            ],
+            </text>
+            }
+            columns: [
+                { field: "check_row", title: " ", width: 30, template: "<input type='checkbox' value=#= Id# class='sel' data-isallowedit=#= IsAllowEdit# />" },
+                {
+                    field: "Content",
+                    title: "Issues",
+                    width: 250,
+                    template: "#=(Content == null) ? ' ' : Content #",
+                    editor: textEditorInitialize
+                },
+                {
+                    field: "ActionPlan",
+                    title: "Follow up action",
+                    width: 250,
+                    template: "#=(ActionPlan == null) ? ' ' : ActionPlan #",
+                    editor: textEditorFollowUpActionInitialize
+                },
+                {
+                    field: "UserAssignedId",
+                    title: "Owner",
+                    width: 100,
+                    editor: userDropDownEditor,
+                    template: "#:UserAssigned#"
+                },
+                {
+                    field: "WhenDue",
+                    title: "When",
+                    width: 100,
+                    attributes: { style: "text-align:center" },
+
+                    editor: dateTimeEditorWhenDue,
+                    format: '{0:MM/dd/yyyy}',
+                },
+                {
+                    field: "StatusId",
+                    title: "Status",
+                    width: 100,
+                    editor: statusDropDownEditor,
+                    template: setColor
+                },
+                //_Issues is called form dofollowup can edit DepartmentId -> has column departmentId
+                //_Issues is called form Ddsmeeting can not edit DepartmentId  -> don't has column departmentId
+                @if(Model.ShowDepartmentCbx)
+                {
+                <text>
+                {
+                    field: "DepartmentId",
+                    title: "Department",
+                    width: 100,
+                    editor: departmentDropDownEditor,
+                    template: "#:DepartmentName#"
+                },
+                </text>
+                }
+                {
+                    field: "Note",
+                    title: "Note",
+                    width: 250,
+                    template: "#=(Note == null) ? ' ' : Note #",
+                    editor: textEditorNoteInitialize
+                },
+                {
+                    field: "SystemFixDMSLinkage",
+                    title: "System Fix <br/>DMS Linkage",
+                    width: 250,
+                    template: "#=(SystemFixDMSLinkage == null) ? ' ' : SystemFixDMSLinkage #",
+                    attributes: { style: "width:226px; margin-top: 7px;" },
+                    editor: textInputSystemFixDMSLinkage
+                },
+                {
+                    field: "When",
+                    title: "When",
+                    width: 120,
+                    attributes: { style: "text-align:center" },
+                    format: '{0:MM/dd/yyyy}',
+                    editor: dateTimeEditor
+                },
+                {
+                    field: "CreatedDate",
+                    title: "Create Date",
+                    width: 120,
+                    attributes: { style: "text-align:center" },
+                    template: '#:CreatedDate#',
+                    format: '{0:MM/dd/yyyy}'
+                }
+                @*@if (Model.CanWriteIssue)
+                {
+                <text>
+                    , { command: ["edit", "destroy"], title: "&nbsp;", width: "200px" }
+                </text>
+                }*@
+            ]
+            ,
+            dataBound: function () {
+                //change text of create of grid
+                if (!$('.k-button.k-button-icontext.k-grid-add')) {
+                    $('.k-button.k-button-icontext.k-grid-add').html($('.k-button.k-button-icontext.k-grid-add').html().replace($('.k-button.k-button-icontext.k-grid-add').text(), 'Add new issue'));
+                }
+                //hide column departmentId
+                //_Issues is called form dofollowup has column departmentId -> hide column
+                //_Issues is called form Ddsmeeting not has column departmentId -> don't need hide column
+                @*@if (Model.ShowDepartmentCbx)
+                {
+                    <text>
+                    $("#issue-grid").data("kendoGrid").hideColumn(1);
+                    </text>
+                }*@
+
+                //set width for horizontal scrollbar
+                $('#scrollbar').width($('#issue-grid').width());
+                //set width for content of horizontal scrollbar
+                $('#scrollbar div').width($('#issue-grid tbody').width());
+                //when abstract scrollbar scroll -> grid scroll too
+                $("#scrollbar").scroll(function () {
+                    $('#issue-grid .k-grid-content').scrollLeft($('#scrollbar').scrollLeft());
+                });
+            }
+        });
+
+
+        //define delete popup comfirm
+        var kendoWindow = $("<div id='window'/>").kendoWindow({
+            //height: "250px",
+            title: "Delete Confirm",
+            visible: false,
+            width: "400px",
+            resizable: false,
+            modal: true,
+            viewable: false,
+            content: {
+                template: $("#windowTemplateDeleteConfirm").html()
+            },
+
+            close: function (e) {
+                kendoWindowIsOpen = false;
+            },
+            open: function (e) {
+                kendoWindowIsOpen = true;
+            }
+
+        }).data("kendoWindow");
+
+        //get array of id to delete
+        function deletionData() {
+            var ids = [];
+            $("#issue-grid").find("input:checked").each(function (i, value) {
+                ids.push($(value).val());
+            });
+            return ids;
+        }
+
+
+        @*//show edit popup when double click
+        @if (workContext.CurrentUser != null && (workContext.CurrentUser.IsAdmin() || (
+            permissionService.Authorize(PermissionProvider.WriteIssues))))
+    {
+        <text>
+        $("#issue-grid").delegate("tbody>tr", "dblclick", function () {
+            if (!$(this).hasClass('k-grid-edit-row')) {
+                $("#issue-grid").data("kendoGrid").editRow($(this));
+            }
+        });
+
+
+        </text>
+    }*@
+
+        //show edit popup when double click
+        $("#issue-grid").delegate("tbody>tr", "dblclick", function () {
+            if (!$(this).hasClass('k-grid-edit-row')) {
+                //guest not allow edit
+                if ($(this).find('[data-isallowedit=true]').length > 0) {
+                    $("#issue-grid").data("kendoGrid").editRow($(this));
+                }
+                else {
+                    alert("You don't have permission, please contact with Administrator to be supported");
+                }
+            }
+        });
+
+
+
+        //click delete button
+        $("#delete-issue").on("click", function (e) {
+            @if (workContext.CurrentUser != null && (workContext.CurrentUser.IsAdmin()))
+                 {
+                     <text>
+            if ($("#issue-grid").find("input:checked").length <= 0)
+                return;
+            kendoWindow.open().center();
+            </text>
+                 }
+             else
+                {
+                    <text>
+            alert("You don't have permission, please contact with Administrator to be supported");
+            </text>
+                }
+
+
+        });
+        $("#yesBtnDeleteConfirm").click(function () {
+            $.ajax({
+                url: "@Html.Raw(Url.Action("Delete", "Issue"))",
+                type: "POST",
+                dataType: "json",
+                data: {
+                    listId: deletionData()
+                },
+                success: function (result) {
+                    $('#issue-grid').data('kendoGrid').dataSource.read();
+                    $('#issue-grid').data('kendoGrid').refresh();
+                }
+            });
+
+            kendoWindow.close();
+        });
+        $("#noBtnDeleteConfirm").click(function () {
+            kendoWindow.close();
+        });
+    });
+
+
+
+    //scroll bar resize when window resize
+    $(window).bind("resize", function () {
+        resizeFixedScroll();
+    });
+
+    function resizeFixedScroll() {
+        $('#scrollbar').width($('#issue-grid').width());
+        $('#scrollbar div').width($('#issue-grid tbody').width());
+    }
+
+
+    //change tab event
+    $('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
+        var target = $(e.target).attr("href");
+        if ((target == '#tabissue')) {
+            $('#issue-grid').data('kendoGrid').refresh();
+            $('#scrollbar').width($('#issue-grid').width());
+            $('#scrollbar div').width($('#issue-grid tbody').width());
+            $("#scrollbar").scroll(function () {
+                $('#issue-grid .k-grid-content').scrollLeft($('#scrollbar').scrollLeft());
+            });
+        }
+    });
+</script>

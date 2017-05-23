@@ -1,0 +1,113 @@
+﻿@using Entities.Domain
+@using Nois.Web.Framework.Kendoui;
+@model List<Web.Models.SupplyChain.SupplyChainModel>
+@{
+
+    Layout = null;
+}
+
+
+<div class="row">
+    <div class="col-md-12">
+
+
+        <div class="box border orange scroll-x">
+            <table>
+                <tr>
+
+
+                    <table id="supplychaingrid" class="table">
+                        <thead>
+                            <tr>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                                @foreach (var item in Model)
+                                {
+                                    <th colspan="3">@item.SupplyChainHSE[0].CreatedDate</th>
+                                }
+                            </tr>
+                            <tr>
+                                <th>DMS</th>
+                                <th>Measure</th>
+                                <th>Owner</th>
+                                @foreach (var item in Model)
+                                {
+                                   
+                                    <th>Making</th>
+                                    <th>Packing</th>
+                                    <th>Common Area</th>
+                                 
+                                }
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="scdds-target">
+                                <td rowspan="3" class="scdds-DMS">
+                                    HS&E
+                                </td>
+                                <td>
+                                    Target
+                                </td>
+                                <td></td>
+                                @foreach (var item in Model)
+                                {
+                                    
+                                    <td class="" id="target" colspan="3"><span>@item.SupplyChainHSE[0].Making</span></td>
+                                  
+                                    
+                                }
+                            </tr>
+                            <tr id="BOS-Completetion">
+                                <td>
+                                    BOS-Completetion
+                                </td>
+                                <td class="">
+                                    <span>@Model[0].SupplyChainHSE[1].Owner</span>
+                                   
+                                </td>
+                                @foreach (var item in Model)
+                                {
+                                    
+                                    <td class="line-edit" colspan="3">
+                                        <div>
+                                            <label class="text-strong-underline">BOS today:</label> <span>@item.SupplyChainHSE[1].Making</span>
+                                        </div>
+                                        <div>
+                                            <label class="text-strong-underline">BOS done yesterday:</label> <span>@item.SupplyChainHSE[1].Packing</span>
+                                        </div>
+                                    </td>
+                                   
+                                }
+                            </tr>
+                            <tr>
+                                <td class="sc-measure  ">
+                                    BOS-Top Unsafe Behaviour
+                                </td>
+                                <td class="sc-owner ">
+                                    <span>@Model[0].SupplyChainHSE[2].Owner</span>
+
+
+
+                                </td>
+                                @foreach (var item in Model)
+                                {
+                                   
+                                    <td class="sc-hse-making line-edit"><span>@item.SupplyChainHSE[2].Making</span> </td>
+                                    <td class="sc-hse-packing line-edit scayt_disabled "><span>@item.SupplyChainHSE[2].Packing</span> </td>
+                                    <td class="sc-hse-common line-edit"><span>@item.SupplyChainHSE[2].CommonArea</span> </td>
+                                  
+                                }
+                            </tr>
+
+
+                        </tbody>
+                    </table>
+
+
+                </tr>
+            </table>
+        </div>
+
+    </div>
+</div>

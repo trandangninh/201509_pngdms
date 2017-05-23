@@ -1,0 +1,502 @@
+﻿@using Entities.Domain
+@using Service.Common
+@using Service.Departments
+@using Service.Interface
+@using Service.Users
+@using Web.Models.Report
+@model List<Web.Models.Report.MeetingReportModel>
+@{
+    ViewBag.Title = "Packing Department DDS Report";
+    Layout = "~/Views/Shared/_KendoUILayout.cshtml";
+    var dmsCodes = Model.Select(t => t.DmsCode).Distinct().ToList();
+    var listResults = new List<LineResultReportModel>();
+    var resultLine = Model.Select(t => t.ListResult).FirstOrDefault();
+    foreach (var lineItem in resultLine)
+    {
+        listResults.Add(lineItem);
+    }
+
+    var _report = DependencyResolver.Current.GetService<IReportService>();
+    listResults = listResults.ToList();
+    var _dmsService = DependencyResolver.Current.GetService<IDmsService>();
+}
+
+<style>
+    .reportscroll {
+        overflow-x: scroll;
+        width: 100%;
+        position: relative;
+        overflow-y: hidden !important;
+    }
+
+    #clone {
+        position: absolute !important;
+    }
+</style>
+
+
+@if (listResults.Count > 0)
+{
+    <div class="form-group">
+
+        <div class="pull-left col-xs-2" style="padding-right:0;padding-top:7px; margin-bottom:5px">
+            <a class="btn btn-info btn-info-custom" id="export-excel" title="Export to Excel" href="/Report/ExportPackingToExcel">
+
+                Export to Excel
+            </a>
+
+        </div>
+        <input type="hidden" id="fromDate" name="fromDate" value="" />
+        <input type="hidden" id="toDate" name="toDate" value="" />
+        @if (User.Identity.Name != "")
+        {
+            <div class="pull-left col-xs-2" style="padding-right:0;padding-top:7px; margin-bottom:5px">
+
+                <button class="btn btn-info btn-info-custom" id="send-mail" title="Send Mail">Send Mail</button>
+
+            </div>
+            <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Cancel</span></button>
+                            <h4 class="modal-title" id="myModalLabel"> Send Mail</h4>
+                        </div>
+                        <div class="modal-body">
+                            <table style="width:100%">
+
+                                <tr>
+                                    <td>Input Email</td>
+                                    <td>
+                                        <select class="listEmail" multiple="multiple" name="listEmail" data-placeholder="Select owner..." style="width:250px !important">
+                                            @{
+            var ownerservice = DependencyResolver.Current.GetService<IUserService>();
+            var owner = ownerservice.GetAllUsersAsync();
+                                            }
+                                            @foreach (var user in owner)
+                                            {
+                                                <option>@ownerservice.GetUserByUsernameAsync(user.Username).Result.Email</option>
+                                            }
+
+                                        </select>
+                                    </td>
+                                </tr>
+
+                            </table>
+
+                        </div>
+                        <div class="modal-footer">
+                            <button id="btn-close" type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                            <button id="btn-send" type="button" class="btn btn-primary">Send</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+
+
+        <div class="pull-right " style="padding-right:0; margin-bottom:5px">
+
+            <div style="float:left; padding:10px 30px">To</div>  <input type="text" id="toDatepicker" class="datepicker-fullscreen" style="width: 150px;" />
+
+        </div>
+
+        <div class="pull-right col-xs-3" style="padding-right:0; margin-bottom:5px">
+            <div style="float:left; padding:10px 30px">From</div>  <input type="text" id="fromDatepicker" class="datepicker-fullscreen" style="width: 150px;" />
+
+        </div>
+
+    </div>
+    <div class="row">
+        <div class="col-md-12">
+            <!-- BOX -->
+            <div class="box border blue">
+                <div class="box-title">
+                    <h4><i class="fa fa-user"></i><span class="hidden-inline-mobile">  </span></h4>
+                </div>
+                <div class="box-body">
+
+
+                    <div class="tabbable header-tabs">
+                        <ul class="nav nav-tabs">
+                            <li class="active"><a href="#tabresult" data-toggle="tab"><i class="fa fa-question"></i> <span class="hidden-inline-mobile">Result daily </span></a></li>
+                        </ul>
+                        <div class="tab-content">
+                            <!-- Result -->
+                            <div class="tab-pane fade in active" id="tabresult">
+
+                                <div class="form-group">
+
+                                </div>
+                                <div class="box border orange reportscroll">
+
+                                    <table class="table" id="resultPacking">
+                                        <thead>
+                                            <tr>
+                                                <th rowspan="2">DMS</th>
+                                                <th rowspan="2"><div style="width:80px">IP/OP</div></th>
+                                                <th rowspan="2"><div style="width:210px">Measure</div></th>
+                                                <th rowspan="2"><div style="width:100px">Owner</div></th>
+                                                <th rowspan="2"><div style="width:50px">Target</div></th>
+                                                <th rowspan="2" style="border-right: 1px solid #c7c7c7;"><div style="width:50px">Unit</div></th>
+                                                <th colspan="5" style="border-right: 1px solid #c7c7c7;"><div style="width:350px">@listResults[0].DateTimeCreate.ToShortDateString()</div></th>
+                                                @{
+    var day = listResults[0].DateTimeCreate;
+
+                                                }
+                                                @for (int i = 0; i < listResults.Count; i++)
+                                                {
+                                                    if (day != listResults[i].DateTimeCreate)
+                                                    {
+                                                        <th colspan="5" style="border-right: 1px solid #c7c7c7;"><div style="width:350px">@listResults[i].DateTimeCreate.ToShortDateString()</div></th>
+                                                        day = day.AddDays(1);
+                                                    }
+                                                }
+
+                                            </tr>
+                                            <tr>
+                                                @{
+                                                var indexTh = 1;
+                                                foreach (var str in listResults)
+                                                {
+                                                    if (indexTh % 5 == 0)
+                                                    {
+                                                        <th class="linename" style="border-right: 1px solid #c7c7c7;">@str.LineName</th>
+                                                    }
+                                                    else
+                                                    {
+                                                    <th class="linename">@str.LineName</th>
+                                                        
+                                                    }
+                                                    indexTh++;
+                                                }
+                                                }
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @{
+    var evenRow = 0;
+                                            }
+                                            @foreach (var dmsCode in dmsCodes)
+                                            {
+                                                var currentRow = 0;
+                                                var totalDmsMeasures = 0;
+                                                evenRow++;
+                                                var data = Model.Where(t => t.DmsCode == dmsCode);
+
+                                                totalDmsMeasures = data.Count();
+                                                if (totalDmsMeasures < 1)
+                                                {
+                                                    totalDmsMeasures = 1;
+                                                }
+                                                foreach (var meetingResultModel in data)
+                                                {
+
+                                                    currentRow++;
+                                                    if (evenRow % 2 != 0)
+                                                    {
+                                                        <text>
+                                                            <tr class="eventRow">
+                                                        </text>
+                                                    }
+                                                    else
+                                                    {
+                                                        <text>
+                                                        <tr>
+                                                        </text>
+                                                    }
+
+
+                                                    if (currentRow == 1)
+                                                    {
+                                                        <text>
+                                                            <th rowspan="@totalDmsMeasures" class="dms-code-col depart-DMS" data="dms-code">@_dmsService.GetDmsByDmsCode(dmsCode).Result.Description</th>
+                                                        </text>
+                                                    }
+
+                                                    switch (meetingResultModel.MeasureType)
+                                                    {
+                                                        case "Null":
+                                                            <text>
+                                                                <td data="MeasureMeasureType" class="measure-type-col"></td></text>
+                                                            break;
+                                                        case "IPorOP":
+                                                        <text>
+                                                            <td data="MeasureMeasureType" class="measure-type-col">IP/OP</td></text>
+                                                            break;
+                                                        default:
+                                                        <text>
+                                                            <td data="MeasureMeasureType" class="measure-type-col">@meetingResultModel.MeasureType</td></text>
+                                                            break;
+                                                    }
+                                                    <text>
+                                                        <td data="MeasureName">@meetingResultModel.MeasureName</td>
+                                                        <td data="Owner" class="owner-col">@meetingResultModel.Owner</td>
+                                                        <td data="Target" class="target-col">@meetingResultModel.Target</td>
+                                                        <td data="Unit" class="unit-col">@meetingResultModel.Unit</td>
+                                                    </text>
+                                                    var index = 1;
+                                                    foreach (var str in listResults)
+                                                    {
+                                                        var lineValue = meetingResultModel.ListResult.FirstOrDefault(s => s.LineCode == str.LineCode);
+                                                        meetingResultModel.ListResult.Remove(lineValue);
+                                                        DmsCode dmsc;
+                                                        Enum.TryParse(dmsCode, out dmsc);
+                                                        var dmsci = (int)dmsc;
+
+                                                        var measurec = meetingResultModel.MeasureCode;
+                                                        NoisMainMeasureType mc;
+                                                        Enum.TryParse(measurec, out mc);
+                                                        var mci = (int)mc;
+
+                                                        var linec = str.LineCode.Replace("(", "").Replace(")", "");
+                                                        LineHardCodeType lc;
+                                                        Enum.TryParse(linec, out lc);
+                                                        var lci = (int)lc;
+
+                                                        if (index % 5 == 0 && index != listResults.Count)
+                                                        {
+                                                            <td class="line-editable  line-check-edit @_report.checkColorPacking(meetingResultModel.Target, lineValue.Result)" data-mscode="@mci-@lci" data-linename="@str" style="border-right: 1px solid #c7c7c7; ">
+                                                                <div class="line-edit-span">@lineValue.Result</div>
+                                                                <input value="@lineValue.Result" required type="text" class="hide line-edit-value" data-dmscode="@dmsci" data-measurecode="@mci" data-linecode="@lci" data-target="@meetingResultModel.Target" />
+                                                            </td>
+                                                        }
+                                                        else
+                                                        {
+                                                            <td class="line-editable line-check-edit @_report.checkColorPacking(meetingResultModel.Target, lineValue.Result)" data-mscode="@mci-@lci" data-linename="@str">
+                                                                <div class="line-edit-span">@lineValue.Result</div>
+                                                                <input value="@lineValue.Result" required type="text" class="hide line-edit-value" data-dmscode="@dmsci" data-measurecode="@mci" data-linecode="@lci" data-target="@meetingResultModel.Target" />
+                                                            </td>
+                                                        }
+                                                        index++;
+                                                    }
+
+                                            @:</tr>
+                                            }
+                                            }
+
+                                        </tbody>
+                                    </table>
+
+                                    <div id="bottom_anchor"></div>
+                                </div>
+                                <!-- /Result -->
+
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+else
+{
+    <div>
+        Opp! Admin didn’t assign any line for you so that you can update information.Please contact admin for it!
+    </div>
+}
+
+@section bottomjs{
+
+    <script src="@Url.Content("~/Scripts/kendo/2014.1.318/kendo.web.min.js")"></script>
+    <script src="@Url.Content("~/Scripts/moment.min.js")"></script>
+    <script>
+
+        function moveScroll() { // scroll table
+            var scroll = $(window).scrollTop();
+
+            var anchor_top = $("#resultPacking").offset().top;
+
+            var topheader = parseFloat(scroll) - parseFloat(anchor_top);
+            $("#clone").css({
+                position: 'absolute',
+                'pointer-events': 'none',
+                'top': parseInt(topheader)
+
+            });
+            var anchor_bottom = $("#bottom_anchor").offset().top;
+            if (scroll > anchor_top && scroll < anchor_bottom) {
+                clone_table = $("#clone");
+                if (clone_table.length == 0) {
+                    clone_table = $("#resultPacking").clone();
+                    clone_table.attr('id', 'clone');
+                    clone_table.css({
+                        position: 'absolute',
+                        'pointer-events': 'none',
+                        'top': parseInt(topheader)
+
+                    });
+                    clone_table.width($(".table").width());
+                    $(".orange").append(clone_table);
+                    $("#clone tbody").css({ visibility: 'collapse' });
+                    $("#clone thead").css({ visibility: 'visible', 'pointer-events': 'auto' });
+                }
+            } else {
+                $("#clone").remove();
+            }
+        }
+
+        $(window).scroll(moveScroll);
+
+        function getURLParameter(name) { // get parameter url
+            return decodeURIComponent(
+                (location.search.match(RegExp("[?|&]" + name + '=(.+?)(&|$)')) || [, null])[1]
+            );
+        }
+
+        var fromDate = getURLParameter('fromDate'); // from date
+        if (fromDate != "null") { // get from date to url
+
+            $("#fromDatepicker").val(fromDate);
+            $("#fromDatepicker").val(fromDate);
+            $("#fromDate").val(fromDate);
+        } else {
+            $("#fromDatepicker").val($.datepicker.formatDate('mm/dd/yy', new Date())); // set current date for from day
+            fromDate = $.datepicker.formatDate('mm/dd/yy', new Date());
+            $("#fromDate").val($.datepicker.formatDate('mm/dd/yy', new Date()));
+        }
+
+        var toDate = getURLParameter('toDate'); // to date
+        if (toDate != "null") { // get to date to url
+            $("#toDatepicker").val(toDate);
+            $("#toDate").val(toDate);
+        } else {
+            $("#toDatepicker").val($.datepicker.formatDate('mm/dd/yy', new Date())); // set current date for from day
+            toDate = $.datepicker.formatDate('mm/dd/yy', new Date());
+            $("#toDate").val($.datepicker.formatDate('mm/dd/yy', new Date()));
+        }
+
+        $("#export-excel").attr("href", "/Report/ExportPackingToExcel?fromDate=" + fromDate + "&toDate=" + toDate); // set href for #export-excel to export excell
+
+        // date click
+        var currentDate = new Date();
+        $("#fromDatepicker").kendoDatePicker({
+            origin: "top right",
+            position: "bottom right",
+
+            max: new Date(),
+            change: function () {
+                $('.overlay-loading').show();
+                setTimeout(function() {
+                var fromDate = $('#fromDatepicker').data('kendoDatePicker').value();
+                var toDate = $('#toDatepicker').data('kendoDatePicker').value();
+                var maxDate = moment(fromDate);
+                maxDate.format('L');
+                maxDate.add('days', 30);
+
+                var checkDay = maxDate;
+                var checkMaxDate = Math.floor((currentDate - Date.parse(fromDate)) / 86400000); // check total day
+                if (fromDate > toDate) {
+                    window.location.href = "/Report/MakingReport?fromDate=" + kendo.toString(fromDate, 'd') + "&toDate=" + checkDay.format('L');
+                    $("#export-excel").attr("href", "/Report/ExportMakingToExcel?fromDate=" + kendo.toString(fromDate, 'd') + "&toDate=" + checkDay.format('L'));
+                } else {
+                    if (checkMaxDate < 30) {
+                        checkDay = new Date();
+                    }
+                    if (checkDay < toDate) {
+                        window.location.href = "/Report/PackingReport?fromDate=" + kendo.toString(fromDate, 'd') + "&toDate=" + checkDay.format('L');
+                        $("#export-excel").attr("href", "/Report/ExportPackingToExcel?fromDate=" + kendo.toString(fromDate, 'd') + "&toDate=" + checkDay.format('L'));
+                    } else {
+                        window.location.href = "/Report/PackingReport?fromDate=" + kendo.toString(fromDate, 'd') + "&toDate=" + kendo.toString(toDate, 'd');
+                        $("#export-excel").attr("href", "/Report/ExportPackingToExcel?fromDate=" + kendo.toString(fromDate, 'd') + "&toDate=" + kendo.toString(toDate, 'd'));
+                    }
+                }
+                }, 500);
+            }
+
+        });
+
+
+        var maxDate = $('#fromDatepicker').data('kendoDatePicker').value();
+        var checkDay1 = moment(maxDate);
+        checkDay1.format('L');
+
+        var checkMaxDate1 = Math.floor((currentDate - Date.parse(fromDate)) / 86400000); // check total day
+
+        if (checkMaxDate1 < 30) {
+            checkDay1 = currentDate;
+        } else {
+            checkDay1.add('days', 30);
+        }
+
+        var minDate = $('#fromDatepicker').data('kendoDatePicker').value();
+        $("#toDatepicker").kendoDatePicker({
+            origin: "top right",
+            position: "bottom right",
+            min: minDate,
+            max: new Date(checkDay1),
+            change: function () {
+                $('.overlay-loading').show();
+                setTimeout(function() {
+                var fromDate = $('#fromDatepicker').data('kendoDatePicker').value();
+                var toDate = $('#toDatepicker').data('kendoDatePicker').value();
+                window.location.href = "/Report/PackingReport?fromDate=" + kendo.toString(fromDate, 'd') + "&toDate=" + kendo.toString(toDate, 'd');
+                $("#export-excel").attr("href", "/Report/ExportPackingToExcel?fromDate=" + kendo.toString(fromDate, 'd') + "&toDate=" + kendo.toString(toDate, 'd'));
+                }, 500);
+            }
+        });
+
+        // send mail
+
+        $(".listEmail").kendoMultiSelect().data("kendoMultiSelect");
+
+        $(".sendmail-popup").hide();
+
+
+        $("#send-mail").click(function() {
+            $("#myModal").modal('show');
+
+        }); // open popup
+
+
+        $("#btn-send").on('click', function() {
+            var listEmail = "";
+
+            $(".listEmail option:selected").each(function() {
+                listEmail += $(this).text();
+                listEmail += ";";
+            });
+            $.ajax({
+                url: '/Report/SendMailWithAttachment',
+                type: 'POST',
+                data: JSON.stringify({
+                    Email: listEmail,
+                    fromDate: $("#fromDatepicker").val(),
+                    toDate: $("#toDatepicker").val(),
+                    type: 2,
+                }),
+                contentType: 'application/json',
+                dataType: 'json',
+                processData: false,
+                beforeSend: function() {
+                    $("#btn-send").attr("disabled", "disabled");
+                    $("#btn-send").attr('value', 'Sending Mail');
+                },
+                success: function(data) {
+                    if (data.status == "success") {
+                        $('#btn-send').removeAttr("disabled");
+                        $("#btn-send").attr('value', 'Send Mail');
+                        alert('send email successfully');
+                    }
+                }
+            });
+        });
+        //end send mail
+
+
+
+        $(document).ready(function () {
+            $("#nav-report").addClass("active");
+            $(".report-packing").addClass("active");
+            //set readonly datepicker
+
+            $('#fromDatepicker').prop('readonly', true);
+            $('#toDatepicker').prop('readonly', true);
+        });
+    </script>
+
+
+
+}

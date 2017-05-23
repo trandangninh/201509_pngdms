@@ -1,0 +1,804 @@
+﻿@using Entities.Domain
+@using Nois.Web.Framework.Kendoui;
+@using Service.Users
+@model Web.Models.SupplyChain.SupplyChainModel
+@{
+
+    Layout = null;
+}
+
+
+<div class="box border orange">
+
+    <table id="supplychaingrid" class="table production-result">
+
+        <tbody>
+            <tr>
+                <td class="scdds-DMS">
+                    <table class="table" style="border:none !important">
+                        <thead>
+                            <tr>
+                                <th>DMS</th>
+
+                            </tr>
+
+                        </thead>
+                        <tbody style="border:none !important">
+                            <tr style="height: 284px;" class="scdds-DMS">
+                                <td style="border:none !important">Production Planning</td>
+
+                            </tr>
+
+                        </tbody>
+
+                    </table>
+                </td>
+                <td>
+                    <table id="making-product" class="table table-1">
+                        <thead>
+                            <tr>
+                                <th>Production Unit-Making</th>
+                                <th>Owner</th>
+                                <th>Shift 2</th>
+                                <th>Shift 3</th>
+                                <th>Shift 1</th>
+
+                                <th class="remark-supplychain">Remark</th>
+
+                            </tr>
+                        </thead>
+                        <tbody>
+
+                            @for (int i = 0; i < 6; i++)
+                            {
+                                <tr class="tr-edit" data-type="1" data-measurecode="@(i+1)">
+                                    <td class="measurecode">@Model.SupplyChainProductionPlanning[i].MeasureName <input type="text" class="input-edit-value-result" value="@Model.SupplyChainProductionPlanning[i].MeasureCode" /></td>
+
+                                    <td class="owner ">
+                                        <span>@Model.SupplyChainProductionPlanning[i].Owner</span>
+                                        @{
+                                var ownerservice = DependencyResolver.Current.GetService<IUserService>();
+                                var owner = ownerservice.GetAllUsersAsync();
+                                var userAdmin = ownerservice.GetUserByUsernameAsync("Admin").Result;
+                                if (userAdmin != null)
+                                {
+                                    owner.Remove(userAdmin);
+                                }
+                                        }
+                                        <select id="Owner1">
+                                            @foreach (var user in owner)
+                                            {
+                                                if (user.Username == Model.SupplyChainProductionPlanning[i].Owner)
+                                                {
+                                                    <option value="@user.Username" selected>@user.Username</option>
+                                                }
+                                                else
+                                                {
+                                                    <option value="@user.Username">@user.Username</option>
+                                                }
+
+                                            }
+                                        </select>
+                                    </td>
+
+                                    <td class="shift2 line-check-edit line-edit-productplanning shift"  style="background-color: @Model.SupplyChainProductionPlanning[i].Shift2UIColorBg">
+                                        <span>@Model.SupplyChainProductionPlanning[i].Shift2 </span>
+                                        <input type="text" class="input-edit-value-result" value="@Model.SupplyChainProductionPlanning[i].Shift2" />
+                                    </td>
+                                    <td class="shift3 line-check-edit line-edit-productplanning shift" style="background-color: @Model.SupplyChainProductionPlanning[i].Shift3UIColorBg">
+                                        <span>@Model.SupplyChainProductionPlanning[i].Shift3 </span>
+                                        <input type="text" class="input-edit-value-result" value="@Model.SupplyChainProductionPlanning[i].Shift3" />
+                                    </td>
+                                    <td class="shift1 line-check-edit line-edit-productplanning shift" style="background-color: @Model.SupplyChainProductionPlanning[i].Shift1UIColorBg">
+                                        <span>@Model.SupplyChainProductionPlanning[i].Shift1 </span>
+                                        <input type="text" class="input-edit-value-result" value="@Model.SupplyChainProductionPlanning[i].Shift1" />
+                                    </td>
+                                    <td class="remark remark-float line-check-edit line-edit-productplanning line-remark not-enter">
+                                        <span>@Html.Raw(Model.SupplyChainProductionPlanning[i].RemarkDisplay.Replace("\n", "<br />")) </span>
+                                        <textarea type="text" class="input-edit-value-result not-enter" value="@Model.SupplyChainProductionPlanning[i].Remark">@Model.SupplyChainProductionPlanning[i].Remark</textarea>
+                                    </td>
+                                </tr>
+                            }
+
+                        </tbody>
+                    </table>
+
+                    <table id="packing-product" class="table table-2">
+                        <thead>
+                            <tr>
+                                <th>Production Unit Pkg</th>
+                                <th>Month Target</th>
+                                <th>Today 's Plan</th>
+                                <th>MTD</th>
+                                <th>Gap</th>
+                                <th class="remark-supplychain">Remark</th>
+
+                            </tr>
+                        </thead>
+                        <tbody>
+
+                            @for (int i = 6; i < 9; i++)
+                            {
+                                <tr class="ProductionUnitPkg tr-edit" data-type="2" data-measurecode="@(i+1)">
+                                    <td class="measurecode">@Model.SupplyChainProductionPlanning[i].MeasureName</td>
+                                    <td class="monthtarget @(Model.SupplyChainProductionPlanning[i].MeasureName)0 colum0 line-check-edit line-edit-productplanning production-val">
+                                        <span>@Model.SupplyChainProductionPlanning[i].MonthTarget</span>
+                                        <input type="text" class="input-edit-value-result" value="@Model.SupplyChainProductionPlanning[i].MonthTarget" />
+                                    </td>
+                                    <td class="todayplan @(Model.SupplyChainProductionPlanning[i].MeasureName)1 colum1 line-check-edit line-edit-productplanning production-val">
+                                        <span>@Model.SupplyChainProductionPlanning[i].TodayPlan</span>
+                                        <input type="text" class="input-edit-value-result" value="@Model.SupplyChainProductionPlanning[i].TodayPlan" />
+                                    </td>
+                                    <td class="mtd  @(Model.SupplyChainProductionPlanning[i].MeasureName)2  colum2 line-check-edit line-edit-productplanning production-val">
+                                        <span>@Model.SupplyChainProductionPlanning[i].MTD</span>
+                                        <input type="text" class="input-edit-value-result" value="@Model.SupplyChainProductionPlanning[i].MTD" />
+                                    </td>
+                                    <td class="gap gap@(i-6)   colum3   production-val">
+                                        <span>
+                                            @{ var gap = Model.SupplyChainProductionPlanning[i].MonthTarget
+
+                                                                                 - Model.SupplyChainProductionPlanning[i].MTD;
+                                            }
+                                            @gap.ToString("F2")
+                                        </span>
+                                        <input type="text" class="input-edit-value-result" value=" @(Model.SupplyChainProductionPlanning[i].MonthTarget - Model.SupplyChainProductionPlanning[i].TodayPlan - Model.SupplyChainProductionPlanning[i].MTD) " />
+
+                                    </td>
+                                    <td class="remark remark-float remark@(i-6) line-edit-productplanning line-remark">
+                                        <span>@Html.Raw(Model.SupplyChainProductionPlanning[i].RemarkDisplay.Replace("\n", "<br />"))</span>
+                                        <textarea type="text" class="input-edit-value-result not-enter" value="@Model.SupplyChainProductionPlanning[i].Remark">@Model.SupplyChainProductionPlanning[i].Remark</textarea>
+                                    </td>
+                                </tr>
+                            }
+                            <tr data-type="2" data-measurecode="10">
+                                <td class="ssc-pro-fe">FE</td>
+                                <td class="FE0 ssc-pro-fe">
+
+                                    @{ var FE0 = Model.SupplyChainProductionPlanning[6].MonthTarget
+                                                                              + Model.SupplyChainProductionPlanning[7].MonthTarget
+                                                                              + Model.SupplyChainProductionPlanning[8].MonthTarget;
+                                    }
+
+                                    @FE0.ToString("F2")
+                                </td>
+                                <td class="FE1 ssc-pro-fe">
+                                    @{ var feTodayPlan =
+                                                                       Model.SupplyChainProductionPlanning[6].TodayPlan
+                                                                       + Model.SupplyChainProductionPlanning[7].TodayPlan
+                                                                       + Model.SupplyChainProductionPlanning[8].TodayPlan;
+                                    }
+                                    @feTodayPlan.ToString("F2")
+                                </td>
+                                <td class="FE2 ssc-pro-fe">
+                                    @{ var feMTD =
+                                                                Model.SupplyChainProductionPlanning[6].MTD
+                                                                + Model.SupplyChainProductionPlanning[7].MTD
+                                                                + Model.SupplyChainProductionPlanning[8].MTD;
+                                    }
+                                    @feMTD.ToString("F2")
+                                </td>
+                                <td class="FE3 gap3 ssc-pro-fe">
+                                    @{ var gap3 = Model.SupplyChainProductionPlanning[6].MonthTarget
+                                                                              + Model.SupplyChainProductionPlanning[7].MonthTarget
+                                                                              + Model.SupplyChainProductionPlanning[8].MonthTarget
+                                                                              - Model.SupplyChainProductionPlanning[6].MTD
+                                                                              - Model.SupplyChainProductionPlanning[7].MTD
+                                                                              - Model.SupplyChainProductionPlanning[8].MTD;
+                                    }
+                                    @gap3.ToString("F2")
+                                </td>
+                                <td class="remark remark-float FE4 line-edit-productplanning">
+                                    <span>@Html.Raw(Model.SupplyChainProductionPlanning[9].RemarkDisplay.Replace("\n", "<br />"))</span>
+                                    <textarea class="input-edit-value-result not-enter" value="@Model.SupplyChainProductionPlanning[9].Remark">@Model.SupplyChainProductionPlanning[9].Remark</textarea>
+                                </td>
+                            </tr>
+
+                            <tr data-type="2" data-measurecode="11">
+                                <td>@Model.SupplyChainProductionPlanning[10].MeasureName</td>
+                                <td class="monthtarget FR0 line-check-edit colum0 line-edit-productplanning production-val">
+                                    <span>@Model.SupplyChainProductionPlanning[10].MonthTarget</span>
+                                    <input type="text" class="input-edit-value-result" value="@Model.SupplyChainProductionPlanning[10].MonthTarget" />
+                                </td>
+                                <td class="todayplan FR1 line-check-edit colum1 line-edit-productplanning production-val">
+                                    <span>@Model.SupplyChainProductionPlanning[10].TodayPlan</span>
+                                    <input type="text" class="input-edit-value-result" value="@Model.SupplyChainProductionPlanning[10].TodayPlan" />
+                                </td>
+                                <td class="mtd FR2 colum2 line-check-edit line-edit-productplanning production-val">
+                                    <span>@Model.SupplyChainProductionPlanning[10].MTD</span>
+                                    <input type="text" class="input-edit-value-result" value="@Model.SupplyChainProductionPlanning[10].MTD" />
+                                </td>
+                                <td class="gap gap4   colum3   production-val">
+                                    <span>
+                                        @{ var gap4 = Model.SupplyChainProductionPlanning[10].MonthTarget
+
+                                                                                  - Model.SupplyChainProductionPlanning[10].MTD;}
+                                        @gap4.ToString("F2")  
+                                     </span>
+
+                                </td>
+
+
+
+                                <td class="remark remark-float line-check-edit line-edit-productplanning">
+                                    <span>@Html.Raw(Model.SupplyChainProductionPlanning[10].RemarkDisplay.Replace("\n", "<br />"))</span>
+                                    <textarea type="text" class="input-edit-value-result not-enter" value="@Model.SupplyChainProductionPlanning[10].Remark">
+                                        @Model.SupplyChainProductionPlanning[10].Remark
+
+                                    </textarea>
+                                </td>
+                            </tr>
+                            <tr data-type="2" data-measurecode="12">
+                                <td class="ssc-pro-total">Total(Liquids)</td>
+                                <td class="totalMonthTarget ssc-pro-total">
+
+                                    @{ var totalMonthTarget = Model.SupplyChainProductionPlanning[6].MonthTarget
+                                                                  + Model.SupplyChainProductionPlanning[7].MonthTarget
+                                                                  + Model.SupplyChainProductionPlanning[8].MonthTarget
+                                                                  + Model.SupplyChainProductionPlanning[10].MonthTarget;
+                                    }
+                                    @totalMonthTarget.ToString("F2")
+
+
+                                </td>
+                                <td class="totaTodayPlan ssc-pro-total">
+                                    @{ var totaTodayPlan =
+                                                                       Model.SupplyChainProductionPlanning[6].TodayPlan
+                                                                       + Model.SupplyChainProductionPlanning[7].TodayPlan
+                                                                       + Model.SupplyChainProductionPlanning[8].TodayPlan
+                                                                       + Model.SupplyChainProductionPlanning[10].TodayPlan;
+                                    }
+                                    @totaTodayPlan.ToString("F2")
+                                </td>
+
+                                <td class="totalMTD ssc-pro-total">
+                                    @{ var totalMTD =
+                                                                       Model.SupplyChainProductionPlanning[6].MTD
+                                                                       + Model.SupplyChainProductionPlanning[7].MTD
+                                                                       + Model.SupplyChainProductionPlanning[8].MTD
+                                                                       + Model.SupplyChainProductionPlanning[10].MTD;
+                                    }
+                                    @totalMTD.ToString("F2")
+                                </td>
+                                <td class="gap gap5 ssc-pro-total  colum3   production-val">
+                                    <span>
+                                        @{ var gap5 =
+
+                                                                           Model.SupplyChainProductionPlanning[6].MonthTarget
+                                                                           + Model.SupplyChainProductionPlanning[7].MonthTarget
+                                                                           + Model.SupplyChainProductionPlanning[8].MonthTarget
+                                                                           + Model.SupplyChainProductionPlanning[10].MonthTarget
+                                                                           - Model.SupplyChainProductionPlanning[6].MTD
+                                                                           - Model.SupplyChainProductionPlanning[7].MTD
+                                                                           - Model.SupplyChainProductionPlanning[8].MTD
+                                                                           - Model.SupplyChainProductionPlanning[10].MTD;
+                                        }
+                                        @gap5.ToString("F2")
+                                    </span>
+
+                                </td>
+                                <td class="remark remark-float line-check-edit line-edit-productplanning">
+                                    <span>@Html.Raw(Model.SupplyChainProductionPlanning[9].RemarkDisplay.Replace("\n", "<br />"))</span>
+                                    <textarea class="input-edit-value-result not-enter" value="@Model.SupplyChainProductionPlanning[9].Remark">@Model.SupplyChainProductionPlanning[9].Remark</textarea>
+                                </td>
+                            </tr>
+                        </tbody>
+
+                    </table>
+                </td>
+            </tr>
+
+
+        </tbody>
+    </table>
+
+</div>
+
+
+
+<script src="@Url.Content("~/Scripts/kendo/2014.1.318/kendo.web.min.js")"></script>
+<script>
+    var isEdittingProduct = false;
+    var currentDate;
+    var oldval = 0;
+    $(document).ready(function () {
+
+
+        function activeEditproductplanning(e) {
+            $(e).children(".input-edit-value-result").removeClass("hide");
+            $(e).children("span").addClass("hide");
+            $(e).children(".input-edit-value-result").select();
+            $(e).children(".input-edit-value-result").focus();
+            $(e).children("select").removeClass("hide");
+            $(e).children("select").focus();
+
+            oldval = $(e).children(".input-edit-value-result").val();
+            setTimeout(function () {
+                isEdittingProduct = true;
+            }, 100);
+
+        }
+
+        $("#tabresult-dms-productionplanning td input ").addClass("hide");
+        $("#tabresult-dms-productionplanning td select ").addClass("hide");
+        $("#tabresult-dms-productionplanning td textarea ").addClass("hide");
+
+        var isEdittingProduct = false;
+
+        $(".line-edit-productplanning").on('click', function () {// target
+            console.log(isEdittingProduct);
+            if (isEdittingProduct == false) {
+                activeEditproductplanning(this);
+            }
+        });
+
+        //end gird supply chain
+        function validateDecimal(e) {
+
+            if (e.value.length > 0) {
+                var RE = /^[+-]?\d+(\.\d+)?$/;
+                if (RE.test(e.value)) {
+                    return true;
+                } else {
+                    return false;
+                }
+            } else {
+                return true;
+            }
+        }
+
+        function GetColorByProductName(productName, e) {
+            var color = "#ffff";
+            $.ajax({
+                url: '/SupplyChain/GetColorByProductResult',
+                type: 'POST',
+                data: {
+                    productPlanningResult: productName,
+                },
+                success: function (data) {
+                    color = data;
+                    // this td
+                    var $td = $(e).parent("td");
+
+                    // set background color
+                    $td.css('background-color', color);
+                }
+            });
+            return color;
+        }
+
+        jQuery(".line-edit-productplanning").children("select").blur(function () {
+            var $input = jQuery(this);
+
+            var $tr = jQuery($input.parent().parent());
+
+
+            //if input exist and on edit mode
+            if ($input.length > 0 //if textbox is on active
+                    && isEdittingProduct //if on edit mode
+            ) {
+
+                var newVal = $input.val();
+                if (newVal != oldval) { //validate new value
+                    var owner = this.value;
+                    //var type = $tr.data('MeasureType');
+                    var type = $tr.data('type');
+                    var measureCode = $tr.data('measurecode');
+                    var shift2 = $tr.children(".shift2").children(".input-edit-value-result").val();
+                    var shift3 = $tr.children(".shift3").children(".input-edit-value-result").val();
+                    var shift1 = $tr.children(".shift1").children(".input-edit-value-result").val();
+                    var monthtarget = $tr.children(".monthtarget").children(".input-edit-value-result").val();
+                    var todayplan = $tr.children(".todayplan").children(".input-edit-value-result").val();
+                    var mtd = $tr.children(".mtd ").children(".input-edit-value-result").val();
+                    var gap = $tr.children(".gap").children(".input-edit-value-result").val();
+                    var fe = $tr.children(".fe").children(".input-edit-value-result").val();
+                    var remark = $tr.children(".remark ").children(".input-edit-value-result").val();
+                    $.ajax({
+                        url: '/SupplyChain/UpdateProductionPlanning',
+                        type: 'POST',
+                        dataType: 'json',
+                        data: {
+                            Owner: owner,
+                            type: type,
+                            MeasureCode: measureCode,
+                            Shift2: shift2,
+                            Shift1: shift1,
+                            Shift3: shift3,
+                            MonthTarget: monthtarget,
+                            TodayPlan: todayplan,
+                            Gap: gap,
+                            MTD: mtd,
+                            Remark: remark
+                        },
+                        success: function (data) {
+                            if (data.status == "success") {
+                                //isEdittingProduct = false; //remove edit mode
+                                $input.parent().children('span').removeClass("hide"); //show span
+                                $input.parent().children('span').html(owner);
+                                $input.addClass("hide");
+                            }
+                        }
+                    });
+                    GetColorByProductName(newVal, $input);
+                } else {
+                    //if value not change
+
+
+                    $input.parent().children('span').removeClass("hide"); //show span
+                    $input.addClass("hide");
+                }
+
+            } else {
+
+            }
+            isEdittingProduct = false; //remove edit mode
+        });
+
+        var $table = jQuery("#making-product");
+        var $tablePacking = jQuery("#packing-product");
+
+        $table.on("tr.td.next", function (e, $input) {
+            $input = $($input);
+            var $nextInRowTd = $input.parent(".line-check-edit").next();
+            if ($nextInRowTd.length > 0) {
+                if ($nextInRowTd.hasClass("colum3")) {
+                    activeEditproductplanning($nextInRowTd.next());
+                } else {
+                    activeEditproductplanning($nextInRowTd);
+                }
+
+            } else {
+                var currentTdIndex = 2;
+                var $trParent = $input.parents("tr");
+
+                var $nextTr = $trParent.next();
+                if ($nextTr.hasClass("ProductionUnitPkg")) {
+                    currentTdIndex = 1;
+                }
+                if ($nextTr.length > 0 && $nextTr.hasClass("tr-edit")) {
+                    var $nextTd = $nextTr.children("td").eq(currentTdIndex);
+                    if ($nextTd.length > 0) {
+                        activeEditproductplanning($nextTd);
+                    }
+                } else {
+                    if ($nextTr.length <= 0) {
+                        var $pTable = $input.parents("table");
+                        if ($pTable.hasClass("table-1")) {
+                            var $nextTd = $tablePacking.children("tbody").children("tr").eq(0).children("td").eq(1);
+                            activeEditproductplanning($nextTd);
+                        }
+                    } else {
+
+                    }
+                }
+
+            }
+            //isEdittingProduct = true;
+        });
+
+        function editvaluecolum0(e) {
+            var $input = jQuery(e);
+            if (validateDecimal(e)) {
+
+                //if input exist and on edit mode
+                if ( //if textbox is on active
+                        isEdittingProduct //if on edit mode
+                ) {
+
+                    var newVal = $input.val();
+                    if (newVal != oldval) { //validate new value
+                        var sachet = $(".Sachet0").children(".input-edit-value-result").val();
+                        var sachet1 = $(".Sachet1").children(".input-edit-value-result").val();
+                        var sachet2 = $(".Sachet2").children(".input-edit-value-result").val();
+                        var Pouch = $(".Pouch0").children(".input-edit-value-result").val();
+                        var Pouch1 = $(".Pouch1").children(".input-edit-value-result").val();
+                        var Pouch2 = $(".Pouch2").children(".input-edit-value-result").val();
+                        var Fr = $(".FR0").children(".input-edit-value-result").val();
+                        var Bottle = $(".Bottle0  ").children(".input-edit-value-result").val();
+                        var Bottle1 = $(".Bottle1  ").children(".input-edit-value-result").val();
+                        var Bottle2 = $(".Bottle2  ").children(".input-edit-value-result").val();
+                        var FR0 = $(".FR0").children(".input-edit-value-result").val();
+                        var FR2 = $(".FR2").children(".input-edit-value-result").val();
+                        var FE0 = $(".FE0").html();
+                        var FE2 = $(".FE2").html();
+
+                        var FE = parseFloat(sachet) + parseFloat(Pouch) + parseFloat(Bottle);
+                        var total = parseFloat(sachet) + parseFloat(Pouch) + parseFloat(Fr) + parseFloat(Bottle);
+                        var grap0 = parseFloat(sachet) - parseFloat(sachet2);
+
+                        var grap1 = parseFloat(Pouch) - parseFloat(Pouch2);
+                        var grap2 = parseFloat(Bottle) - parseFloat(Bottle2);
+                        var grap3 = parseFloat(FE0) - parseFloat(FE2);
+                        var grap4 = parseFloat(FR0) - parseFloat(FR2);
+
+                        $(".totalMonthTarget").html(total.toFixed(2));
+                        $(".FE0").html(FE.toFixed(2));
+                        $(".gap0").html(grap0.toFixed(2));
+                        $(".gap1").html(grap1.toFixed(2));
+                        $(".gap2").html(grap2.toFixed(2));
+                        $(".gap3").html(grap3.toFixed(2));
+                        $(".gap4").html(grap4.toFixed(2));
+
+                        var totalMTD = $(".totalMTD").html();
+
+                        var grap5 = parseFloat(total) - parseFloat(totalMTD);
+
+                        $(".gap5").html(grap5.toFixed(2));
+                    }
+
+                }
+            } else {
+                this.value = 0;
+
+            }
+        }
+
+        jQuery(".colum0").children(".input-edit-value-result").keypress(function (event) {
+
+            var charCode = event.which || event.keyCode;
+            if (charCode == 13) {
+                if (validateDecimal(this)) {
+
+                    event.preventDefault();
+                    editvaluecolum0(this);
+                    $table.trigger("tr.td.next", this);
+                } else {
+                    this.value = "";
+
+                }
+            }
+
+        })
+            .blur(function () {
+
+                if (validateDecimal(this)) {
+                    editvaluecolum0(this);
+                } else {
+                    this.value = "";
+
+                }
+            });
+
+        function editvaluecolum1(e) {
+            var $input = jQuery(e);
+
+            if (validateDecimal(e)) {
+                //if input exist and on edit mode
+                if ($input.length > 0 //if textbox is on active
+                        && isEdittingProduct //if on edit mode
+                ) {
+
+
+                    //validate new value
+                    var sachet0 = $(".Sachet0").children(".input-edit-value-result").val();
+                    var sachet1 = $(".Sachet1").children(".input-edit-value-result").val();
+                    var sachet2 = $(".Sachet2").children(".input-edit-value-result").val();
+                    var Pouch0 = $(".Pouch0").children(".input-edit-value-result").val();
+                    var Pouch1 = $(".Pouch1").children(".input-edit-value-result").val();
+                    var Pouch2 = $(".Pouch2").children(".input-edit-value-result").val();
+                    var Fr = $(".FR1").children(".input-edit-value-result").val();
+                    var Bottle0 = $(".Bottle0  ").children(".input-edit-value-result").val();
+                    var Bottle1 = $(".Bottle1  ").children(".input-edit-value-result").val();
+                    var Bottle2 = $(".Bottle2  ").children(".input-edit-value-result").val();
+                    var FE = parseFloat(sachet1) + parseFloat(Pouch1) + parseFloat(Bottle1);
+                    var total = parseFloat(sachet1) + parseFloat(Pouch1) + parseFloat(Fr) + parseFloat(Bottle1);
+                    var grap0 = parseFloat(sachet0) - parseFloat(sachet2);
+
+                    var grap1 = parseFloat(Pouch0) - parseFloat(Pouch2);
+                    var grap2 = parseFloat(Bottle0) - parseFloat(Bottle2);
+                    $(".totaTodayPlan").html(total.toFixed(2));
+                    $(".FE1").html(FE.toFixed(2));
+                    $(".gap0").html(grap0.toFixed(2));
+                    $(".gap1").html(grap1.toFixed(2));
+                    $(".gap2").html(grap2.toFixed(2));
+
+
+                }
+            } else {
+                this.value = 0;
+
+            }
+
+        }
+
+        jQuery(".colum1").children(".input-edit-value-result").keypress(function (event) {
+
+            var charCode = event.which || event.keyCode;
+            if (charCode == 13) {
+                if (validateDecimal(this)) {
+
+                    event.preventDefault();
+                    editvaluecolum1(this);
+                    $table.trigger("tr.td.next", this);
+                } else {
+                    this.value = "";
+
+                }
+            }
+
+        })
+            .blur(function () {
+
+                if (validateDecimal(this)) {
+                    editvaluecolum1(this);
+                } else {
+                    this.value = "";
+
+                }
+            });
+
+        function editvaluecolum2(e) {
+            var $input = jQuery(e);
+
+            if (validateDecimal(e)) {
+                //if input exist and on edit mode
+                if ($input.length > 0 //if textbox is on active
+                        && isEdittingProduct //if on edit mode
+                ) {
+
+
+                    //validate new value
+                    var sachet0 = $(".Sachet0").children(".input-edit-value-result").val();
+                    var sachet1 = $(".Sachet1").children(".input-edit-value-result").val();
+                    var sachet2 = $(".Sachet2").children(".input-edit-value-result").val();
+                    var Pouch0 = $(".Pouch0").children(".input-edit-value-result").val();
+                    var Pouch1 = $(".Pouch1").children(".input-edit-value-result").val();
+                    var Pouch2 = $(".Pouch2").children(".input-edit-value-result").val();
+                    var Fr = $(".FR2").children(".input-edit-value-result").val();
+                    var Bottle0 = $(".Bottle0  ").children(".input-edit-value-result").val();
+                    var Bottle1 = $(".Bottle1  ").children(".input-edit-value-result").val();
+                    var Bottle2 = $(".Bottle2  ").children(".input-edit-value-result").val();
+                    var FE = parseFloat(sachet2) + parseFloat(Pouch2) + parseFloat(Bottle2);
+                    var FR0 = $(".FR0").children(".input-edit-value-result").val();
+                    var FR2 = $(".FR2").children(".input-edit-value-result").val();
+                    var FE0 = $(".FE0").html();
+                    var FE2 = $(".FE2").html();
+
+                    var total = parseFloat(sachet2) + parseFloat(Pouch2) + parseFloat(Fr) + parseFloat(Bottle2);
+                    var grap0 = parseFloat(sachet0) - parseFloat(sachet2);
+                    var grap1 = parseFloat(Pouch0) - parseFloat(Pouch2);
+                    var grap2 = parseFloat(Bottle0) - parseFloat(Bottle2);
+                    var grap3 = parseFloat(FE0) - parseFloat(FE2);
+                    var grap4 = parseFloat(FR0) - parseFloat(FR2);
+                    $(".totalMTD").html(total.toFixed(2));
+                    $(".FE2").html(FE.toFixed(2));
+                    $(".gap0").html(grap0.toFixed(2));
+                    $(".gap1").html(grap1.toFixed(2));
+                    $(".gap2").html(grap2.toFixed(2));
+                    $(".gap3").html(grap3.toFixed(2));
+                    $(".gap4").html(grap4.toFixed(2));
+
+                    var totalMonthTarget = $(".totalMonthTarget").html();
+
+                    var grap5 = parseFloat(totalMonthTarget) - parseFloat(total);
+
+                    $(".gap5").html(grap5.toFixed(2));
+                }
+
+            }
+
+            else {
+                this.value = 0;
+
+            }
+        }
+
+        jQuery(".colum2").children(".input-edit-value-result")
+         .keypress(function (event) {
+
+             var charCode = event.which || event.keyCode;
+             if (charCode == 13) {
+                 if (validateDecimal(this)) {
+
+                     event.preventDefault();
+                     editvaluecolum2(this);
+                     $table.trigger("tr.td.next", this);
+                 } else {
+                     this.value = "";
+
+                 }
+             }
+
+         })
+            .blur(function () {
+
+                if (validateDecimal(this)) {
+                    editvaluecolum2(this);
+                } else {
+                    this.value = "";
+
+                }
+            });
+
+        function editvalueProductionPlanning(e) {
+            var $input = jQuery(e);
+
+            var $tr = jQuery($input.parent().parent());
+
+
+            //if input exist and on edit mode
+            if ($input.length > 0 //if textbox is on active
+                    && isEdittingProduct //if on edit mode
+            ) {
+
+                var newVal = $input.val();
+                if (newVal != oldval) { //validate new value
+                    var owner = $tr.children(".owner").children("span").html();
+
+                    //var type = $tr.data('MeasureType');
+                    var type = $tr.data('type');
+                    var measureCode = $tr.data('measurecode');
+                    var shift2 = $tr.children(".shift2").children(".input-edit-value-result").val();
+                    var shift3 = $tr.children(".shift3").children(".input-edit-value-result").val();
+                    var shift1 = $tr.children(".shift1").children(".input-edit-value-result").val();
+                    var monthtarget = $tr.children(".monthtarget").children(".input-edit-value-result").val();
+                    var todayplan = $tr.children(".todayplan").children(".input-edit-value-result").val();
+                    var mtd = $tr.children(".mtd ").children(".input-edit-value-result").val();
+                    var gap = $tr.children(".gap").children(".input-edit-value-result").val();
+                    var fe = $tr.children(".fe").children(".input-edit-value-result").val();
+                    var remark = $tr.children(".remark ").children(".input-edit-value-result").val();
+                    $.ajax({
+                        url: '/SupplyChain/UpdateProductionPlanning',
+                        type: 'POST',
+                        dataType: 'json',
+                        data: {
+                            Owner: owner,
+                            type: type,
+                            MeasureCode: measureCode,
+                            Shift2: shift2,
+                            Shift1: shift1,
+                            Shift3: shift3,
+                            MonthTarget: monthtarget,
+                            TodayPlan: todayplan,
+                            Gap: gap,
+                            MTD: mtd,
+                            Remark: remark
+                        },
+                        success: function (data) {
+                            if (data.status == "success") {
+
+                                $input.parent().children('span').removeClass("hide"); //show span
+                                $input.parent().children('span').html(newVal.replace(/\n/g, "<br />"));
+                                $input.addClass("hide");
+                                $table.trigger("tr.td.next", this);
+                            }
+                        }
+                    });
+                } else {
+                    //if value not change
+
+                    //isEdittingProduct = false; //remove edit mode
+                    $input.parent().children('span').removeClass("hide"); //show span
+                    $input.addClass("hide");
+                }
+
+            } else {
+
+            }
+            isEdittingProduct = false;
+        }
+
+        jQuery(".line-edit-productplanning").children(".input-edit-value-result")
+            .keypress(function (event) {
+
+                var charCode = event.which || event.keyCode;
+                if (charCode == 13) {
+
+                    if (!$(this).hasClass("not-enter")) {
+                        event.preventDefault();
+                        editvalueProductionPlanning(this);
+                        $table.trigger("tr.td.next", this);
+                    }
+
+                }
+
+            })
+            .blur(function () {
+                editvalueProductionPlanning(this);
+
+            });
+
+
+    });
+
+</script>
+

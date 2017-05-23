@@ -1,0 +1,159 @@
+﻿@using Entities.Domain
+@using Nois.Web.Framework.Kendoui;
+@model List<Web.Models.SupplyChain.SupplyChainModel>
+@{
+
+    Layout = null;
+}
+
+
+<div class="row">
+    <div class="col-md-12">
+
+        <div class="box border orange scroll-x">
+
+            <table id="supplychaingrid" class="table">
+                <thead>
+                    <tr>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        @foreach (var item in Model)
+                        {
+                            <th colspan="9">@item.SupplyChainHSE[0].CreatedDate</th>
+                        }
+                    </tr>
+                    <tr>
+                        <th>DMS</th>
+                        <th>Measure-Making</th>
+                        <th>Owner</th>
+                        @foreach (var item in Model)
+                        {
+                          
+                            <th>PR(MK)</th>
+                            <th>LPD1</th>
+                            <th>LPD2</th>
+                            <th>LPD3</th>
+                            <th>Batch</th>
+                            <th>PR(PK)</th>
+                            <th>Bottle</th>
+                            <th>Sachet</th>
+                            <th>Pouch</th>
+                          
+                        }
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr data-measurecode="1" class="scdds-target">
+                        <td rowspan="5" class="scdds-DMS">FPQ</td>
+                        <td>Target</td>
+                        <td></td>
+                        @foreach (var item in Model)
+                        {
+                           
+
+                            <td colspan="9" class=" lpd1 ">
+                                <span>@item.SupplyChainFPQ[0].LPD1</span>
+
+                            </td>
+                           
+                        }
+
+                    </tr>
+                    @for (int i = 1; i < 5; i++)
+                    {
+                        <tr data-measurecode="@(i + 1)">
+                            <td class="measurecode"><span>@Model[0].SupplyChainFPQ[i].MeasureName</span> </td>
+                            <td class="owner ">
+                                <span>
+                                    @foreach (var user in Model[0].SupplyChainFPQ[i].ListUsernameInSupplyChainFPQ)
+                                    {
+                                        <text> @user; </text>
+                                    }
+                                </span>
+
+
+                            </td>
+
+                            @foreach (var item in Model)
+                            {
+
+                                 <td class="FRMK  line-cols">
+                                    <span>@item.SupplyChainFPQ[i].FRMK </span>
+
+                                </td>
+                                <td class="lpd1  line-cols">
+                                    <span>@item.SupplyChainFPQ[i].LPD1 </span>
+
+                                </td>
+                                <td class="lpd2  line-cols">
+                                    <span>@item.SupplyChainFPQ[i].LPD2 </span>
+
+                                </td>
+                                <td class="lpd3  line-cols">
+                                    <span>@item.SupplyChainFPQ[i].LPD3 </span>
+
+                                </td>
+                                <td class="batch  line-cols">
+                                    <span>@item.SupplyChainFPQ[i].Batch </span>
+
+                                </td>
+                                <td class="fr  line-cols">
+                                    <span>@item.SupplyChainFPQ[i].FR </span>
+
+                                </td>
+                                <td class="bottle  line-cols">
+                                    <span>@item.SupplyChainFPQ[i].Bottle </span>
+
+                                </td>
+                                <td class="sachet  line-cols">
+                                    <span>@item.SupplyChainFPQ[i].Sachet </span>
+
+                                </td>
+                                <td class="pouch  line-cols">
+                                    <span>@item.SupplyChainFPQ[i].Pouch </span>
+
+                                </td>
+                               
+                            }
+                        </tr>
+                    }
+
+                </tbody>
+            </table>
+
+        </div>
+
+    </div>
+</div>
+
+
+<script src="@Url.Content("~/Scripts/kendo/2014.1.318/kendo.web.min.js")"></script>
+<script>
+    var IsEditting = false;
+    var currentDate;
+    var oldval = 0;
+    $(document).ready(function () {
+
+        function getURLParameter(name) {
+            return decodeURIComponent(
+                (location.search.match(RegExp("[?|&]" + name + '=(.+?)(&|$)')) || [, null])[1]
+            );
+        }
+
+        var date = getURLParameter('date');
+        if (date != "null") {
+            currentDate = date;
+            $("#datepicker").val(date);
+        } else {
+            $("#datepicker").val($.datepicker.formatDate('mm/dd/yy', new Date()));
+            currentDate = $.datepicker.formatDate('mm/dd/yy', new Date());
+
+        }
+        // gird supply chain\
+
+    });
+
+</script>
+
+

@@ -1,0 +1,314 @@
+﻿@model Web.Models.DdsConfig.DdsConfigTransportModel
+
+@{
+    //page title
+    ViewBag.Title = "Measure Config";
+    Layout = "~/Views/Shared/_KendoUILayout.cshtml";
+}
+@{
+    var permissionService = RepositoryPattern.Infrastructure.EngineContext.Current.Resolve<Service.Security.IPermissionService>();
+}
+<script src="@Url.Content("~/Scripts/kendo/2014.1.318/kendo.web.min.js")"></script>
+
+<style>
+    #grid table tr td {
+        border-bottom: 1px solid #ddd;
+    }
+
+    #grid table thead tr th {
+        border: 1px solid #d5d5d5;
+        background-color: blue;
+        color: white;
+        height: 30px;
+    }
+
+    #grid table tr td:nth-child(1) {
+        color: white;
+    }
+
+    .k-edit-cell input[type="checkbox"] {
+        margin-left: 0px;
+        margin-top: 0px;
+        vertical-align: middle;
+    }
+</style>
+@if (permissionService.Authorize(Service.Security.PermissionProvider.ManageMeasure))
+{
+    <a href='/Measure' class='k-button k-button-icontext btn-info-custom' title=' Back to Measure' style="margin-bottom: 5px;">
+        <span class="k-icon k-i-arrow-w"></span>
+        Back to Measure
+    </a>
+    
+    <div class="row">
+        <div class="col-md-12">
+            <!-- BOX -->
+            <div class="box border blue">
+                <div class="box-title">
+                    <h4><i class="fa fa-user"></i><span class="hidden-inline-mobile">  </span></h4>
+                </div>
+                <div class="box-body">
+
+
+                    <div class="tabbable header-tabs">
+                        <ul class="nav nav-tabs">
+
+                            <li class="active"><a href="#tabresult" data-toggle="tab"><i class="fa fa-question"></i> <span class="hidden-inline-mobile">Result daily </span></a></li>
+
+                        </ul>
+                        <div class="tab-content">
+
+                            <!-- Result -->
+
+                            <div class="tab-pane fade in active" id="tabresult">
+
+                            </div>
+                            <div class="box">
+
+
+                                <div id="grid"></div>
+
+                                <div id="bottom_anchor"></div>
+                            </div>
+                        </div>
+                        <!-- /Result -->
+
+                    </div>
+
+
+
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+}
+else
+{
+    <div>
+        Opp! Admin didn’t assign any line for you so that you can update information.Please contact admin for it!!!
+    </div>
+}
+
+<script>
+    $(document).ready(function () {
+        var ds = {
+            type: "json",
+            transport: {
+                read: {
+                    url: "@Html.Raw(Url.Action("List", "DdsConfig"))",
+                    type: "POST",
+                    dataType: "json",
+                    data: { departmentId: "@Model.DepartmentId" }
+                },
+                update: {
+                    url: "@Html.Raw(Url.Action("Update", "DdsConfig"))",
+                    type: "POST",
+                    dataType: "json",
+                    //data: data
+                }
+
+            },
+            //pageSize: 10,
+            schema: {
+                data: "Data",
+                total: "Total",
+                errors: "Errors",
+                batch: true,
+                model: {
+                    id: "Id",
+                    fields: {
+                        Id: { editable: false },
+                        Dms: { editable: false },
+                        MeasureType: { editable: false },
+                        Measure: { editable: false },
+                        Owner: { editable: false },
+                        Target: { editable: false },
+                        Unit: { editable: false }//,
+                        //Lines: {}
+                        @foreach (var line in Model.Lines)
+                        {
+                            <text>, "@line.Field": { type: "boolean" }</text>
+                        }
+                    }
+                }
+            }
+        };
+        var data = {};
+        var grid = $("#grid").kendoGrid({
+            dataSource: ds,
+            //pageable: true,
+            filterable: false,
+            //toolbar: ["save", "cancel"],
+            columns: [
+                {
+                    field: "Dms", width: 100, title: "Dms", filterable: false
+                },
+                {
+                    field: "MeasureType", width: 55, title: "IP/OP", filterable: false
+                },
+                {
+                    field: "Measure", title: "Measure", filterable: false
+                },
+                {
+                    field: "Owner", width: 150, title: "Owner", filterable: false
+                },
+                {
+                    field: "Target", width: 75, title: "Target", filterable: false
+                },
+                {
+                    field: "Unit", width: 50, title: "Unit", filterable: false
+                }
+                @foreach (var line in Model.Lines)
+                {
+                     <text>
+                        , {
+                            field: "@line.Field",
+                            width: 75,
+                            title: "@line.Name",
+                            attributes: {
+                                "LineId": "@line.LineId",
+                                "style": "# if(@line.IsHiddenForSpanColumns) { #display:none;# } #",
+                                "colspan": "#=@line.Colspan#",
+                                "IsHiddenForSpanColumns": "#=(@line.IsHiddenForSpanColumns)#"
+                            },
+                            template: '<img src="@Url.Content("~/Content/img/")active-#=!@line.Field#.gif" />'
+                            //template: "#=@line.Template#"
+                            //template: "<input type='checkbox' #= @line.Field? checked='checked': checked='' # class='chkbx' />"
+                        }
+                     </text>
+                }
+            ],
+            editable: true,
+            dataBound: onDataBound,
+            //dataBinding: onDataBinding,
+            edit: function (e) {
+                //console.log(e.model);
+            },
+            save: onChange
+        }).data("kendoGrid");
+
+        //click on cell template will apply to model
+        //template: "<input type='checkbox' #= line.Field? checked='checked': checked='' # class='chkbx' />"
+        //$('#grid').on('click', '.chkbx', function () {
+        //    var checked = $(this).is(':checked');
+        //    var grid = $('#grid').data().kendoGrid;
+        //    grid.closeCell();
+        //    var dataItem = grid.dataItem($(this).closest('tr'));
+        //    var col = $(this).closest('td');
+        //    grid.editCell(col);
+        //    dataItem.set(grid.columns[col.index()].field, checked);
+        //    grid.closeCell(col);
+        //});
+    });
+
+    //format css table
+    function onDataBound() {
+        $('#grid>.k-grid-content>table').each(function (index, item) {
+            var dimension_col = 1;
+            var key = true;//set color for row
+            // First, scan first row of headers for the "Dimensions" column.
+            $('#grid>.k-grid-header>.k-grid-header-wrap>table').find('th').each(function () {
+                if ($(this).text() == 'Dms') {
+
+                    // first_instance holds the first instance of identical td
+                    var first_instance = null;
+
+                    $(item).find('tr').each(function () {
+                        var row = $(this);
+                        // find the td of the correct column (determined by the colTitle)
+                        var dimension_td = $(this).find('td:nth-child(' + dimension_col + ')');
+
+                        if (first_instance == null) {
+                            first_instance = dimension_td;
+                            first_instance.css("background-color", 'white');
+                        } else if (dimension_td.text() == first_instance.text()) {
+                            var count = 0;
+                            row.children().each(function () {
+                                if (count < 6)
+                                    $(this).css('background-color', first_instance.css("background-color"));
+                                else
+                                    $(this).css('background-color', 'white');
+                                count++;
+                            });
+                            // console.log(dimension_td.text(), first_instance.text());
+                            // if current td is identical to the previous
+                            // then remove the current td
+                            //dimension_td.remove();
+                            dimension_td.css('display', 'none');
+                            //console.log(dimension_td);
+                            // increment the rowspan attribute of the first instance
+                            first_instance.attr('rowspan', typeof first_instance.attr('rowspan') == "undefined" ? 2 : parseInt(first_instance.attr('rowspan')) + 1);
+                        } else {
+                            // this cell is different from the last
+                            first_instance = dimension_td;
+                            first_instance.css("background-color", key ? '#d7ffc1' : 'white');
+                            var count = 0;
+                            row.children().each(function () {
+                                if (count < 6)
+                                    $(this).css('background-color', first_instance.css("background-color"));
+                                else
+                                    $(this).css('background-color', 'white');
+                                count++;
+                            });
+                            //console.log(first_instance.css("background-color"));
+                            key = !key;
+                        }
+                    });
+
+                    //format backround color for column dms
+                    $(item).find('tr').each(function () {
+                        $(this).find('td:nth-child(1)').css('background-color', '#eea236');
+                    });
+                }
+                dimension_col;
+            });
+        });
+        //css for td of table to show checkbox in center the cell
+        $('#grid>.k-grid-content>table').each(function (index, item) {
+            var count = 0;
+            $('#grid>.k-grid-header>.k-grid-header-wrap>table').find('th').each(function () {
+                if (count >= 6) {
+                    $('#grid table tr td:nth-child(' + (count + 1) + ')').css('text-align', 'center');
+                }
+                count++;
+            });
+        });
+
+        //remove selected border when click different cell
+        $('#grid table tr td').focusout(function () {
+            $(this).removeClass("k-edit-cell");
+            $(this).removeClass("k-dirty-cell");
+        });
+    }
+
+    var ColIndexEditing, RowIndexEditing;
+    $("#grid").on("click", "td", function (e) {
+        ColIndexEditing = $(this).parent().children().index($(this));
+        RowIndexEditing = $(this).parent().parent().children().index($(this).parent());
+        //console.log(RowIndexEditing, ColIndexEditing);
+    });
+
+    function onChange(e) {
+        console.log(e);
+        var lineId = $('#grid table tr:nth-child(' + (RowIndexEditing + 1) + ') td:nth-child(' + (ColIndexEditing + 1) + ')').attr('LineId');
+        for (var i = 0; i < e.model.Lines.length; i++) {
+            if (e.model.Lines[i].Id == lineId) {
+                setTimeout(function () {
+                    $.ajax({
+                        url: "@Html.Raw(Url.Action("Update", "DdsConfig"))",
+                        data: {
+                            departmentId: e.model.DepartmentId,
+                            lineId: lineId,
+                            measureId: e.model.MeasureId,
+                            readOnly: e.model.Lines[i].ReadOnly
+                        },
+                        type: "POST",
+                        dataType: 'application/json'
+                    });
+                }, 100);
+                break;
+            }
+        }
+    }
+</script>

@@ -1,0 +1,230 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{D90918C7-DBBD-4BBF-BDBA-15ACD9186C20}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>Service</RootNamespace>
+    <AssemblyName>Service</AssemblyName>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\..\</SolutionDir>
+    <RestorePackages>true</RestorePackages>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>..\..\UI\Web\bin\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="Autofac">
+      <HintPath>..\..\packages\Autofac.3.5.2\lib\net40\Autofac.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="EntityFramework, Version=6.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\EntityFramework.6.1.3\lib\net45\EntityFramework.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="EntityFramework.SqlServer, Version=6.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\EntityFramework.6.1.3\lib\net45\EntityFramework.SqlServer.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="EPPlus, Version=4.0.4.0, Culture=neutral, PublicKeyToken=ea159fdaa78159a1, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\EPPlus.4.0.4\lib\net20\EPPlus.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.ComponentModel.DataAnnotations" />
+    <Reference Include="System.Configuration" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Web" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Authentication\FormsAuthenticationService.cs" />
+    <Compile Include="Authentication\IAuthenticationService.cs" />
+    <Compile Include="BaseService.cs" />
+    <Compile Include="Categories\CategoryService.cs" />
+    <Compile Include="Categories\ICategoryService.cs" />
+    <Compile Include="ClassificationDefects\IClassificationDefectService.cs" />
+    <Compile Include="ClassificationDefects\ClassificationDefectService.cs" />
+    <Compile Include="ClassificationDefects\IMaterialService.cs" />
+    <Compile Include="ClassificationDefects\MaterialService.cs" />
+    <Compile Include="Common\KeepAliveTask.cs" />
+    <Compile Include="Dds\DdsConfigService.cs" />
+    <Compile Include="Dds\DdsMeetingPrDetailService.cs" />
+    <Compile Include="Dds\DdsMeetingDetailService.cs" />
+    <Compile Include="Dds\DdsMeetingResultService.cs" />
+    <Compile Include="Dds\DdsMeetingService.cs" />
+    <Compile Include="Dds\DdsMeetingTask.cs" />
+    <Compile Include="Dds\IDdsConfigService.cs" />
+    <Compile Include="Dds\IDdsMeetingPrDetailService.cs" />
+    <Compile Include="Dds\IDdsMeetingDetailService.cs" />
+    <Compile Include="Dds\IDdsMeetingResultService.cs" />
+    <Compile Include="Dds\IDdsMeetingService.cs" />
+    <Compile Include="FoundByFunctions\FoundByFunctionService.cs" />
+    <Compile Include="FoundByFunctions\IFoundByFunctionService.cs" />
+    <Compile Include="Frequencys\FrequencyService.cs" />
+    <Compile Include="Frequencys\IFrequencyService.cs" />
+    <Compile Include="QualityAlerts\ClassificationService.cs" />
+    <Compile Include="QualityAlerts\IClassificationService.cs" />
+    <Compile Include="Departments\DepartmentService.cs" />
+    <Compile Include="Departments\IDepartmentService.cs" />
+    <Compile Include="IBaseService.cs" />
+    <Compile Include="Meetings\IMeetingService.cs" />
+    <Compile Include="Meetings\MeetingService.cs" />
+    <Compile Include="Meetings\IUserInMeetingService.cs" />
+    <Compile Include="Meetings\MeetingTask.cs" />
+    <Compile Include="Meetings\UserInMeetingService.cs" />
+    <Compile Include="QualityAlerts\ISubColumnFormulaService.cs" />
+    <Compile Include="QualityAlerts\SubColumnFormulaService.cs" />
+    <Compile Include="ScMeasures\IMqsMeasureService.cs" />
+    <Compile Include="ScMeasures\IScMeasureService.cs" />
+    <Compile Include="ScMeasures\MqsMeasureService.cs" />
+    <Compile Include="ScMeasures\ScMeasureService.cs" />
+    <Compile Include="ScoreCards\IScoreCardService.cs" />
+    <Compile Include="ScoreCards\ScoreCardService.cs" />
+    <Compile Include="Suppliers\IScMeasureTargetService.cs" />
+    <Compile Include="Suppliers\ISupplierService.cs" />
+    <Compile Include="Suppliers\ScMeasureTargetService.cs" />
+    <Compile Include="Suppliers\SupplierService.cs" />
+    <Compile Include="SupplyChain\ISupplyChainService.cs" />
+    <Compile Include="SupplyChain\SupplyChainService.cs" />
+    <Compile Include="Users\IUserRoleService.cs" />
+    <Compile Include="Users\IUserService.cs" />
+    <Compile Include="Users\UserRoleService.cs" />
+    <Compile Include="Users\UserService.cs" />
+    <Compile Include="Departments\DmsService.cs" />
+    <Compile Include="Lines\LineRemarkService.cs" />
+    <Compile Include="Messages\QueuedEmailService.cs" />
+    <Compile Include="Common\ReportService.cs" />
+    <Compile Include="Departments\IssueService.cs" />
+    <Compile Include="Lines\LineService.cs" />
+    <Compile Include="Departments\MeasureService.cs" />
+    <Compile Include="Departments\MeetingResultService.cs" />
+    <Compile Include="Security\PermissionService.cs" />
+    <Compile Include="Common\ProductPlanningService.cs" />
+    <Compile Include="Common\ScheduleTaskService.cs" />
+    <Compile Include="Common\ShutdownRequestService.cs" />
+    <Compile Include="Messages\StringBuilderWorkFlowMessageService.cs" />
+    <Compile Include="SupplyChain\SupplyChainDDSService.cs" />
+    <Compile Include="SupplyChain\SupplyChainFPQService.cs" />
+    <Compile Include="SupplyChain\SupplyChainHSEService.cs" />
+    <Compile Include="SupplyChain\SupplyChainMPSAService.cs" />
+    <Compile Include="SupplyChain\SupplyChainProductionPlanningService .cs" />
+    <Compile Include="SupplyChain\SupplyChainServiceService.cs" />
+    <Compile Include="Departments\MeasureSupplyChainService.cs" />
+    <Compile Include="Tasks\IssuesTask.cs" />
+    <Compile Include="Tasks\Task.cs" />
+    <Compile Include="Tasks\TaskManager.cs" />
+    <Compile Include="Tasks\TaskThread.cs" />
+    <Compile Include="Common\ExcellService.cs" />
+    <Compile Include="Common\XmlService.cs" />
+    <Compile Include="Common\TrackingService.cs" />
+    <Compile Include="Departments\UserAllowInSupplyChainService.cs" />
+    <Compile Include="Departments\IDmsService.cs" />
+    <Compile Include="Departments\IIssueService.cs" />
+    <Compile Include="Lines\ILineRemarkService.cs" />
+    <Compile Include="Lines\ILineService.cs" />
+    <Compile Include="Departments\IMeasureService.cs" />
+    <Compile Include="Departments\IMeetingResultService.cs" />
+    <Compile Include="Security\IPermissionProvider.cs" />
+    <Compile Include="Common\IProductPlanningService.cs" />
+    <Compile Include="Messages\IQueuedEmailService.cs" />
+    <Compile Include="Common\IScheduleTaskService.cs" />
+    <Compile Include="Messages\ISendMailService.cs" />
+    <Compile Include="Common\IShutdownRequestService.cs" />
+    <Compile Include="SupplyChain\ISupplyChainDDSService.cs" />
+    <Compile Include="SupplyChain\ISupplyChainFPQService.cs" />
+    <Compile Include="SupplyChain\ISupplyChainHSEService.cs" />
+    <Compile Include="SupplyChain\ISupplyChainMPSAService.cs" />
+    <Compile Include="SupplyChain\ISupplyChainProductionPlanningService.cs" />
+    <Compile Include="SupplyChain\ISupplyChainServiceService.cs" />
+    <Compile Include="Departments\IMeasureSupplyChainService.cs" />
+    <Compile Include="Common\IReportService.cs" />
+    <Compile Include="Common\IExcellService.cs" />
+    <Compile Include="Common\IXmlService.cs" />
+    <Compile Include="Common\ITrackingService.cs" />
+    <Compile Include="Security\PermissionProvider.cs" />
+    <Compile Include="Departments\IUserAllowInSupplyChainService.cs" />
+    <Compile Include="Messages\IWorkFlowMessageService.cs" />
+    <Compile Include="Tasks\IStartupTask.cs" />
+    <Compile Include="Tasks\ITask.cs" />
+    <Compile Include="Messages\SendMailTask.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Messages\SendMailByTaskService.cs" />
+    <Compile Include="QualityAlerts\IQualityAlertService.cs" />
+    <Compile Include="QualityAlerts\QualityAlertService.cs" />
+    <Compile Include="Security\EncryptionService.cs" />
+    <Compile Include="Security\IEncryptionService.cs" />
+    <Compile Include="Users\ChangePasswordRequest.cs" />
+    <Compile Include="Users\IUserRegistrationService.cs" />
+    <Compile Include="Users\PasswordChangeResult.cs" />
+    <Compile Include="Users\UserRegistrationMessage.cs" />
+    <Compile Include="Users\UserRegistrationRequest.cs" />
+    <Compile Include="Users\UserRegistrationResult.cs" />
+    <Compile Include="Users\UserRegistrationService.cs" />
+    <Compile Include="WebWorkContext.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\Framework\RepositoryPatternEF6\2.RepositoryPatternEF6.csproj">
+      <Project>{A6C5A991-35A8-421D-80BA-80A87EA25A54}</Project>
+      <Name>2.RepositoryPatternEF6</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Framework\RepositoryPattern\1.RepositoryPattern.csproj">
+      <Project>{7EFAA7C0-D715-446F-BBD9-51C44F72AF14}</Project>
+      <Name>1.RepositoryPattern</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Framework\ServicePattern\3.ServicePattern.csproj">
+      <Project>{31360631-F933-4F2D-ACCB-C730615549FE}</Project>
+      <Name>3.ServicePattern</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Entities\4.Entities.csproj">
+      <Project>{0CA71F45-5E58-443E-870D-C59667AA935F}</Project>
+      <Name>4.Entities</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Repository\5.Repository.csproj">
+      <Project>{00D8024D-33DB-4E96-A460-BF22CF1174F3}</Project>
+      <Name>5.Repository</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Utils\0.Utils.csproj">
+      <Project>{F753B30B-1E0E-4CF0-93C5-901F9B5DB46D}</Project>
+      <Name>0.Utils</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Security\IPermissionService.cs" />
+    <None Include="app.config" />
+    <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup />
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <Import Project="$(SolutionDir)\.nuget\NuGet.targets" Condition="Exists('$(SolutionDir)\.nuget\NuGet.targets')" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>

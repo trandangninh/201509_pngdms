@@ -1,0 +1,213 @@
+﻿@using Entities.Domain
+@using Nois.Web.Framework.Kendoui;
+@model List<Web.Models.SupplyChain.SupplyChainModel>
+@{
+
+    Layout = null;
+}
+
+<div class="row">
+    <div class="col-md-12">
+
+        <div class="box border orange scroll-x">
+
+            <table id="supplychaingrid" class="table" style="border: none !important;">
+                
+                <thead>
+                    <tr>
+
+                        @foreach (var item in Model)
+                        {
+                            <th colspan="2">@item.SupplyChainService[0].CreatedDate</th>
+                        }
+                    </tr>
+                </thead>
+                <tbody>
+                    
+                    <tr>
+                        @{
+                            var count = 0;
+                        }
+                        @foreach (var item in Model)
+                        {
+                           
+                          
+                            <td style="border: none !important; padding: 0">
+                                <table id="making" class="table">
+                                    <thead>
+                                        <tr>
+                                            @if (count == 0)
+                                            {
+                                                <th rowspan="2">DMS</th> <th></th>
+                                            }
+                                            
+                                           
+                                            <th colspan="5">Daily-FE</th>
+                                        </tr>
+                                        <tr>
+                                            @{
+
+                            var isDMS = false;
+                                            }
+                                            @if (count == 0)
+                                            {
+                                                <td class="owner line-edit">
+                                               
+                                                    <span>@item.SupplyChainService[0].Owner</span>
+                                                </td>
+                                            }
+                                            <th>CFR(%)</th>
+                                            <th>SAMBC(%)</th>
+                                            <th>Priority Line</th>
+                                            <th>Priority SKU</th>
+                                            <th>Shipment</th>
+
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @for (int i = 0; i < 3; i++)
+                                        {
+                                            if (!isDMS)
+                                            {
+                                                <text>
+                                                   
+                                                    <tr data-type="1" data-measurecode="@(i + 1)" style="height: 30px !important" class="scdds-target">
+                                                    @if (count == 0)
+                                                    {
+                                                        <td class="scdds-DMS" rowspan="3">Service</td>
+                                                       
+                                                    }
+                                                    
+                                                </text>
+                                                isDMS = true;
+                                            }
+                                            else
+                                            {
+                                                <text>
+                                                    <tr data-type="1" data-measurecode="@(i + 1)" style="height: 30px !important">
+                                                </text>
+                                            }
+                                            
+                                                  <td>
+                                                      <span>@item.SupplyChainService[i].MeasureName</span>
+
+                                                  </td>
+                                                  count++;
+                                              
+                                            <td class="cfr line-edit line-service">
+                                                <span>@item.SupplyChainService[i].CFR </span>
+
+                                            </td>
+                                            <td class="sambc line-edit line-service">
+                                                <span>@item.SupplyChainService[i].SAMBC </span>
+
+                                            </td>
+                                            <td class="priorityline line-edit line-service">
+                                                <span>@item.SupplyChainService[i].PriorityLine </span>
+
+                                            </td>
+                                            <td class="prioritysku line-edit line-service">
+                                                <span>@item.SupplyChainService[i].PrioritySKU </span>
+
+                                            </td>
+                                            <td class="shipment line-edit line-service">
+                                                <span>@item.SupplyChainService[i].Shipment </span>
+
+                                            </td>
+
+                                            @:</tr>
+                                        }
+
+                                    </tbody>
+                                </table>
+
+                            </td>
+                            <td style="border: none !important; padding: 0">
+                                <table id="packing" class="table" style="width: 100%; margin-left: -2px">
+                                    <thead>
+                                        <tr>
+                                            <th colspan="5">Daily-FE</th>
+                                        </tr>
+                                        <tr>
+                                            <th>CFR(%)</th>
+                                            <th>SAMBC(%)</th>
+                                            <th>Priority Line</th>
+                                            <th>Priority SKU</th>
+                                            <th>Shipment</th>
+
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @{
+                                            isDMS = false;
+                                        }
+                                        @for (int i = 3; i < 6; i++)
+                                        {
+                                            if (!isDMS)
+                                            {
+                                                <text>
+                                                    <tr data-type="2" data-measurecode="@(i - 2)" style="height: 30px !important" class="scdds-target">
+                                                </text>
+                                                isDMS = true;
+                                            }
+                                            else
+                                            {
+                                                <text>
+                                                    <tr data-type="2" data-measurecode="@(i - 2)" style="height: 30px !important">
+                                                </text>
+                                            }
+
+
+                                            <td class="cfr line-edit line-service">
+                                                <span>@item.SupplyChainService[i].CFR </span>
+
+                                            </td>
+                                            <td class="sambc line-edit line-service">
+                                                <span>@item.SupplyChainService[i].SAMBC </span>
+
+                                            </td>
+                                            <td class="priorityline line-edit line-service">
+                                                <span>@item.SupplyChainService[i].PriorityLine </span>
+
+                                            </td>
+                                            <td class="prioritysku line-edit line-service">
+                                                <span>@item.SupplyChainService[i].PrioritySKU </span>
+
+                                            </td>
+                                            <td class="shipment line-edit line-service">
+                                                <span>@item.SupplyChainService[i].Shipment </span>
+
+                                            </td>
+
+                                            @:</tr>
+                                        }
+
+                                    </tbody>
+                                </table>
+                            </td>
+                        }
+                    </tr>
+                </tbody>
+            </table>
+
+        </div>
+
+    </div>
+</div>
+
+
+<script src="@Url.Content("~/Scripts/kendo/2014.1.318/kendo.web.min.js")"></script>
+<script>
+
+    $(document).ready(function () {
+
+
+
+        // gird supply chain\
+        $("#tabresult td input ").addClass("hide");
+        $("#tabresult td select ").addClass("hide");
+
+    });
+
+</script>
+

@@ -1,0 +1,72 @@
+﻿@model Web.Models.SupplyChain.SupplyChainModel
+@{
+    ViewBag.Title = "Supply Chain ";
+    Layout = null;
+}
+
+<div class="box-body">
+    <div class="panel-group" id="accordion">
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title"> <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion" href="#collapseOne">HS&E </a> </h3>
+            </div>
+            <div id="collapseOne" class="panel-collapse collapse in">
+                <div class="panel-body"> @Html.Partial("SupplyChainHSENotUpdate", Model)</div>
+            </div>
+        </div>
+        
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title"> <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion" href="#collapseThree">FPQ</a> </h3>
+            </div>
+            <div id="collapseThree" class="panel-collapse collapse">
+                <div class="panel-body">@Html.Partial("SupplyChainFPQNotUpdate", Model) </div>
+            </div>
+        </div>
+        
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title"> <a href="#collapseFour" data-parent="#accordion" data-toggle="collapse" class="accordion-toggle collapsed">MPSA </a> </h3>
+            </div>
+            <div class="panel-collapse collapse" id="collapseFour" style="height: 0px;">
+                <div class="panel-body">
+                    @Html.Partial("SupplyChainMPSANotUpdate", Model)
+                </div>
+            </div>
+        </div>
+
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title"> <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion" href="#collapseTwo">DDS </a> </h3>
+            </div>
+            <div id="collapseTwo" class="panel-collapse collapse">
+                <div class="panel-body">@Html.Partial("SupplyChainDDSNotUpdate", Model)</div>
+            </div>
+        </div>
+        
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title"> <a href="#collapseSix" data-parent="#accordion" data-toggle="collapse" class="accordion-toggle collapsed">Service </a> </h3>
+            </div>
+            <div class="panel-collapse collapse" id="collapseSix" style="height: 0px;">
+                <div class="panel-body">
+                    @Html.Partial("SupplyChainServiceNotUpdate", Model)
+                </div>
+            </div>
+        </div>
+
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title"> <a href="#collapseFive" data-parent="#accordion" data-toggle="collapse" class="accordion-toggle collapsed">ProductionPlanning </a> </h3>
+            </div>
+            <div class="panel-collapse collapse" id="collapseFive" style="height: 0px;">
+                <div class="panel-body">
+                    @Html.Partial("SupplyChainProductionPlanningNotUpdate", Model)
+                </div>
+            </div>
+        </div>
+
+    
+    </div>
+</div>
+

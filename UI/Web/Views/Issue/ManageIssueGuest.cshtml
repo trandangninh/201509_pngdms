@@ -1,0 +1,633 @@
+﻿@using Entities.Domain
+@using Microsoft.Ajax.Utilities
+@using Service.Users
+
+@{
+    ViewBag.Title = "Manage Issue";
+    Layout = "~/Views/Shared/_KendoUILayout.cshtml";
+}
+
+<div class="form-group" style="padding-right:0; margin-bottom: 55px">
+    <div class="pull-left col-xs-3" style="padding-left: 0">
+        <input type="text" class="form-control" placeholder="Search" id="SearchKeyword">
+
+    </div>
+    <div class="pull-right col-xs-3 issue-dropdown">
+        <input id="assignToUser" value="" />
+    </div>
+    <div class="pull-right col-xs-3 issue-dropdown">
+        <input id="status" value="" />
+    </div>
+    <div class="pull-right col-xs-3 issue-dropdown">
+        <input id="type" value="" />
+    </div>
+</div>
+<div class="form-group">
+
+    <div id="grid" class="table-overflow-x">
+
+    </div>
+    <div id="bottom_anchor" class="k-grid k-widget"></div>
+    <input type="submit" id="btnRefresh" name="btnRefresh" style="display: none" />
+</div>
+
+
+@section bottomjs
+{
+    <script src="@Url.Content("~/Scripts/kendo/2014.1.318/kendo.web.min.js")"></script>
+    <script>
+        $(document).ready(function() {
+            function display_kendoui_grid_error(e) {
+                if (e.errors) {
+                    if ((typeof e.errors) == 'string') {
+                        //single error
+                        //display the message
+                        alert(e.errors);
+                    } else {
+                        //array of errors
+                        var message = "The following errors have occurred:";
+                        //create a message containing all errors.
+                        $.each(e.errors, function(key, value) {
+                            if (value.errors) {
+                                message += "\n";
+                                message += value.errors.join("\n");
+                            }
+                        });
+                        //display the message
+                        alert(message);
+                    }
+                } else {
+                    alert('Error happened');
+                }
+            }
+
+
+            var alluserAttributes = [
+                @{
+                    var userService = DependencyResolver.Current.GetService<IUserService>();
+                    var listUsername = userService.GetAllUsersAsync();
+                    var userAdmin = userService.GetUserByUsernameAsync("Admin").Result;
+                    if (userAdmin != null)
+                    {
+                        listUsername.Remove(userAdmin);
+                    }
+                }
+
+                @for (int i = 0; i < listUsername.Count; i++)
+                {
+                    var type = listUsername[i];
+                    <text>
+                    {
+                        Id: "@type.Id.ToString()",
+                        Name: "@(Html.Raw(HttpUtility.JavaScriptStringEncode(type.Username)))"
+                    }
+                    </text>
+                    if (i != listUsername.Count - 1)
+                    {
+                        <text>,</text>
+                    }
+                }
+            ];
+
+
+            var allStatusAttributes = [
+                @{
+                    var listStatus = new List<IssueStatus>()
+                                     {
+                                         IssueStatus.Open,
+                                         IssueStatus.Delayed,
+                                         IssueStatus.Closed
+                                     };
+                }
+
+                @for (int i = 0; i < listStatus.Count; i++)
+                {
+                    var type = listStatus[i];
+                    <text>
+                    {
+                        Id: @((int) type),
+                        Name: "@(Html.Raw(HttpUtility.JavaScriptStringEncode(type.ToString())))"
+                    }
+                    </text>
+                    if (i != listStatus.Count - 1)
+                    {
+                        <text>,</text>
+                    }
+                }
+            ];
+            var allTypeAttributes = [
+                @{
+                    var listType = new List<IssueType>()
+                                   {
+                                       IssueType.Making,
+                                       IssueType.Packing,
+                                       IssueType.SupplyChain
+                                   };
+                }
+
+                @for (int i = 0; i < listType.Count; i++)
+                {
+                    var type = listType[i];
+                    <text>
+                         {
+                             Id: @((int) type),
+                             Name: "@(Html.Raw(HttpUtility.JavaScriptStringEncode(type.ToString())))"
+                         }
+                        </text>
+                    if (i != listType.Count - 1)
+                    {
+                        <text>,</text>
+                    }
+                }
+            ];
+
+
+            function statusDropDownEditor(container, options) {
+                $('<input required data-text-field="Name" data-value-field="Id" data-bind="value:StatusId"/>')
+                    .appendTo(container)
+                    .kendoDropDownList({
+                        autoBind: false,
+                        dataSource: allStatusAttributes
+                    });
+            }
+
+            function userDropDownEditor(container, options) {
+                $('<input required data-text-field="Name" data-value-field="Id" data-bind="value:UserAssignedId"/>')
+                    .appendTo(container)
+                    .kendoDropDownList({
+                        dataTextField: "Name",
+                        dataValueField: "Id",
+                        dataSource: alluserAttributes
+                    });
+            }
+
+            function typeDropDownEditor(container, options) {
+                $('<input required data-text-field="Name" data-value-field="Id" data-bind="value:MeasureTypeId"/>')
+                    .appendTo(container)
+                    .kendoDropDownList({
+                        autoBind: false,
+                        dataSource: allTypeAttributes
+                    });
+            }
+
+
+            function serialize(data) {
+
+                for (var property in data) {
+                    if ($.isArray(data[property])) {
+                        serializeArray(property, data[property], data);
+                    }
+                    if (data[property] == null) {
+                        data[property] = " ";
+                    }
+                }
+            }
+
+            function serializeArray(prefix, array, result) {
+                for (var i = 0; i < array.length; i++) {
+                    if ($.isPlainObject(array[i])) {
+                        for (var property in array[i]) {
+                            result[prefix + "[" + i + "]." + property] = array[i][property];
+                        }
+                    } else {
+                        result[prefix + "[" + i + "]"] = array[i];
+                    }
+
+
+                }
+            }
+
+            // dropdown list
+            $("#assignToUser").kendoMultiSelect({
+                dataTextField: "Name",
+                dataValueField: "Id",
+                dataSource: alluserAttributes,
+                index: 0,
+                change: onChange,
+                optionLabel: "--- Any User ---",
+                placeholder: "---  Any User ---"
+            });
+            $("#status").kendoMultiSelect({
+                dataTextField: "Name",
+                dataValueField: "Id",
+                dataSource: allStatusAttributes,
+                index: 0,
+                change: onChange,
+                optionLabel: "--- Any Status ---",
+                placeholder: "--- Any Status ---"
+            });
+            $("#type").kendoDropDownList({
+                dataTextField: "Name",
+                dataValueField: "Id",
+                dataSource: allTypeAttributes,
+                index: 0,
+                change: onChange,
+                optionLabel: "--- Any Type ---",
+            });
+
+            function onChange() {
+                var grid = $("#grid").data('kendoGrid');
+                grid.dataSource.page(1);
+            };
+
+            var datasource = new kendo.data.DataSource({
+                type: "json",
+                transport: {
+                    read: {
+                        url: "@Html.Raw(Url.Action("ManageList", "Issue"))",
+                        type: "POST",
+                        dataType: "json",
+                        data: additionalData
+                    },
+                    destroy: {
+                        url: "@Html.Raw(Url.Action("Delete", "Issue"))",
+                        type: "POST",
+                        dataType: "json"
+                    },
+                    create: {
+                        url: "@Html.Raw(Url.Action("ManageCreate", "Issue"))",
+                        type: "POST",
+                        dataType: "json",
+                        data: serialize
+                    },
+                    update: {
+                        url: "@Html.Raw(Url.Action("ManageUpdate", "Issue"))",
+                        type: "POST",
+                        dataType: "json",
+                        data: serialize
+                    }
+                },
+                schema: {
+                    data: "Data",
+                    total: "Total",
+                    errors: "Errors",
+                    model: {
+                        id: "Id",
+                        fields: {
+                            Index: {
+                        editable: false,
+                    },
+                            CreatedDate: {
+                                editable: false,
+                            },
+                            UpdatedDate: {
+                                editable: false,
+                            },
+                            Content: {
+                                editable: false,
+                                validation:
+                                {
+                                    required: true,
+                                    min: 1
+                                }
+                            },
+                            NextStep: {
+                                editable: false,
+
+                                validation:
+                                {
+                                    required: true,
+                                }
+                            },
+
+                            UserAssigned: {
+                                editable: false,
+                                type: "string",
+                                validation:
+                                {
+                                    required: true,
+                                }
+                            },
+
+                            UserAssignedId: { editable: false, type: "string" },
+
+                            Status: {
+                                editable: true,
+                                type: "string",
+                                validation:
+                                {
+                                    required: true,
+                                }
+                            },
+                            StatusId: { editable: true, type: "number" },
+
+                            Type: {
+                                editable: false,
+                                type: "string",
+                                validation:
+                                {
+                                    required: true,
+                                }
+                            },
+                            TypeId: {
+                                type: "number",
+                                editable: false,
+                            },
+
+                            date: {
+                                type: "string",
+                            },
+
+                            ActionPlan: {
+                                editable: false,
+                                type: "string",
+                                validation:
+                                {
+                                    required: false,
+                                }
+                            },
+                            IssuesPriority: {
+                                editable: false,
+                                type: "string",
+                                validation:
+                                {
+                                    required: false,
+                                }
+                            },
+                            WhenDue: {
+                                editable: false,
+                                type: "string",
+                                validation:
+                                {
+                                    required: true,
+                                }
+                            },
+                            When: {
+                                editable: false,
+                                type: "string",
+                                validation:
+                                {
+                                    required: true,
+                                }
+                            },
+                            Note: {
+                                editable: false,
+                                type: "string",
+                                validation:
+                                {
+                                    required: false,
+                                }
+                            },
+                            SystemFixDMSLinkage: {
+                                editable: false,
+                                type: "string",
+                                validation:
+                                {
+                                    required: false,
+                                }
+                            }
+                        }
+                    }
+                },
+                requestEnd: function(e) {
+                    if (e.type == "create" || e.type == "update") {
+                        this.read();
+                    }
+                },
+                error: function(e) {
+                    display_kendoui_grid_error(e);
+                    // Cancel the changes
+                    this.cancelChanges();
+                },
+
+                pageSize: 10,
+                serverPaging: true,
+                serverFiltering: true,
+                serverSorting: true
+            });
+
+            function SetColor(container, options) {
+
+                if (container.Status == '@IssueStatus.Closed') {
+                    return "<div class='issues-close'>" + container.Status + "</div>";
+                }
+                if (container.Status == '@IssueStatus.Delayed') {
+                    return "<div class='issues-delay'>" + container.Status + "</div>";
+                } else
+                    return "<div>" + container.Status + "</div>";
+            };
+
+            var record = 0;
+            $("#grid").kendoGrid({
+                dataSource: datasource,
+                pageable: {
+                    refresh: true,
+                },
+                height: 'auto !important',
+                edit: function(e) {
+                    if (e.model.Id == "") { // fix error for edit
+                        //little hack here
+                        //pre-select the first value of kendoui dropdownlist datasource
+                        //for some reasons (maybe, bug) it always sends 0
+                        //if no value has been selected (changed) in the dropdownlist
+                        if (alluserAttributes.length > 0) {
+                            //e.model.MeasureTypeId = allMeasureTypeAttributes[0].Name;
+                            e.model.UserAssignedId = alluserAttributes[0].Id;
+                        }
+
+                        if (allStatusAttributes.length > 0) {
+                            e.model.StatusId = allStatusAttributes[0].Id;
+                        }
+
+                        if (allTypeAttributes.length > 0) {
+                            e.model.TypeId = allTypeAttributes[0].Id;
+                        }
+                    }
+                },
+                editable: {
+                    confirmation: true,
+                    mode: "inline"
+                },
+                //scrollable: false,
+                scrollable: true,
+                //filterable: true,
+                //sortable: true,
+                columns: [
+                    
+                    {
+                        field: "Content",
+                        title: "Issues",
+                        width: 250,
+                        editor: textEditorInitialize  ,
+                        template: "#=(Content == null) ? ' ' : Content #"
+                    }, {
+                        field: "ActionPlan",
+                        title: "Follow up action",
+                        editor: textEditorNoteInitialize  ,
+                        width: 250,
+                        template: "#=(ActionPlan == null) ? ' ' : ActionPlan #"
+                    },
+                    {
+                        field: "UserAssignedId",
+                        title: "Owner",
+                        width: 100,
+                        editor: userDropDownEditor,
+                        template: "#:UserAssigned#"
+                    },
+                    {
+                        field: "WhenDue",
+                        title: "When",
+                        width: 150,
+                        editor: dateTimeEditorWhenDue,
+                        format: '{0:MM/dd/yyyy}',
+                    },
+                    {
+                        field: "StatusId",
+                        title: "Status",
+                        width: 100,
+
+                        editor: statusDropDownEditor,
+                        template: SetColor
+
+                    },
+                    {
+                        field: "TypeId",
+                        title: "Type",
+                        width: 100,
+                        editor: typeDropDownEditor,
+                        template: "#:Type#"
+                    },
+                    {
+                        field: "Note",
+                        title: "Note",
+                        width: 250,
+                        editor: textEditorNoteInitialize  ,
+                        template: "#=(Note == null) ? ' ' : Note #"
+                    },
+                    {
+                        field: "SystemFixDMSLinkage",
+                        title: "System Fix <br/>DMS Linkage",
+                        width: 150,
+                        template: "#=(SystemFixDMSLinkage == null) ? ' ' : SystemFixDMSLinkage #"
+                    },
+                    {
+                        field: "When",
+                        title: "When",
+                        width: 100,
+                        format: '{0:MM/dd/yyyy}',
+                        editor: dateTimeEditor,
+                    }
+                    ,
+                    {
+                        field: "CreatedDate",
+                        title: "Create Date",
+                        width: 100,
+                        template: '#:CreatedDate#'
+                    }
+                ],
+                dataBound: function() {
+                    var rows = this.items();
+                    $(rows).each(function() {
+                        var index = $(this).index() + 1;
+                        var rowLabel = $(this).find(".row-number");
+                        $(rowLabel).html(index);
+                    });
+                }
+            }).on("click", ".k-grid-edit", function(){
+                $(".k-grid-update").html("<span class='k-icon k-update'></span>").css("min-width","16px").removeClass("k-button-icontext");
+                $(".k-grid-cancel").html("<span class='k-icon k-cancel'></span>").css("min-width","16px").removeClass("k-button-icontext");
+            }).on("click", ".k-grid-add", function() {
+                $(".k-grid-update").html("<span class='k-icon k-update'></span>").css("min-width","16px").removeClass("k-button-icontext");
+                $(".k-grid-cancel").html("<span class='k-icon k-cancel'></span>").css("min-width","16px").removeClass("k-button-icontext");
+            });
+
+            //search
+            $('#SearchKeyword').bind("input", function(e) {
+                if (this.value.length >= 3 || e.keyCode == 13 || e.keyCode == 8 || e.keyCode == 46 || this.value.length == 0) {
+                    var grid = $("#grid").data('kendoGrid');
+                    grid.dataSource.page(1); //new search. Set page size to 1
+                    //grid.dataSource.read();
+
+                }
+                return false;
+            });
+
+ 
+            function textEditorInitialize(container, options) {
+                $('<textarea name="' + options.field + '"  cols="50" rows="2" style="width: ' + container.width() + 'px;height: auto" />')
+                    .appendTo(container);
+            };
+
+            function textEditorNoteInitialize(container, options) {
+                $('<textarea name="' + options.field + '"  cols="40" rows="2" style="width: ' + container.width() + 'px;height:auto" />')
+                    .appendTo(container);
+            };
+
+
+            var drpStatus = $("#status").data("kendoMultiSelect");
+            var drpUser = $("#assignToUser").data("kendoMultiSelect");
+            function additionalData() {
+
+                if (typeof drpStatus === "undefined") {
+                    return {
+                        SearchKeyword: $('#SearchKeyword').val(),
+                        UserId: $("#assignToUser").val(),
+                        Status: $("#status").val(),
+                        Type: $("#type").val(),
+
+                    };
+                } else
+                    console.log(drpStatus.value());
+                return {
+                       
+                    SearchKeyword: $('#SearchKeyword').val(),
+                    UserId: drpUser.value().toString(),
+                    Status: drpStatus.value().toString(),
+                    Type: $("#type").val(),
+
+                };
+            }
+
+
+            function dateTimeEditor(container, options) {
+                $('<input data-text-field="' + options.field + '" data-value-field="' + options.field + '" data-bind="value:' + options.field + '" data-format="' + options.format + '"/>')
+                    .appendTo(container)
+                    .kendoDatePicker({});
+            }
+
+            function dateTimeEditorWhenDue(container, options) {
+                $('<input data-text-field="' + options.field + '" data-value-field="' + options.field + '" data-bind="value:' + options.field + '" data-format="' + options.format + '"/>')
+                    .appendTo(container)
+                    .kendoDatePicker({});
+            }
+
+
+            //scroll
+
+            function moveScroll() {
+                var scroll = $(window).scrollTop();
+                var anchor_top = $("table[role='grid']").offset().top;
+                var anchor_bottom = $("#bottom_anchor").offset().top;
+                if (scroll > anchor_top && scroll < anchor_bottom) {
+                    clone_table = $("#clone");
+                    if (clone_table.length == 0) {
+                        clone_table = $("table[role='grid']").clone();
+                        clone_table.attr('id', 'clone');
+                        clone_table.css({
+                            position: 'fixed',
+                            'pointer-events': 'none',
+                            top: 0
+                        });
+                        clone_table.width($("table[role='grid']").width());
+                        $("#bottom_anchor").append(clone_table);
+                        $("#clone tbody").css({ visibility: 'collapse' });
+                        $("#clone thead").css({ visibility: 'visible', 'pointer-events': 'auto' });
+
+                    }
+                } else {
+                    $("#clone").remove();
+                }
+            }
+
+            $(window).scroll(moveScroll);
+        });
+
+
+    </script>
+    <script>
+        $(document).ready(function() {
+            $("#nav-followup").addClass("active");
+
+        });
+    </script>
+},

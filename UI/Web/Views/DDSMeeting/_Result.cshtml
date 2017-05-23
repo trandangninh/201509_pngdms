@@ -1,0 +1,455 @@
+﻿@using RepositoryPattern.Infrastructure
+@model Web.Models.DdsMeeting.ResultViewModel
+@{
+    var workContext = EngineContext.Current.Resolve<Utils.IWorkContext>();
+}
+
+<style>
+    #window > form {
+        margin-top: 20px;
+    }
+
+    .field {
+        height: 50px;
+    }
+
+        .field > label {
+            text-align: right;
+            width: 180px;
+        }
+
+        .field .k-numerictextbox {
+            margin-left: 10px;
+            margin-top: -15px;
+            width: 390px;
+        }
+
+        .field > input {
+            margin-left: 10px;
+            width: 390px;
+        }
+
+    #grid .k-state-selected {
+        color: #787878;
+    }
+
+    #grid table thead tr th {
+        border: 1px solid #d5d5d5;
+        background-color: blue;
+        color: white;
+        height: 30px;
+        word-wrap: break-word;
+        white-space: normal;
+    }
+
+    #grid table tr td {
+        border-bottom: 1px solid #ddd;
+        padding: 0px 5px 0px 5px;
+    }
+
+        #grid table tr td:nth-child(1) {
+            color: white;
+        }
+
+    #grid table tbody tr {
+        height: 31px;
+    }
+    /*.k-ff input.k-textbox {
+        width: 100%;
+    }*/
+    #yesBtnCellRemarkConfirm {
+        margin-top: 20px;
+        width: 50%;
+        float: left;
+    }
+
+    #noBtnCellRemarkConfirm {
+        margin-top: 20px;
+        float: left;
+        width: 50%;
+    }
+
+    #yesBtnColumnRemarkConfirm {
+        margin-top: 20px;
+        width: 50%;
+        float: left;
+    }
+
+    #noBtnColumnRemarkConfirm {
+        margin-top: 20px;
+        float: left;
+        width: 50%;
+    }
+
+    #grid table tbody tr {
+        height: 31px;
+    }
+
+    .k-ff input.k-textbox {
+        /*height: 100%;*/
+        width: 100%;
+    }
+
+    #pom-Making-Remark, #pom-Packing-Remark, #pom-Planing-Remark {
+        width: 390px;
+    }
+
+    #pr-lastday-remark, #pr-mtd-remark {
+        width: 390px;
+    }
+    //Using Scroll in table
+    /*#grid .k-grid-header {
+        padding: 0 !important;
+    }
+
+    #grid .k-grid-content {
+        overflow-y: hidden;
+    }*/
+
+</style>
+@*template window*@
+<script type="text/x-kendo-template" id="windowTemplateCellRemark">
+    <div>
+        <textarea id="cellRemarkResult" rows="4" style="margin: 10px; width: 93%;"></textarea>
+    </div>
+    <input class="k-button" id="yesBtnCellRemarkConfirm" type="button" value="OK" />
+    <input class="k-button" id="noBtnCellRemarkConfirm" type="button" value="Cancel" />
+
+</script>
+<script type="text/x-kendo-template" id="windowTemplateMpsa">
+    <form id="pom-update">
+        <input type="hidden" name="measureId" id="measureId" />
+        <input type="hidden" name="lineId" id="lineId" />
+        <div class="field">
+            <label>Reason Code - PO Missed due to Making</label>
+            <input type="text" name="pomMaking" id="pom-making" />
+        </div>
+        <div class="field">
+            <label>Remark</label>
+            <input class="k-input k-textbox" type="text" name="pomMakingRemark" id="pom-Making-Remark" />
+        </div>
+        <div class="field">
+            <label>Reason Code - PO Missed due to Packing</label>
+            <input type="text" name="pomPacking" id="pom-packing" />
+        </div>
+        <div class="field">
+            <label>Remark</label>
+            <input class="k-input k-textbox" type="text" name="pomPackingRemark" id="pom-Packing-Remark" />
+        </div>
+        <div class="field">
+            <label>Reason Code - PO Missed due to Planing</label>
+            <input type="text" name="pomPlaning" id="pom-planing" />
+        </div>
+        <div class="field">
+            <label>Remark</label>
+            <input class="k-input k-textbox" type="text" name="pomPlaningRemark" id="pom-Planing-Remark" />
+        </div>
+        <div class="buttons">
+            <input class="k-button" id="noBtnCellRemarkConfirm" type="button" value="Cancel" onclick="cancelPom()" />
+            <input class="k-button" id="yesBtnCellRemarkConfirm" type="button" value="Update" onclick="savePom()" />
+        </div>
+    </form>
+</script>
+<script type="text/x-kendo-template" id="windowTemplatePr">
+    <form id="pr-update">
+        <input type="hidden" name="measureId" id="measureId" />
+        <input type="hidden" name="lineId" id="lineId" />
+        <div class="field">
+            <label>PR last day</label>
+            <input type="text" name="prLastDay" id="pr-lastday" />
+        </div>
+        <div class="field">
+            <label>PR last day remark</label>
+            <input class="k-input k-textbox" type="text" name="prLastDayRemark" id="pr-lastday-remark" />
+        </div>
+        <div class="field">
+            <label>PRMTD</label>
+            <input type="text" name="prMtd" id="pr-mtd" />
+        </div>
+        <div class="field">
+            <label>PRMTD remark</label>
+            <input class="k-input k-textbox" type="text" name="prMtdRemark" id="pr-mtd-remark" />
+        </div>
+        <div class="buttons">
+            <input class="k-button" id="noBtnCellRemarkConfirm" type="button" value="Cancel" onclick="cancelPr()" />
+            <input class="k-button" id="yesBtnCellRemarkConfirm" type="button" value="Update" onclick="savePr()" />
+        </div>
+    </form>
+</script>
+<script type="text/x-kendo-template" id="windowTemplateHeaderColumnRemarkForMaking">
+    <form id="lineremark-update">
+        <input type="hidden" name="departmentId-LineRemark" id="departmentId-LineRemark" />
+        <input type="hidden" name="lineId-LineRemark" id="lineId-LineRemark" />
+        <div>
+            <textarea id="columnRemarkResult" name="columnRemarkResult" rows="4" style="margin: 10px; width: 93%;"></textarea>
+        </div>
+        <input class="k-button" id="yesBtnColumnRemarkConfirm" type="button" value="OK" />
+        <input class="k-button" id="noBtnColumnRemarkConfirm" type="button" value="Cancel" />
+    </form>
+</script>
+@if (Model.Lines.Count > 0)
+{
+    <text>
+        <div class="form-group">
+            @if (workContext.CurrentUser != null)
+            {
+                <text>
+                    <div class="pull-left " style="padding-right:0; margin-bottom:5px">
+                        <button class="btn btn-info btn-info-custom" id="send-mail" title="Send Mail">Send Mail</button>
+                    </div>
+                    <div class="pull-right" style="margin-bottom: 5px">
+                        Line <input id="line_cbx" value="" />
+                    </div>
+                </text>
+            }
+
+        </div>
+        <div class="box border orange">
+
+            <div id="grid"></div>
+
+            <div id="bottom_anchor"></div>
+        </div>
+    </text>
+}
+else
+{
+    <text>
+        <div>
+            Opp! Admin didn’t assign any line for you so that you can update information.Please contact admin for it!!!
+        </div>
+    </text>
+}
+
+<script src="~/Scripts/ddsmeetingresult.js"></script>
+<script>
+    var lines = [@String.Join(",",Model.Lines.Select((item,index)=>"{Id:"+item.LineId+",Index:"+index+"}"))];
+    //get data Line for combobox popup editor
+    var dataSourceLine = new kendo.data.DataSource({
+        transport: {
+            read: {
+                dataType: "json",
+                type: "POST",
+                url: "@Html.Raw(Url.Action("GetAllLineForDdsMeetingByDepartmentIdAndDate", "DdsMeeting"))",
+                data: {
+                    departmentId: "@Model.DepartmentId",
+                    date: "@Model.Date"
+                }
+            }
+        }
+        ,
+        schema: {
+            parse: function (data) {
+                data.unshift({ Id: "0", LineName: "--  All Line  --" });
+                return data;
+            }
+        }
+    });
+
+    @if (workContext.CurrentUser != null)
+    {
+    <text>
+    //difine lineCombobox
+    $("#line_cbx").kendoComboBox({
+        dataTextField: "LineName",
+        dataValueField: "Id",
+        dataSource: dataSourceLine,
+        height: 100,
+        index: 0,
+        //change: selectLine
+        change: function (e) {
+
+            console.log(comboboxLine.value());
+            window.location.href="/DdsMeeting/index?id=" + "@Model.DepartmentId" + "&date=" + "@Model.Date.ToShortDateString()" + "&lineId=" + comboboxLine.value();
+        }
+    });
+    var comboboxLine = $("#line_cbx").data("kendoComboBox");
+    @if(Model.LineId != 0)
+    {
+        <text>
+    comboboxLine.value("@Model.LineId");
+    </text>
+    }
+
+
+    </text>
+    }
+
+
+    function addtionData() {
+        return {
+            departmentId: "@Model.DepartmentId",
+            date: "@Model.Date",
+            lineId: "@Model.LineId"
+        }
+    }
+
+    $(document).ready(function () {
+
+        var ds = {
+            type: "json",
+            transport: {
+                read: {
+                    url: "@Html.Raw(Url.Action("ResultList", "DdsMeeting"))",
+                    type: "POST",
+                    dataType: "json",
+                    data: addtionData
+                    @*{ departmentId: "@Model.DepartmentId", date: "@Model.Date" }*@
+                }
+            },
+            //pageSize: 10,
+            schema: {
+                data: "Data",
+                total: "Total",
+                errors: "Errors",
+                model: {
+                    id: "Id",
+                    fields: {
+                        Id: { editable: false },
+                        MeasureId: { editable: false },
+                        Dms: {},
+                        IPorOP: {},
+                        MeasureName: {},
+                        Owner: {},
+                        Target: {},
+                        Unit: {},
+                        Lines: {}
+                    }
+                }
+            }
+        };
+
+        //Edit Heigh 
+        valueSideBar = $('.sidebar').height();
+        y = $('body').height() - $('.container').height();
+        
+        x = $('body').height() - $('#grid').offset().top-$('.container').height();
+
+        if (valueSideBar > y)
+        {
+            y = valueSideBar;
+            x = valueSideBar  - $('#grid').offset().top;
+        }
+        //else
+        //{
+        //    valueFullScreen = $('body').height() - $('.container').height() - $('#sidebar').height() + 14;
+        //    $(".full-screen-icon").css("cssText", "margin-top:" + valueFullScreen + "px");
+        //}
+        
+        $("#page").css("cssText", "height:"+y+"px; overflow: hidden");
+
+        //scrollable: true and height != null --> column header will have position fixed
+        var grid = $("#grid").kendoGrid({
+            dataSource: ds,
+            filterable: false,
+            scrollable: true,
+            selectable: "cell",
+            height: x,
+            columns: [
+                {
+                    field: "Dms", width: 100, title: "Dms", filterable: false,
+                    attributes: {
+                        "is-editable": "false"
+                    }
+                },
+                {
+                    field: "IPorOP", width: 60, title: "IP/OP", filterable: false,
+                    attributes: {
+                        "is-editable": "false"
+                    }
+                },
+                {
+                    field: "MeasureId", title: "MeasureId", hidden: true,
+                    attributes: {
+                        "is-editable": "false"
+                    }
+                },
+                {
+                    field: "MeasureName", /*width: 300,*/ title: "Measure", filterable: false,
+                    attributes: {
+                        "is-editable": "false"
+                    },
+                    width: 250
+                },
+                {
+                    field: "Owner", width: 150, title: "Owner", filterable: false,
+                    attributes: {
+                        "is-editable": "false"
+                    }
+                },
+                {
+                    field: "Target", width: 75, title: "Target", filterable: false,
+                    attributes: {
+                        "is-editable": "false"
+                    }
+                },
+                {
+                    field: "Unit", width: 50, title: "Unit", filterable: false,
+                    attributes: {
+                        "is-editable": "false"
+                    }
+                }
+                @foreach (var line in Model.Lines)
+                {
+                     <text>
+                        , {
+                            field: "@line.Field",
+                            width: 75,
+                            title: "@line.Name",
+                            headerAttributes: {
+                                "title": "@line.LineRemark",
+                                "LineId": "@line.LineId"
+                            },
+                            attributes: {
+                                "is-editable": "#=!(@line.IsReadOnly||Readonly)#",
+                                "style": "# if(@line.IsHiddenForSpanColumns) { #display:none;# } if(Readonly) { #background-color:white;# } else if(@line.IsReadOnly) { #background-color:gray;# }#",
+                                "LineId": "@line.LineId",
+                                "colspan": "#=@line.Colspan#",
+                                "IsHiddenForSpanColumns": "#=(@line.IsHiddenForSpanColumns)#",
+                                "IsGray": "#=@line.IsReadOnly#"
+                            },
+
+                            //template: '#if (@line.Field) {# #= @line.Field# <div class="cell-remark" style="background-color: orange; height: 5px; width: 5px; margin-left: 56px; position: relative; top: -25px;"></div> #} else {# #= @line.Field# <div class="cell-remark" style="background-color: orange; height: 5px; width: 5px; margin-left: 56px; position: relative; top: -12px;"></div> #}#'
+                            @if(Model.DepartmentId != 1 && Model.DepartmentId != 2)
+                            {
+                            <text>
+                            //template: "#=IsGuest ? @line.Field :((!@line.IsReadOnly)? ((MeasureSystemType=='PoMissed')?'<div style=\"width: 100%; height:24px\" class=\"cell-popup\">'+@line.Field+'</div>': (MeasureSystemType=='Pr') ?'<div style=\"width: 100%; height:24px\" class=\"pr-cell-popup\">'+@line.Field+'</div>': @line.Field) + Readonly ? '' : '<div class=\"cell-remark\" LineId=\"@line.LineId\" title=\"@line.Remark\" style=\"background-color: orange; height: 20px; width: 20px; right: -10px; position: absolute; top: -12px; -ms-transform: rotate(45deg); -webkit-transform: rotate(45deg); transform: rotate(45deg); display: none;\"></div>':'')#"
+                            //          check cell can edit   if (MeasureSystemType = PoMissed  --->do it                                                                           else if MeasureSystemType = Pr ---> do it                                                                          else do it       if readonly --> "", else ---> render remark
+                            template: "#=IsGuest ? @line.Field : ((!@line.IsReadOnly)?	(((MeasureSystemType=='PoMissed')?'<div style=\"width: 100%; height:24px\" class=\"cell-popup\">'+@line.Field+'</div>':(MeasureSystemType=='Pr') ? '<div style=\"width: 100%; height:24px\" class=\"pr-cell-popup\">'+@line.Field+'</div>': @line.Field) + (Readonly ? '' : '<div class=\"cell-remark\" LineId=\"@line.LineId\" title=\"'+@line.Remark+'\" style=\"background-color: orange; height: 20px; width: 20px; right: -10px; position: absolute; top: -12px; -ms-transform: rotate(45deg); -webkit-transform: rotate(45deg); transform: rotate(45deg); display: none;\"></div>')):@line.Field)#"
+                            </text>
+                            }
+
+                            @if (Model.DepartmentId == 1 || Model.DepartmentId == 2)
+                            {
+                            <text>
+                            template: "#=IsGuest ? @line.Field : ((!@line.IsReadOnly)? ((MeasureSystemType=='PoMissed')?'<div style=\"width: 100%; height:24px\" class=\"cell-popup\">'+@line.Field+'</div>':(MeasureSystemType=='Pr') ?'<div style=\"width: 100%; height:24px\" class=\"pr-cell-popup\">'+@line.Field+'</div>': @line.Field):@line.Field)#"
+                            </text>
+                            }
+                    }
+                     </text>
+                }
+        ],
+        editable: true,
+        dataBound: onDataBound,
+        dataBinding: onDataBinding,
+        change: function (e) {
+            //console.log(e);
+        },
+        edit: function (e) {
+            if (e.container[0].getAttribute("is-editable") == "false") {
+                this.closeCell(); // prevent editing
+            }
+        },
+        save: onChange
+    }).data("kendoGrid");
+
+    });
+
+    getDateSearch("@Model.Date.ToShortDateString()");
+
+    getDepartmentId("@Model.DepartmentId");
+    //$('th[data-field$=".Value"]').each(function( index ) {
+    //    alert();
+    //});
+
+</script>

@@ -1,0 +1,155 @@
+﻿@{
+    ViewBag.Title = "Permission Manage";
+    Layout = "~/Views/Shared/_KendoUILayout.cshtml";
+    var _permission = DependencyResolver.Current.GetService<IPermissionService>();
+}
+@using Service.Interface
+@using Service.Security
+@model Web.Models.Permission.PermissionMappingModel
+@using (Html.BeginForm())
+{
+
+    @*<input type="submit" name="save" value="Save" />*@
+
+    <div class="box border orange">
+        <div class="box-title">
+            <h4><i class="fa fa-gear"></i>Permission Manage</h4>
+            <div class="tools">
+                <input type="submit" name="save" value="Save" class="btn btn-info btn-info-custom" />
+            </div>
+        </div>
+        <div class="box-body">
+
+            @if (Model.AvailablePermissions.Count == 0)
+            {
+                <text>No permissions defined</text>
+            }
+            else if (Model.AvailableRoles.Count == 0)
+            {
+                <text>No  roles available</text>
+            }
+            else
+            {
+                <script type="text/javascript">
+                    $(document).ready(function () {
+                        @foreach (var cr in Model.AvailableRoles)
+                                    {
+                                        <text>
+                        $('#selectall-@(cr.Id)').click(function () {
+                            $('.allow_@(cr.Id)').prop('checked', $(this).is(':checked')).change();
+                        });
+
+                        </text>
+                                    }
+                    });
+                </script>
+                <table class="table table-hover permission">
+                    <thead>
+                        <tr>
+                            <th scope="col">
+                                @*<strong>Admin.Configuration.ACL.Permission</strong>*@
+                                <strong>Page</strong>
+                            </th>
+                            @foreach (var cr in Model.AvailableRoles)
+                            {
+                                <th scope="col">
+                                    <input type="checkbox" id="selectall-@(cr.Id)" />
+                                    <strong>@cr.Name</strong>
+
+                                </th>
+                            }
+                        </tr>
+                    </thead>
+                    @{
+                bool altRow = true;
+                    }
+                    <tbody>
+                        @{
+                            var count = 0;
+                            foreach (var pr in Model.AvailablePermissions)
+                            {
+                                altRow = !altRow;
+                                if (_permission.GetPermissionRecordsByCategory(pr.Category).Result.Count == 1)
+                                {
+                                    <tr>
+                                        <td>
+                                            <span>@pr.Name</span>
+                                        </td>
+                                        @foreach (var cr in Model.AvailableRoles)
+                                        {
+                                            var allowed = Model.Allowed.ContainsKey(pr.SystemName) && Model.Allowed[pr.SystemName][cr.Id];
+                                            <td>
+                                                <input class="allow_@(cr.Id)" type="checkbox" value="@(pr.SystemName)" name="allow_@(cr.Id)" @(allowed ? " checked=checked" : null) />
+                                            </td>
+                                        }
+                                    </tr>
+                                }
+                                else
+                                {
+                                    if (count == 0)
+                                    {
+                                        count++;
+                                        <tr>
+                                            <td style="border-bottom:none">
+                                                <span >@pr.Category</span>
+                                            </td>
+                                            @foreach (var cr in Model.AvailableRoles)
+                                            {
+                                                var allowed = Model.Allowed.ContainsKey(pr.SystemName) && Model.Allowed[pr.SystemName][cr.Id];
+                                                <td style="border-bottom:none"></td>
+                                            }
+                                        </tr>
+                                        <tr>
+                                            <td style="border:none">
+                                                <span style="padding-left: 50px">@pr.Name</span>
+                                            </td>
+                                            @foreach (var cr in Model.AvailableRoles)
+                                            {
+                                                var allowed = Model.Allowed.ContainsKey(pr.SystemName) && Model.Allowed[pr.SystemName][cr.Id];
+                                                <td style="border:none">
+                                                    <input class="allow_@(cr.Id)" type="checkbox" value="@(pr.SystemName)" name="allow_@(cr.Id)" @(allowed ? " checked=checked" : null) />
+                                                </td>
+                                            }
+                                        </tr>
+                                    }
+                                    else
+                                    {
+                                        count++;
+                                        <tr style="border:none">
+                                            <td style="border:none">
+                                                <span style="padding-left: 50px">@pr.Name</span>
+                                            </td>
+                                            @foreach (var cr in Model.AvailableRoles)
+                                            {
+                                                var allowed = Model.Allowed.ContainsKey(pr.SystemName) && Model.Allowed[pr.SystemName][cr.Id];
+                                                <td style="border:none">
+                                                    <input class="allow_@(cr.Id)" type="checkbox" value="@(pr.SystemName)" name="allow_@(cr.Id)" @(allowed ? " checked=checked" : null) />
+                                                </td>
+                                            }
+                                        </tr>
+                                    }
+                                    if (count == _permission.GetPermissionRecordsByCategory(pr.Category).Result.Count)
+                                    {
+                                        count = 0;
+                                    }
+                                }
+                            }
+}
+                    </tbody>
+                </table>
+            }
+        </div>
+    </div>
+}
+
+@section bottomjs
+{
+    <script>
+        $(document).ready(function () {
+            $("#nav-dashboard").addClass("active");
+            $(".dashboard-permission").addClass("active");
+        });
+    </script>
+}
+
+

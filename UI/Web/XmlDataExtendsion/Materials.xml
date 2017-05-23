@@ -1,0 +1,19 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<Materials>
+  <Material>
+    <Id>1</Id>
+    <Name>Cap</Name>
+  </Material>
+  <Material>
+    <Id>2</Id>
+    <Name>Pouch/Laminate</Name>
+  </Material>
+  <Material>
+    <Id>3</Id>
+    <Name>Shipper/Carton</Name>
+  </Material>
+  <Material>
+    <Id>4</Id>
+    <Name>Label</Name>
+  </Material>
+</Materials>

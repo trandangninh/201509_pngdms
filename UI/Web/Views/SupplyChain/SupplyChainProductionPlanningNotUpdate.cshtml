@@ -1,0 +1,262 @@
+﻿@using Entities.Domain
+@using Nois.Web.Framework.Kendoui;
+@model Web.Models.SupplyChain.SupplyChainModel
+@{
+
+    Layout = null;
+}
+
+
+<div class="row">
+    <div class="col-md-12">
+
+        <div class="box border orange">
+
+            <table id="supplychaingrid" class="table production-result">
+
+                <tbody>
+                    <tr>
+                        <td class="scdds-DMS">
+                            <table class="table" style="border:none !important">
+                                <thead>
+                                    <tr>
+                                        <th>DMS</th>
+
+                                    </tr>
+
+                                </thead>
+                                <tbody style="border:none !important">
+                                    <tr style="height: 284px;" class="scdds-DMS">
+                                        <td style="border:none !important">Production Planning</td>
+
+                                    </tr>
+
+                                </tbody>
+
+                            </table>
+                        </td>
+                        <td>
+                            <table id="making" class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Production Unit-Making</th>
+                                        <th>Owner</th>
+                                        <th>Shift 2</th>
+                                        <th>Shift 3</th>
+                                        <th>Shift 1</th>
+
+                                        <th class="remark-supplychain">Remark</th>
+
+                                    </tr>
+                                </thead>
+                                <tbody>
+
+                                    @for (int i = 0; i < 6; i++)
+                                    {
+                                        <tr data-type="1" data-measurecode="@(i+1)">
+                                            <td class="measurecode">@Model.SupplyChainProductionPlanning[i].MeasureName </td>
+
+                                            <td class="owner " >
+                                                <span>@Model.SupplyChainProductionPlanning[i].Owner</span>
+
+                                            </td>
+
+                                            <td class="shift2  shift"  style="background-color: @Model.SupplyChainProductionPlanning[i].Shift2UIColorBg">
+                                                <span>@Model.SupplyChainProductionPlanning[i].Shift2 </span>
+
+                                            </td>
+                                            <td class="shift3  shift"  style="background-color: @Model.SupplyChainProductionPlanning[i].Shift3UIColorBg">
+                                                <span>@Model.SupplyChainProductionPlanning[i].Shift3 </span>
+
+                                            </td>
+                                            <td class="shift1  shift"  style="background-color: @Model.SupplyChainProductionPlanning[i].Shift1UIColorBg">
+                                                <span>@Model.SupplyChainProductionPlanning[i].Shift1 </span>
+
+                                            </td>
+                                            <td class="remark remark-float  line-remark">
+                                                <span>@Html.Raw(Model.SupplyChainProductionPlanning[i].RemarkDisplay.Replace("\n", "<br />")) </span>
+
+                                            </td>
+                                        </tr>
+                                    }
+
+                                </tbody>
+                            </table>
+
+                            <table id="packing" class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Production Unit Pkg</th>
+                                        <th>Month Target</th>
+                                        <th>Today 's Plan</th>
+                                        <th>MTD</th>
+                                        <th>Gap</th>
+                                        <th class="remark-supplychain">Remark</th>
+
+                                    </tr>
+                                </thead>
+                                <tbody>
+
+                                    @for (int i = 6; i < 9; i++)
+                                    {
+                                        <tr class="ProductionUnitPkg tr-edit" data-type="2" data-measurecode="@(i+1)">
+                                            <td class="measurecode">@Model.SupplyChainProductionPlanning[i].MeasureName</td>
+                                            <td class="monthtarget @(Model.SupplyChainProductionPlanning[i].MeasureName)0 colum0 line-check-edit line-edit-productplanning production-val">
+                                                <span>@Model.SupplyChainProductionPlanning[i].MonthTarget</span>
+                                            </td>
+                                            <td class="todayplan @(Model.SupplyChainProductionPlanning[i].MeasureName)1 colum1 line-check-edit line-edit-productplanning production-val">
+                                                <span>@Model.SupplyChainProductionPlanning[i].TodayPlan</span>
+                                            </td>
+                                            <td class="mtd  @(Model.SupplyChainProductionPlanning[i].MeasureName)2  colum2 line-check-edit line-edit-productplanning production-val">
+                                                <span>@Model.SupplyChainProductionPlanning[i].MTD</span>
+                                            </td>
+                                            <td class="gap gap@(i-6)   colum3   production-val">
+                                                <span>
+                                                    @(Model.SupplyChainProductionPlanning[i].MonthTarget
+
+                                                                    - Model.SupplyChainProductionPlanning[i].MTD)
+                                                </span>
+
+                                            </td>
+                                            <td class="remark remark-float remark@(i-6) line-edit-productplanning line-remark">
+                                                <span>@Html.Raw(Model.SupplyChainProductionPlanning[i].RemarkDisplay.Replace("\n", "<br />"))</span>
+                                            </td>
+                                        </tr>
+                                    }
+                                    <tr data-type="2" data-measurecode="10">
+                                        <td class="ssc-pro-fe">FE</td>
+                                        <td class="FE0 ssc-pro-fe production-val">
+
+                                            @{ var FE0 = Model.SupplyChainProductionPlanning[6].MonthTarget
+                                                                              + Model.SupplyChainProductionPlanning[7].MonthTarget
+                                                                              + Model.SupplyChainProductionPlanning[8].MonthTarget;
+                                            }
+
+                                            @FE0.ToString("F2")
+
+                                        </td>
+                                        <td class="FE1 ssc-pro-fe production-val">
+                                            @{ var feTodayPlan =
+                                                                Model.SupplyChainProductionPlanning[6].TodayPlan
+                                                                + Model.SupplyChainProductionPlanning[7].TodayPlan
+                                                                + Model.SupplyChainProductionPlanning[8].TodayPlan;
+                                            }
+                                            @feTodayPlan.ToString("F2")
+                                        </td>
+                                        <td class="FE2 ssc-pro-fe production-val">
+                                            @{ var feMTD =
+                                                                Model.SupplyChainProductionPlanning[6].MTD
+                                                                + Model.SupplyChainProductionPlanning[7].MTD
+                                                                + Model.SupplyChainProductionPlanning[8].MTD;
+                                            }
+                                            @feMTD.ToString("F2")
+                                        </td>
+                                        <td class="FE3 gap3 ssc-pro-fe production-val">
+                                            @{ var gap3 = Model.SupplyChainProductionPlanning[6].MonthTarget
+                                                                              + Model.SupplyChainProductionPlanning[7].MonthTarget
+                                                                              + Model.SupplyChainProductionPlanning[8].MonthTarget
+                                                                              - Model.SupplyChainProductionPlanning[6].MTD
+                                                                              - Model.SupplyChainProductionPlanning[7].MTD
+                                                                              - Model.SupplyChainProductionPlanning[8].MTD;
+                                            }
+                                            @gap3.ToString("F2")
+                                        </td>
+                                        <td class="remark remark-float FE4 line-edit-productplanning">
+                                            <span>@Html.Raw(Model.SupplyChainProductionPlanning[9].RemarkDisplay.Replace("\n", "<br />"))</span>
+                                        </td>
+                                    </tr>
+
+                                    <tr data-type="2" data-measurecode="11">
+                                        <td>@Model.SupplyChainProductionPlanning[10].MeasureName</td>
+                                        <td class="monthtarget FR0 line-check-edit colum0 line-edit-productplanning production-val">
+                                            <span>@Model.SupplyChainProductionPlanning[10].MonthTarget</span>
+                                        </td>
+                                        <td class="todayplan FR1 line-check-edit colum1 line-edit-productplanning production-val">
+                                            <span>@Model.SupplyChainProductionPlanning[10].TodayPlan</span>
+                                        </td>
+                                        <td class="mtd FR2 colum2 line-check-edit line-edit-productplanning production-val">
+                                            <span>@Model.SupplyChainProductionPlanning[10].MTD</span>
+                                        </td>
+                                        <td class="gap gap4   colum3   production-val">
+                                            <span>
+                                                @{ var gap4 = Model.SupplyChainProductionPlanning[10].MonthTarget
+
+                                                                                  - Model.SupplyChainProductionPlanning[10].MTD;}
+                                                @gap4.ToString("F2")
+                                            </span>
+
+                                        </td>
+
+
+
+                                        <td class="remark remark-float line-check-edit line-edit-productplanning">
+                                            <span>@Html.Raw(Model.SupplyChainProductionPlanning[10].RemarkDisplay.Replace("\n", "<br />"))</span>
+
+                                        </td>
+                                    </tr>
+                                    <tr data-type="2" data-measurecode="12">
+                                        <td class="ssc-pro-total">Total(Liquids)</td>
+                                        <td class="totalMonthTarget ssc-pro-total production-val">
+                                            @{ var totalMonthTarget = Model.SupplyChainProductionPlanning[6].MonthTarget
+                                                                  + Model.SupplyChainProductionPlanning[7].MonthTarget
+                                                                  + Model.SupplyChainProductionPlanning[8].MonthTarget
+                                                                  + Model.SupplyChainProductionPlanning[10].MonthTarget;
+                                            }
+                                            @totalMonthTarget.ToString("F2")
+
+
+                                        </td>
+                                        <td class="totaTodayPlan ssc-pro-total">
+                                            @{ var totaTodayPlan =
+                                                                       Model.SupplyChainProductionPlanning[6].TodayPlan
+                                                                       + Model.SupplyChainProductionPlanning[7].TodayPlan
+                                                                       + Model.SupplyChainProductionPlanning[8].TodayPlan
+                                                                       + Model.SupplyChainProductionPlanning[10].TodayPlan;
+                                            }
+                                            @totaTodayPlan.ToString("F2")
+                                        </td>
+
+                                        <td class="totalMTD ssc-pro-total">
+                                            @{ var totalMTD =
+                                                                       Model.SupplyChainProductionPlanning[6].MTD
+                                                                       + Model.SupplyChainProductionPlanning[7].MTD
+                                                                       + Model.SupplyChainProductionPlanning[8].MTD
+                                                                       + Model.SupplyChainProductionPlanning[10].MTD;
+                                            }
+                                            @totalMTD.ToString("F2")
+                                        </td>
+                                        <td class="gap gap5 ssc-pro-total  colum3   production-val">
+                                            <span>
+                                                @{ var gap5 =
+
+                                                                           Model.SupplyChainProductionPlanning[6].MonthTarget
+                                                                           + Model.SupplyChainProductionPlanning[7].MonthTarget
+                                                                           + Model.SupplyChainProductionPlanning[8].MonthTarget
+                                                                           + Model.SupplyChainProductionPlanning[10].MonthTarget
+                                                                           - Model.SupplyChainProductionPlanning[6].MTD
+                                                                           - Model.SupplyChainProductionPlanning[7].MTD
+                                                                           - Model.SupplyChainProductionPlanning[8].MTD
+                                                                           - Model.SupplyChainProductionPlanning[10].MTD;
+                                                }
+                                                @gap5.ToString("F2")
+                                            </span>
+
+                                        </td>
+                                        <td class="remark remark-float line-check-edit line-edit-productplanning">
+                                            <span>@Html.Raw(Model.SupplyChainProductionPlanning[9].RemarkDisplay.Replace("\n", "<br />"))</span>
+                                        </td>
+                                    </tr>
+                                </tbody>
+
+                            </table>
+                        </td>
+                    </tr>
+
+
+                </tbody>
+            </table>
+
+        </div>
+
+    </div>
+</div>

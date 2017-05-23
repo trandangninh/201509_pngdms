@@ -1,0 +1,471 @@
+﻿@using Entities.Domain
+@using Service.Users
+
+@{
+    ViewBag.Title = "Manage Attendance";
+    Layout = "~/Views/Shared/_KendoUILayout.cshtml";
+}
+
+
+<div class="form-group" style="padding-right:0; margin-bottom:30px">
+    
+    <div class="pull-left  attend-dropdown">
+        <input id="type" value="" />
+    </div>
+
+    <div class="pull-right " style="padding-right:0; margin-bottom:5px">
+
+        <div style="float:left; padding:10px 30px">To</div>  <input type="text" id="toDatepicker"  class="datepicker-fullscreen" style="width: 150px;" />
+
+    </div>
+
+    <div class="pull-right col-xs-3" style="padding-right:0; margin-bottom:5px">
+        <div style="float:left; padding:10px 30px">From</div>  <input type="text" id="fromDatepicker" class="datepicker-fullscreen" style="width: 150px;" />
+
+    </div>
+
+    <input type="hidden" id="fromDate" name="fromDate" value="" />
+    <input type="hidden" id="toDate" name="toDate" value="" />
+</div>
+<div class="form-group">
+
+
+    <div id="grid"></div>
+
+    <input type="submit" id="btnRefresh" name="btnRefresh" style="display: none" />
+</div>
+
+
+@section bottomjs
+    {
+    <script src="@Url.Content("~/Scripts/kendo/2014.1.318/kendo.web.min.js")"></script>
+    <script src="@Url.Content("~/Scripts/moment.min.js")"></script>
+
+
+    <script>
+        $(document).ready(function() {
+            $("#nav-attendance").addClass("active");
+
+
+
+            function getURLParameter(name) { // get parameter url
+                return decodeURIComponent(
+                    (location.search.match(RegExp("[?|&]" + name + '=(.+?)(&|$)')) || [, null])[1]
+                );
+            }
+
+            var fromDate = getURLParameter('fromDate'); // from date
+            if (fromDate != "null") { // get from date to url
+
+                $("#fromDatepicker").val(fromDate);
+                $("#fromDatepicker").val(fromDate);
+                $("#fromDate").val(fromDate);
+            } else {
+                $("#fromDatepicker").val($.datepicker.formatDate('mm/dd/yy', new Date())); // set current date for from day
+                fromDate = $.datepicker.formatDate('mm/dd/yy', new Date());
+                $("#fromDate").val($.datepicker.formatDate('mm/dd/yy', new Date()));
+            }
+
+            var toDate = getURLParameter('toDate'); // to date
+            if (toDate != "null") { // get to date to url
+                $("#toDatepicker").val(toDate);
+                $("#toDate").val(toDate);
+            } else {
+                $("#toDatepicker").val($.datepicker.formatDate('mm/dd/yy', new Date())); // set current date for from day
+                toDate = $.datepicker.formatDate('mm/dd/yy', new Date());
+                $("#toDate").val($.datepicker.formatDate('mm/dd/yy', new Date()));
+            }
+
+            $("#export-excel").attr("href", "/Attendance/Index?fromDate=" + fromDate + "&toDate=" + toDate); // set href for #export-excel to export excell
+
+         
+            // date click
+            var currentDate = new Date();
+            $("#fromDatepicker").kendoDatePicker({
+                origin: "top right",
+                position: "bottom right",
+
+                max: new Date(),
+                change: function() {
+                    $('.overlay-loading').show();
+                    setTimeout(function() {
+                        // Do something after 5 seconds
+
+                        var fromDate = $('#fromDatepicker').data('kendoDatePicker').value();
+                        var toDate = $('#toDatepicker').data('kendoDatePicker').value();
+                        var maxDate = moment(fromDate);
+                        maxDate.format('L');
+                        maxDate.add('days', 30);
+
+                        var checkDay = maxDate;
+                        var checkMaxDate = Math.floor((currentDate - Date.parse(fromDate)) / 86400000); // check total day
+
+                        if (checkMaxDate < 30) {
+                            checkDay = moment(new Date());
+                        }
+                        if (fromDate > toDate) {
+                            window.location.href = "/Attendance/Index?fromDate=" + kendo.toString(fromDate, 'd') + "&toDate=" + checkDay.format('L');
+                        } else {
+                            if (checkDay < toDate) {
+                                window.location.href = "/Attendance/Index?fromDate=" + kendo.toString(fromDate, 'd') + "&toDate=" + checkDay.format('L');
+                            } else {
+                                window.location.href = "/Attendance/Index?fromDate=" + kendo.toString(fromDate, 'd') + "&toDate=" + kendo.toString(toDate, 'd');
+                            }
+
+                        }
+                    }, 500);
+
+                }
+            });
+
+
+            var maxDate = $('#fromDatepicker').data('kendoDatePicker').value();
+            var checkDay1 = moment(maxDate);
+            checkDay1.format('L');
+
+            var checkMaxDate1 = Math.floor((currentDate - Date.parse(fromDate)) / 86400000); // check total day
+
+            if (checkMaxDate1 < 30) {
+                checkDay1 = currentDate;
+            } else {
+                checkDay1.add('days', 30);
+            }
+
+            var minDate = $('#fromDatepicker').data('kendoDatePicker').value();
+
+            $("#toDatepicker").kendoDatePicker({
+                origin: "top right",
+                position: "bottom right",
+                min: minDate,
+                max: new Date(checkDay1),
+                change: function() {
+                    $('.overlay-loading').show();
+                    var fromDate = $('#fromDatepicker').data('kendoDatePicker').value();
+                    var toDate = $('#toDatepicker').data('kendoDatePicker').value();
+                    window.location.href = "/Attendance/Index?fromDate=" + kendo.toString(fromDate, 'd') + "&toDate=" + kendo.toString(toDate, 'd');
+
+                }
+            });
+
+            //set readonly datepicker
+            $('.datepicker-fullscreen').prop('readonly', true);
+
+        });
+    </script>
+
+
+
+    <script>
+        $(document).ready(function() {
+            var UserDS = [
+                @{
+                        var userService = DependencyResolver.Current.GetService<IUserService>();
+                        var listUsername = userService.GetAllUsersAsync().Select(p => p.Username).ToList();
+
+                    }
+                @for (var i = 0; i < listUsername.Count(); i++)
+                    {
+                        var username = listUsername[i];
+                        <text>
+
+                     "@(Html.Raw(HttpUtility.JavaScriptStringEncode(username.ToString())))"
+                            </text>
+                        if (i != listUsername.Count - 1)
+                        {
+                            <text>,</text>
+                        }
+                    }
+            ];
+
+            function ownerDisplay(data) {
+                if (data.ListUsernameInAttendance != "")
+                    return data.ListUsernameInAttendance.join(', ');
+                else return '';
+            }
+            
+            function ownerNotInAttendDisplay(data) {
+                if (data.ListUsernameNotInAttendance != "")
+                    return data.ListUsernameNotInAttendance.join(', ');
+                else return '';
+            }
+            function ownerEditor(container, options) {
+                $("<select multiple='multiple' required data-bind='value:" + options.field + "'/>").appendTo(container).kendoMultiSelect({
+                    dataSource: options.values,
+                    suggest: true,
+                });
+            }
+
+
+            var datasource = new kendo.data.DataSource({
+                type: "json",
+                transport: {
+                    read: {
+                        url: "@Html.Raw(Url.Action("List", "Attendance"))",
+                        type: "POST",
+                        dataType: "json",
+                        data: additionalData
+                    },
+                    destroy: {
+                        url: "@Html.Raw(Url.Action("Delete", "Attendance"))",
+                        type: "POST",
+                        dataType: "json"
+                    },
+                    create: {
+                        url: "@Html.Raw(Url.Action("Create", "Attendance"))",
+                        type: "POST",
+                        dataType: "json",
+                        data: serialize
+                    },
+                    update: {
+                        url: "@Html.Raw(Url.Action("Update", "Attendance"))",
+                        type: "POST",
+                        dataType: "json",
+                        data: serialize
+                    }
+                },
+                schema: {
+                    data: "Data",
+                    total: "Total",
+                    errors: "Errors",
+                    model: {
+                        id: "Id",
+                        fields: {
+                            CreatedDateString: {
+                                editable: false,
+                            },
+                            Note: {
+                                editable: true,
+                                validation:
+                                {
+                                    required: true,
+                                }
+                            },
+                            ListUsernameInAttendance: {
+                                validation:
+                                {
+                                    required: true,
+                                }
+                            },
+
+                            Type: {
+                                editable: true,
+                                type: "string",
+                                validation:
+                                {
+                                    required: true,
+                                }
+                            },
+                            TypeId: { editable: true, type: "number" },
+                        }
+                    }
+                },
+                requestEnd: function(e) {
+                    if (e.type == "create" || e.type == "update") {
+                        this.read();
+                    }
+                },
+                error: function(e) {
+                    display_kendoui_grid_error(e);
+                    // Cancel the changes
+                    this.cancelChanges();
+                },
+
+                pageSize: 10,
+                serverPaging: true,
+                serverFiltering: true,
+                serverSorting: true
+            });
+
+
+            $("#grid").kendoGrid({
+                dataSource: datasource,
+                pageable: {
+                    refresh: true,
+                },
+                height: 'auto !important',
+                scrollable: true,
+                edit: function(e) {
+
+                    //little hack here
+                    //pre-select the first value of kendoui dropdownlist datasource
+                    //for some reasons (maybe, bug) it always sends 0
+                    //if no value has been selected (changed) in the dropdownlist
+                    if (allTypeAttributes.length > 0) {
+                        //e.model.MeasureTypeId = allMeasureTypeAttributes[0].Name;
+                        e.model.TypeId = allTypeAttributes[0].Id;
+                    }
+                },
+                editable: {
+                    confirmation: true,
+                    mode: "inline"
+                },
+              
+                //toolbar: ["create"],
+                columns: [
+                    {
+                        field: "CreatedDateString",
+                        title: "Created Date",
+                        width: 250,
+                        template: '#:CreatedDateString#'
+                    },
+                    {
+                        field: "ListUsernameInAttendance",
+                        title: "Attendance",
+                        width: 250,
+                        template: ownerDisplay,
+                        editor: ownerEditor,
+                        values: UserDS,
+                    }
+
+                    ,
+                    {
+                        field: "ListUsernameNotInAttendance",
+                        title: "Absence Users",
+                        width: 250,
+                        template: ownerNotInAttendDisplay,
+                        editor: ownerEditor,
+                        values: UserDS,
+                    },
+                    {
+                        field: "MeasureTypeId",
+                        title: "MeasureType",
+                        width: 250,
+                        editor: typeDropDownEditor,
+                        template: "#:MeasureType#"
+                    }
+                ]
+            });
+
+        });
+        function serialize(data) {
+            for (var property in data) {
+                if ($.isArray(data[property])) {
+                    serializeArray(property, data[property], data);
+                }
+                if (data[property]==null) {
+                    data[property] = " ";
+                }
+            }
+        }
+        function serializeArray(prefix, array, result) {
+            for (var i = 0; i < array.length; i++) {
+                if ($.isPlainObject(array[i])) {
+                    for (var property in array[i]) {
+                        result[prefix + "[" + i + "]." + property] = array[i][property];
+                    }
+                }
+                else {
+                    result[prefix + "[" + i + "]"] = array[i];
+                }
+            }
+        }
+
+        //local datasource
+        var allTypeAttributes = [
+            @{
+                var listType = new List<AttendanceType>()
+                {
+                    AttendanceType.Making,
+                    AttendanceType.Packing,
+                    //LineMeasureType.Supplychain
+        };
+        }
+
+              @for (int i = 0; i < listType.Count; i++)
+        {
+                  var type = listType[i];
+                  <text>
+        {
+            Id: @((int)type),
+            Name: "@(Html.Raw(HttpUtility.JavaScriptStringEncode(type.ToString())))"
+        }
+                </text>
+                if (i != listType.Count-1)
+        {
+                    <text>,</text>
+        }
+        }
+        ];
+
+        // dropdown list
+        $("#Type").kendoDropDownList({
+            dataTextField: "Name",
+            dataValueField: "Id",
+            dataSource: allTypeAttributes,
+            index: 0,
+            change: onChange,
+            optionLabel: "--- Any Type ---",
+        });
+
+        function onChange() {
+            var grid = $("#grid").data('kendoGrid');
+            grid.dataSource.page(1);
+        };
+
+        function typeDropDownEditor(container, options) {
+            $('<input required data-text-field="Name" data-value-field="Id" data-bind="value:TypeId"/>')
+                .appendTo(container)
+                .kendoDropDownList({
+                    autoBind: false,
+                    dataSource: allTypeAttributes
+                });
+        }
+
+
+
+
+        function additionalData() {
+            console.log($("#fromDatepicker").val());
+            return {
+                SearchKeyword: $('#SearchKeyword').val(),
+
+                FromDate: $("#fromDatepicker").val(),
+                ToDate: $("#toDatepicker").val(),
+                Type: $("#Type").val(),
+        };
+        }
+    </script>
+
+    <script type="text/javascript">
+                  $(document).ready(function() {
+                      $('#btnRefresh').click(function() {
+                          //refresh grid
+                          var grid = $("#grid").data('kendoGrid');
+                          grid.dataSource.read();
+                          //return false to don't reload a page
+                          return false;
+                      });
+                  });
+
+              function display_kendoui_grid_error(e) {
+                  if (e.errors) {
+                      if ((typeof e.errors) == 'string') {
+                          //single error
+                          //display the message
+                          alert(e.errors);
+                      } else {
+                          //array of errors
+                          //source: http://docs.kendoui.com/getting-started/using-kendo-with/aspnet-mvc/helpers/grid/faq#how-do-i-display-model-state-errors?
+                          var message = "The following errors have occurred:";
+                          //create a message containing all errors.
+                          $.each(e.errors, function(key, value) {
+                              if (value.errors) {
+                                  message += "\n";
+                                  message += value.errors.join("\n");
+                              }
+                          });
+                          //display the message
+                          alert(message);
+                      }
+                  } else {
+                      alert('Error happened');
+                  }
+              }
+
+              // attendance date
+
+
+              //set readonly datepicker
+              $('.datepicker-fullscreen').prop('readonly', true);
+    </script>
+}

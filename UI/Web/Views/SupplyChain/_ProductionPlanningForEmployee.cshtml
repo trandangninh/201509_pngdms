@@ -1,0 +1,261 @@
+﻿@using Service.Common
+@using Service.Interface
+@model Web.Models.SupplyChain.SupplyChainModel
+
+<div class="box border orange">
+    <table class="table" id="result-product">
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Shift</th>
+                <th>LPD1</th>
+                <th>LPD2</th>
+                <th>LPD3</th>
+                <th>Gabbana-DRS(MSU)</th>
+                <th>FR(MK3)</th>
+                <th>FR(MK4)</th>
+            </tr>
+        </thead>
+        <tbody>
+            @{
+                var count = 0;
+                var xmlService = DependencyResolver.Current.GetService<IXmlService>();
+                var listColor = xmlService.GetAllProductionPlanningColors().ToList();
+            }
+            @foreach (var productLineResult in Model.ProductionPlanning)
+            {
+
+                <tr>
+                    @if (count % 3 == 0)
+                    {
+                        <td rowspan="3">@productLineResult.DateTime</td>
+                    }
+                    @if (DateTime.Parse(productLineResult.DateTime) >= DateTime.Now.Date && DateTime.Parse(productLineResult.DateTime) <= DateTime.Now.AddDays(6).Date)
+                    {
+                        <td class="production-col">@productLineResult.ShiftType</td>
+                        foreach (var item in productLineResult.ListProductLineResult)
+                        {
+                            <td class="line-editable-product production-col " style="background-color: @item.Color">
+                                <span class="line-edit-span-product">@item.LineResult</span>
+                                <input class="line-edit-value-product hide" data-date="@productLineResult.DateTime" type="text" data-shift="@productLineResult.ShiftType" value="@item.LineResult" data-line="@item.LineType" data-result="@item.LineResult " />
+                            </td>
+
+
+                        }
+                    }
+                    else
+                    {
+                        <td class="production-col">@productLineResult.ShiftType</td>
+                        foreach (var item in productLineResult.ListProductLineResult)
+                        {
+                            <td style="background-color: @item.Color" class="production-col">
+                                <span class="line-edit-span-product">@item.LineResult</span>
+                            </td>
+
+
+                        }
+                    }
+                </tr>
+                    count++;
+            }
+        </tbody>
+    </table>
+    <div id="bottom_anchor"></div>
+</div>
+<script src="@Url.Content("~/Scripts/kendo/2014.1.318/kendo.web.min.js")"></script>
+<script>
+    var isEdittingProductionTabe = false;
+    var currentDate;
+    var oldvalproduct = 0;
+    var $table = $("#result-product");
+    $(document).ready(function () {
+
+
+
+        function activeEditProduct(e) {
+            $(e).children('.line-edit-span-product').hide();
+            $(e).children('input').removeClass('hide');
+            $(e).children('input').addClass('input-editting-product');
+            $(e).children('input').focus();
+            $(e).children('input').select();
+            oldvalproduct = $(e).children('input').val();
+            setTimeout(function () {
+                isEdittingProductionTabe = true;
+            }, 100);
+
+        }
+
+
+        $(".line-editable-product").click(function () {
+            if (isEdittingProductionTabe == false) {
+                activeEditProduct(this);
+            }
+        });
+
+
+
+        $table.on("tr.td.next.product", function (e, $input) {
+
+            $input = $($input);
+            var $nextInRowTd = $input.parent(".line-editable-product").next();
+            if ($nextInRowTd.length > 0) {
+                activeEditProduct($nextInRowTd);
+            } else {
+                var $trParent = $input.parents("tr");
+                var $nextTr = $trParent.next();
+                console.log($nextTr);
+                var currentTdIndex = $nextTr.children('.line-editable-product').first().index();
+                if ($nextTr.length > 0) {
+                    var $nextTd = $nextTr.children("td").eq(currentTdIndex);
+                    if ($nextTd.length > 0) {
+                        activeEditProduct($nextTd);
+                    }
+                }
+            }
+
+        });
+
+        function EditValueProduct() {
+            var $input = jQuery(".input-editting-product");
+            //if input exist and on edit mode
+            if ($input.length > 0 //if textbox is on active
+                    && isEdittingProductionTabe //if on edit mode
+            ) {
+
+                var newVal = $input.val();
+                var dateTime = $input.data('date'); //get tartet
+                var shiftType = $input.data('shift'); //get measure code
+                var lineCode = $input.data('line'); //get line code
+                //if (newVal != "" && newVal != oldvalproduct) { //validate new value
+                if (newVal != oldvalproduct) { //validate new value
+                    $.ajax({
+                        url: '/ProductPlanning/UpdateProductPlanningResult',
+                        type: 'POST',
+                        dataType: 'json',
+                        data: {
+                            dateTime: dateTime,
+                            shiftType: shiftType,
+                            lineCode: lineCode,
+                            result: newVal
+                        },
+                        success: function (data) {
+                            if (data.status == "success") {
+
+                                $input.parent().children('.line-edit-span-product').show(); //show span
+                                $input.parent().children('.line-edit-span-product').html(newVal); // update new value to span
+                                $input.addClass('hide'); //hide the textbox
+                                $input.removeClass('input-editting-product'); //remove edit class to the textbox
+                                //add color
+
+                            }
+                        }
+                    });
+
+                    // set color for td
+                    GetColorByProductName(newVal.split(':')[0], $input);
+                } else {
+                    //if value not change
+                    $input.parent().children('.line-edit-span-product').show(); //show the span
+                    $input.addClass('hide'); //hide the textbox
+                    $input.removeClass('input-editting-product'); //remove edit class
+
+                }
+
+            } else {
+
+            }
+            isEdittingProductionTabe = false; //remove edit mode
+        }
+
+        jQuery(".line-edit-value-product").keypress(function (event) {
+
+            var charCode = event.which || event.keyCode;
+            if (charCode == 13) {
+
+                event.preventDefault();
+                EditValueProduct();
+                isEdittingProductionTabe = false;
+
+                $table.trigger("tr.td.next.product", this);
+
+            }
+
+        })
+            .blur(function () {
+
+                EditValueProduct();
+                isEdittingProductionTabe = false;
+
+            });
+
+        function GetColorByProductName(productName, e) {
+            var color = "#ffff";
+            $.ajax({
+                url: '/ProductPlanning/GetColorByProductName',
+                type: 'POST',
+                data: {
+                    productName: productName,
+                },
+                success: function (data) {
+                    color = data;
+                    // this td
+                    var $td = $(e).parent("td");
+
+                    // set background color
+                    $td.css('background-color', color);
+                }
+            });
+            return color;
+        }
+        $("#nav-product-plan").addClass("active");
+    });
+
+</script>
+
+@*OLD CODE*@
+@*<div class="box border orange">
+    <table class="table" id="result-product">
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Shift</th>
+                <th>Line1</th>
+                <th>Line2</th>
+                <th>Line3</th>
+                <th>Gabbana-DRS(MSU)</th>
+                <th>FR(MK3)</th>
+                <th>FR(MK4)</th>
+            </tr>
+        </thead>
+        <tbody>
+            @{
+                var count = 0;
+                var xmlService = DependencyResolver.Current.GetService<IXmlService>();
+                var listColor = xmlService.GetAllProductionPlanningColors().ToList();
+            }
+            @foreach (var productLineResult in Model.ProductionPlanning)
+            {
+
+                <tr>
+                    @if (count % 3 == 0)
+                    {
+                        <td rowspan="3">@productLineResult.DateTime</td>
+                    }
+
+                    <td class="production-col">@productLineResult.ShiftType</td>
+                    @foreach (var item in productLineResult.ListProductLineResult)
+                    {
+                        <td style="background-color: @item.Color" class="production-col">
+                            <span class="line-edit-span-product">@item.LineResult</span>
+                        </td>
+
+
+                    }
+
+                </tr>
+                    count++;
+            }
+        </tbody>
+    </table>
+    <div id="bottom_anchor"></div>
+</div>*@

@@ -1,0 +1,135 @@
+﻿@using Entities.Domain
+@using Nois.Web.Framework.Kendoui;
+@model Web.Models.SupplyChain.SupplyChainModel
+@{
+    ViewBag.Title = "Supply Chain ";
+    Layout = "~/Views/Shared/_KendoUILayout.cshtml";
+}
+
+<div class="form-group">
+
+    <div class="pull-right col-xs-2" style="padding-right:0; margin-bottom:5px">
+        <input id="datepicker"  class="datepicker-fullscreen" style="width: 150px;" />
+    </div>
+
+</div>
+
+<div class="row">
+    <div class="col-md-12">
+        <!-- BOX -->
+        <div class="box border blue">
+            <div class="box-title">
+                <h4><i class="fa fa-user"></i><span class="hidden-inline-mobile">  </span></h4>
+            </div>
+            <div class="box-body">
+
+
+                <div class="tabbable header-tabs">
+                    <ul class="nav nav-tabs">
+                       
+                        @*<li class="active"><a href="#tabresult" data-toggle="tab"><i class="fa fa-question"></i> <span class="hidden-inline-mobile">Result daily </span></a></li>*@
+
+                        <li><a href="#tabresult-dms-productionplanning" data-toggle="tab"><span class="hidden-inline-mobile">DMS Production Planning</span></a></li>
+                        <li><a href="#tabresult-dms-service" data-toggle="tab"><span class="hidden-inline-mobile">Service</span></a></li>
+                        <li><a href="#tabresult-dms-dds" data-toggle="tab"><span class="hidden-inline-mobile">DDS</span></a></li>
+                        <li><a href="#tabresult-dms-mpsa" data-toggle="tab"><span class="hidden-inline-mobile">MPSA</span></a></li>
+                        <li><a href="#tabresult-dms-fpq" data-toggle="tab"><span class="hidden-inline-mobile">FPQ</span></a></li>
+                        <li class="active"><a href="#tabresult-dms-hse" data-toggle="tab"><span class="hidden-inline-mobile">HS&E</span></a></li>
+
+                    </ul>
+                    <div class="tab-content">
+                        <!-- Result Dms hs&e -->
+                        <div class="tab-pane fade in active" id="tabresult-dms-hse">
+                            @Html.Partial("SupplyChainHSENotUpdate", Model)
+                        </div>
+                        <!-- /Result Dms hs&e -->
+                        <!-- Result Dms fpq -->
+                        <div class="tab-pane fade" id="tabresult-dms-fpq">
+                            @Html.Partial("SupplyChainFPQNotUpdate", Model)
+                        </div>
+                        <!-- /Result Dms fpq -->
+                        <!-- Result Dms mpsa -->
+                        <div class="tab-pane fade" id="tabresult-dms-mpsa">
+                            @Html.Partial("SupplyChainMPSANotUpdate", Model)
+                        </div>
+                        <!-- /Result Dms mpsa -->
+                        <!-- Result Dms dds -->
+                        <div class="tab-pane fade" id="tabresult-dms-dds">
+                            @Html.Partial("SupplyChainDDSNotUpdate", Model)
+                        </div>
+                        <!-- /Result Dms dds -->
+                        <!-- Result Dms service -->
+                        <div class="tab-pane fade" id="tabresult-dms-service">
+                            @Html.Partial("SupplyChainServiceNotUpdate", Model)
+                        </div>
+                        <!-- /Result Dms service -->
+                        <!-- Result Dms productionplanning -->
+                        <div class="tab-pane fade" id="tabresult-dms-productionplanning">
+                            @Html.Partial("SupplyChainProductionPlanningNotUpdate", Model)
+                        </div>
+                        <!-- /Result Dms productionplanning -->
+
+                        <!-- Result -->
+                        @*<div class="tab-pane fade in active" id="tabresult">
+                           @Html.Partial("_SupplyChainForGuest",Model)
+                        </div>*@
+
+                        <!-- /Result -->
+                      
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+@section bottomjs
+{
+  <script src="@Url.Content("~/Scripts/kendo/2014.1.318/kendo.web.min.js")"></script>
+<script>
+    var IsEditting = false;
+    var currentDate;
+    var oldval = 0;
+    $(document).ready(function() {
+
+        function getURLParameter(name) {
+            return decodeURIComponent(
+                (location.search.match(RegExp("[?|&]" + name + '=(.+?)(&|$)')) || [, null])[1]
+            );
+        }
+
+        var date = getURLParameter('date');
+        if (date != "null") {
+            currentDate = date;
+            $("#datepicker").val(date);
+        } else {
+            $("#datepicker").val($.datepicker.formatDate('mm/dd/yy', new Date()));
+            currentDate = $.datepicker.formatDate('mm/dd/yy', new Date());
+
+        }
+
+        // date picker
+
+        $(".datepicker-fullscreen").kendoDatePicker({
+            max: new Date(),
+            origin: "top right",
+            position: "bottom right",
+            change: function () {
+                window.location.href = "/SupplyChain?date=" + 
+                kendo.toString(this.value(), 'd');
+            }
+
+        });
+
+        $("#nav-meeting").addClass("active");
+
+        $(".meeting-suplychain").addClass("active");
+        //set readonly datepicker
+
+        $('#datepicker').prop('readonly', true);
+    });
+
+</script>
+}
+
+

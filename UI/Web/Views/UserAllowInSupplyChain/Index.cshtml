@@ -1,0 +1,243 @@
+﻿@using RepositoryPattern.Infrastructure
+@using Service.Users
+
+@{
+    ViewBag.Title = "Config user in DMS";
+    Layout = "~/Views/Shared/_KendoUILayout.cshtml";
+}
+
+<div class="form-group">
+    <div id="grid"></div>
+    <input type="submit" id="btnRefresh" name="btnRefresh" style="display: none" />
+</div>
+
+@section bottomjs
+{
+    <script src="@Url.Content("~/Scripts/kendo/2014.1.318/kendo.web.min.js")"></script>
+    <script>
+        $(document).ready(function() {
+            var UserDS = [ @{
+                var userService = EngineContext.Current.Resolve<IUserService>();
+            var listUsername =  userService.GetAllUsersAsync().Where(u => u.Active).Select(p=>p.Username).ToList();
+
+        }
+            @for (var i = 0; i < listUsername.Count(); i++)
+        {
+            var username = listUsername[i];
+            <text>
+
+                     "@(Html.Raw(HttpUtility.JavaScriptStringEncode(username.ToString())))"
+                            </text>
+            if (i != listUsername.Count - 1)
+            {
+                <text>,</text>
+            }
+        }];
+
+        function ownerDisplay(data) {
+            if (data.ListUsername != "")
+                return data.ListUsername.join(', ');
+            else return '';
+        }
+
+        function ownerEditor(container, options) {
+            $("<select multiple='multiple' required data-bind='value:" + options.field + "'/>").appendTo(container).kendoMultiSelect({
+                dataSource: options.values,
+                suggest: true,
+            });
+        }
+
+
+            var datasource = new kendo.data.DataSource({
+                type: "json",
+                transport: {
+                    read: {
+                        url: "@Html.Raw(Url.Action("List", "UserAllowInSupplyChain"))",
+                        type: "POST",
+                        dataType: "json"
+                    },
+                    update: {
+                        url: "@Html.Raw(Url.Action("Update", "UserAllowInSupplyChain"))",
+                        type: "POST",
+                        dataType: "json",
+                        data: serialize
+                    }
+                },
+                schema: {
+                    data: "Data",
+                    total: "Total",
+                    errors: "Errors",
+                    model: {
+                        id: "Id",
+                        fields: {
+                            DMSName: {
+                                editable: false,
+                            },
+
+                            ListUsername: {
+
+                                editable: true,
+                                validation:
+                                {
+                                    required: true,
+                                }
+                            }
+
+                        }
+                    }
+                },
+                requestEnd: function(e) {
+                    if (e.type == "create" || e.type == "update" ) {
+                        this.read();
+                    }
+                },
+                error: function (e) {
+                    console.log(e);
+                    display_kendoui_grid_error(e);
+                    // Cancel the changes
+                    this.cancelChanges();
+                },
+
+                pageSize: 10,
+                serverPaging: true,
+                serverFiltering: true,
+                serverSorting: true
+            });
+
+
+            $("#grid").kendoGrid({
+                dataSource: datasource,
+                pageable: {
+                    refresh: true,
+                },
+                height: 'auto',
+                edit: function (e) {
+                    if (e.model.Id == "") {
+
+                        //little hack here
+                        //pre-select the first value of kendoui dropdownlist datasource
+                        //for some reasons (maybe, bug) it always sends 0
+                        ////if no value has been selected (changed) in the dropdownlist
+                        if (UserDS.length > 0) {//e.model.MeasureTypeId = allMeasureTypeAttributes[0].Name;
+
+                            e.model.UserAssignedId = UserDS[0].Id;
+
+                        }
+
+                     
+
+                    }
+                },
+                editable: {
+                    confirmation: true,
+                    mode: "inline"
+                },
+                scrollable: false,
+                cancel: function(e) {
+                    var grid = $("#grid").data("kendoGrid");
+                    grid.refresh();
+                },
+                columns: [
+
+                    {
+                        field: "DMSName",
+                        title: "DMSName",
+                        width: 250,
+
+                        template: "#:DMSName#"
+                    },
+                    {
+                        field: "ListUsername",
+                        title: "Owner",
+                        width: 250,
+                        template: ownerDisplay,
+                        editor: ownerEditor,
+                        values: UserDS,
+                    },
+
+                    {
+                        command: [
+                            {
+                                name: "edit",
+                                text: "",
+                                template: "<a class='k-button k-grid-edit' href='' style='min-width:16px;'><span class='k-icon k-edit'></span></a>"
+                            }
+                        ],
+                        width: 50
+                    }
+                ]
+            }).on("click", ".k-grid-edit", function(){
+                $(".k-grid-update").html("<span class='k-icon k-update'></span>").css("min-width","16px").removeClass("k-button-icontext");
+                $(".k-grid-cancel").html("<span class='k-icon k-cancel'></span>").css("min-width","16px").removeClass("k-button-icontext");
+            }).on("click", ".k-grid-add", function() {
+                $(".k-grid-update").html("<span class='k-icon k-update'></span>").css("min-width","16px").removeClass("k-button-icontext");
+                $(".k-grid-cancel").html("<span class='k-icon k-cancel'></span>").css("min-width","16px").removeClass("k-button-icontext");
+            });
+        });
+        function serialize(data) {
+            for (var property in data) {
+                if ($.isArray(data[property])) {
+                    serializeArray(property, data[property], data);
+                }
+            }
+        }
+        function serializeArray(prefix, array, result) {
+            for (var i = 0; i < array.length; i++) {
+                if ($.isPlainObject(array[i])) {
+                    for (var property in array[i]) {
+                        result[prefix + "[" + i + "]." + property] = array[i][property];
+                    }
+                }
+                else {
+                    result[prefix + "[" + i + "]"] = array[i];
+                }
+            }
+        }
+        function additionalData() {
+            return {
+
+            };
+        }
+       
+        
+    </script>
+
+    <script type="text/javascript">
+               
+
+              function display_kendoui_grid_error(e) {
+                  if (e.errors) {
+                      if ((typeof e.errors) == 'string') {
+                          //single error
+                          //display the message
+                          alert(e.errors);
+                      } else {
+                          //array of errors
+                          //source: http://docs.kendoui.com/getting-started/using-kendo-with/aspnet-mvc/helpers/grid/faq#how-do-i-display-model-state-errors?
+                          var message = "The following errors have occurred:";
+                          //create a message containing all errors.
+                          $.each(e.errors, function(key, value) {
+                              if (value.errors) {
+                                  message += "\n";
+                                  message += value.errors.join("\n");
+                              }
+                          });
+                          //display the message
+                          alert(message);
+                      }
+                  } else {
+                      alert('Error happened');
+                  }
+              }
+    </script>
+    <script>
+        $(document).ready(function() {
+            $("#nav-dashboard").addClass("active");
+            $(".dashboard-userallowinsupplychain").addClass("active");
+        });
+    </script>
+}
+
+
+
+

@@ -1,0 +1,1347 @@
+﻿
+#header-tasks {
+    float: right;
+}
+
+#header-user {
+    float: right;
+}
+
+.line-edit-span {
+    padding-top: 3px;
+    padding-bottom: 3px;
+    min-width: 40px;
+    text-align: center;
+    min-height: 20px;
+}
+
+.input-editting {
+    height: 25px !important;
+    width: 98% !important;
+}
+
+
+#tabresult > table > thead > tr > th,
+#tabresult .table > tbody > tr > th,
+#tabresult .table > tfoot > tr > th,
+#tabresult .table > thead > tr > td,
+#tabresult .table > tbody > tr > td,
+#tabresult .table > tfoot > tr > td,
+#tabresult-dms-hse > table > thead > tr > th,
+#tabresult-dms-hse .table > tbody > tr > th,
+#tabresult-dms-hse .table > tfoot > tr > th,
+#tabresult-dms-hse .table > thead > tr > td,
+#tabresult-dms-hse .table > tbody > tr > td,
+#tabresult-dms-hse .table > tfoot > tr > td,
+#tabresult-dms-fpq > table > thead > tr > th,
+#tabresult-dms-fpq .table > tbody > tr > th,
+#tabresult-dms-fpq .table > tfoot > tr > th,
+#tabresult-dms-fpq .table > thead > tr > td,
+#tabresult-dms-fpq .table > tbody > tr > td,
+#tabresult-dms-fpq .table > tfoot > tr > td,
+#tabresult-dms-mpsa > table > thead > tr > th,
+#tabresult-dms-mpsa .table > tbody > tr > th,
+#tabresult-dms-mpsa .table > tfoot > tr > th,
+#tabresult-dms-mpsa .table > thead > tr > td,
+#tabresult-dms-mpsa .table > tbody > tr > td,
+#tabresult-dms-mpsa .table > tfoot > tr > td,
+#tabresult-dms-dds > table > thead > tr > th,
+#tabresult-dms-dds .table > tbody > tr > th,
+#tabresult-dms-dds .table > tfoot > tr > th,
+#tabresult-dms-dds .table > thead > tr > td,
+#tabresult-dms-dds .table > tbody > tr > td,
+#tabresult-dms-dds .table > tfoot > tr > td,
+#tabresult-dms-service > table > thead > tr > th,
+#tabresult-dms-service .table > tbody > tr > th,
+#tabresult-dms-service .table > tfoot > tr > th,
+#tabresult-dms-service .table > thead > tr > td,
+#tabresult-dms-service .table > tbody > tr > td,
+#tabresult-dms-service .table > tfoot > tr > td,
+#tabresult-dms-productionplanning > table > thead > tr > th,
+#tabresult-dms-productionplanning .table > tbody > tr > th,
+#tabresult-dms-productionplanning .table > tfoot > tr > th,
+#tabresult-dms-productionplanning .table > thead > tr > td,
+#tabresult-dms-productionplanning .table > tbody > tr > td,
+#tabresult-dms-productionplanning .table > tfoot > tr > td {
+    line-height: 1.2;
+    vertical-align: middle;
+    padding: 2px 5px;
+    border: 1px solid #ddd;
+}
+
+
+
+#clone tbody {
+    border: none !important;
+}
+
+#clone thead {
+    background-color: white;
+    border: 1px solid #ddd;
+}
+
+.table > thead > tr > th {
+    height: 30px;
+    text-align: center;
+    overflow-y: hidden !important;
+}
+
+/* DMS Meeting result table style*/
+
+
+
+
+#tabresult-product .border {
+    border: none !important;
+}
+
+#tabresult-product .table {
+    border: 1px solid #ddd !important;
+}
+
+    #tabresult-product .table thead {
+        background: blue;
+        color: #fff;
+        font-weight: bold;
+    }
+
+    #tabresult-product .table td {
+        padding-left: 5px;
+        padding-top: 2px;
+        padding-bottom: 3px;
+    }
+
+#tabresult-product .production-col {
+    height: 25px;
+    width: 150px;
+    border: 1px solid #ddd;
+}
+
+#tabresult-product > tbody > tr > td, .table > tfoot > tr > td {
+    border-top: 1px solid #ddd;
+    line-height: 1.42857;
+    padding: 0px;
+    vertical-align: top;
+}
+
+#tabresult .border {
+    border: none !important;
+}
+
+#tabresult .table,
+#tabresult-dms-hse .table,
+#tabresult-dms-fpq .table,
+#tabresult-dms-mpsa .table,
+#tabresult-dms-dds .table,
+#tabresult-dms-service .table,
+#tabresult-dms-productionplanning .table {
+    border: 1px solid #ddd !important;
+}
+
+    #tabresult .table thead,
+    #tabresult-dms-hse .table thead,
+    #tabresult-dms-fpq .table thead,
+    #tabresult-dms-mpsa .table thead,
+    #tabresult-dms-dds .table thead,
+    #tabresult-dms-service .table thead,
+    #tabresult-dms-productionplanning .table thead {
+        background: #eea236;
+        color: #fff;
+        font-weight: bold;
+    }
+
+    #tabresult .table td,
+    #tabresult-dms-hse .table td,
+    #tabresult-dms-fpq .table td,
+    #tabresult-dms-mpsa .table td,
+    #tabresult-dms-dds .table td,
+    #tabresult-dms-service .table td,
+    #tabresult-dms-productionplanning .table td {
+        padding-left: 5px;
+    }
+
+.eventRow {
+    background: #d7ffc1 !important;
+}
+
+.match-target {
+    background: green !important;
+    color: white;
+}
+
+.no-match-target {
+    background: red !important;
+    color: white;
+}
+
+.exception-target {
+    background: white !important;
+    color: #000 !important;
+}
+
+.dms-code-col {
+    border-bottom: none !important;
+    vertical-align: middle;
+    width: 100px;
+    word-wrap: break-word;
+}
+
+.measure-type-col, .unit-col, .target-col {
+    vertical-align: middle;
+    width: 50px;
+}
+
+.owner-col {
+    vertical-align: middle;
+    width: 80px;
+}
+
+#ui-datepicker-div {
+    z-index: 999 !important;
+}
+
+/** Issue page **/
+.issue-dropdown {
+    padding-left: 1em !important;
+    padding-top: 0.5em;
+}
+
+/* Custom kendo UI css*/
+/*headers*/
+
+.k-grid th.k-header,
+.k-grid-header {
+    background: #eea236;
+}
+
+    .k-grid th.k-header,
+    .k-grid th.k-header .k-link {
+        color: #fff;
+    }
+
+/*rows*/
+
+/*.k-grid-content table tr
+{
+    background:#ccf !important;
+}*/
+
+
+.k-alt {
+    background: #d7ffc1 !important;
+}
+
+.none-kendo-toolbar .k-toolbar.k-grid-toolbar {
+    display: none;
+}
+
+/*.k-animation-container {
+    left:880px !important
+}*/
+/* end Custom kendo UI css*/
+
+/* widget: tab*/
+.box .header-tabs .nav-tabs > li > a:hover, .box .header-tabs .nav-tabs > li > a {
+    z-index: 3;
+}
+
+    .box .header-tabs .nav-tabs > li > a:after {
+        -webkit-box-shadow: 0 1px 1px rgba(0, 0, 0, 0) !important;
+        -ms-box-shadow: 0 1px 1px rgba(0, 0, 0, 0) !important;
+        box-shadow: 0 1px 1px rgba(0, 0, 0, 0) !important;
+    }
+
+.k-dropdown-wrap.k-state-default {
+    background-color: #8ebc00;
+}
+
+.k-dropdown .k-input, .k-dropdown .k-state-focused .k-input, .k-menu .k-popup {
+    color: #FFF !important;
+}
+
+.k-dropdown-wrap.k-state-default > * > .k-i-arrow-s {
+    background-position: -16px -32px;
+}
+
+.k-group-footer td, .k-grid-footer, .k-footer-template td {
+    background: #dadada !important;
+}
+
+.total-tracking-quantity {
+    font-weight: bold;
+    font-size: 12pt;
+    color: rgb(255, 10, 0);
+}
+/* end widget: tab*/
+/* supply chain dds*/
+#supplychaingrid thead th,
+#tabresult table thead th,
+#tabresult-dms-hse table thead th,
+#tabresult-dms-fpq table thead th,
+#tabresult-dms-mpsa table thead th,
+#tabresult-dms-dds table thead th,
+#tabresult-dms-service table thead th,
+#tabresult-dms-productionplanning table thead th {
+    background: blue;
+    color: #ffffff;
+}
+
+
+
+#result-product table thead th {
+    background: blue;
+    color: #ffffff;
+}
+
+.scdds-target {
+    background: yellow;
+}
+
+#supplychaingrid td input {
+    width: 200px;
+}
+
+#supplychaingrid td {
+    line-height: 1.2em;
+}
+
+.text-strong-underline {
+    font-weight: bold;
+    text-decoration: underline;
+}
+
+.scdds-DMS, .depart-DMS {
+    background: #eea236;
+    font-weight: bold;
+    color: #fff;
+}
+
+.sc-hse-common, .sc-hse-making, .sc-hse-packing {
+    width: 200px;
+    word-wrap: break-word;
+}
+
+.sc-owner {
+    width: 100px;
+    word-wrap: break-word;
+}
+
+.editinline {
+    background: none repeat scroll 0 0 #eeefff;
+    border: medium none;
+    -moz-min-width: 60%;
+    -ms-min-width: 60%;
+    -o-min-width: 60%;
+    -webkit-min-width: 60%;
+    min-width: 60%;
+    width: auto;
+    text-align: center;
+}
+
+.line-cols {
+    width: 80px !important;
+    height: 30px;
+    text-align: center !important;
+}
+
+.line-remark {
+    width: 150px;
+}
+
+.line-service {
+    width: 100px;
+}
+
+.scdds-target td {
+    height: 30px;
+}
+
+.owner {
+    width: 150px;
+}
+
+.production-col {
+    width: 150px;
+    height: 25px;
+}
+
+.production-result > tbody > tr > td {
+    vertical-align: top !important;
+    padding: 0 !important;
+}
+
+    .production-result > tbody > tr > td > table {
+        margin: 0;
+    }
+
+        .production-result > tbody > tr > td > table .production-val {
+            width: 120px;
+        }
+
+        .production-result > tbody > tr > td > table .shift {
+            width: 110px;
+        }
+
+        .production-result > tbody > tr > td > table .measurecode {
+            width: 200px;
+        }
+
+        .owner .k-multiselect, .line-cols input, .scdds-target td input, .line-remark input, .line-service input, .production-result > tbody > tr > td > table .shift input, .production-result > tbody > tr > td > table .production-val input, .production-col input {
+            width: 95% !important;
+            height: 25px !important;
+        }
+
+.owner .k-multiselect-wrap input.k-input {
+    height: 20px !important;
+}
+
+.thead {
+    background: none repeat scroll 0 0 #eea236;
+    color: #fff;
+    font-weight: bold;
+}
+
+    .thead td {
+        background: none repeat scroll 0 0 blue;
+        color: #ffffff;
+        height: 30px;
+        overflow-y: hidden !important;
+        text-align: center;
+    }
+
+#supplychaingrid th {
+    border: 1px solid #fff;
+}
+
+
+/* end supply chain dds*/
+/* dashboard permission*/
+.permission > thead > tr > th {
+    text-align: left !important;
+    color: #3d3c00;
+    background: #d7ffc1;
+}
+
+.btn-info-custom {
+    font-size: 14px;
+    font-weight: bold;
+    line-height: 1.5;
+    padding: 2px 10px;
+    background: #8ebc00;
+    color: #fff;
+    border-radius: 5px;
+}
+
+    .btn-info-custom:hover {
+        background: #228b22;
+    }
+/* end dashboard permission*/
+
+
+.linename {
+    width: 80px;
+}
+
+    .linename .line-edit-value {
+        height: 25px !important;
+        width: 98% !important;
+    }
+
+.validation-summary-errors {
+    color: red;
+}
+
+.orange {
+    margin-bottom: 3px !important;
+}
+
+.box {
+    margin-bottom: 0 !important;
+}
+
+.table {
+    margin-bottom: 5px;
+    width: 100%;
+}
+
+/* custome page header: remove more space and breadcrum*/
+.cus-page-header {
+    min-height: 0 !important;
+    margin-bottom: 5px !important;
+}
+
+.scroll-x {
+    overflow-x: scroll;
+}
+
+#quality-popup .modal-dialog {
+    width: 380px;
+}
+
+#pr-popup .modal-dialog {
+    width: 535px;
+}
+
+.no-padding {
+    padding: 0 !important;
+}
+
+.table-producttionplanning-header-date {
+    width: 100%;
+}
+
+.table-overflow-x, .overflow-z-shutdown-request {
+    width: 100%;
+}
+
+    .table-overflow-x table {
+        width: 200% !important;
+        overflow-x: auto;
+    }
+
+    .overflow-z-shutdown-request table {
+        width: 120% !important;
+        overflow-x: auto;
+    }
+
+    .table-overflow-x colgroup col {
+        width: 300px;
+    }
+
+.issues-delay {
+    background-color: red;
+    color: #fff;
+    text-align: center;
+}
+
+.issues-close {
+    background-color: green;
+    color: #fff;
+    text-align: center;
+}
+
+.remark-supplychain {
+    min-width: 200px;
+}
+
+td.remark, td.completion-remarks {
+    width: 310px !important;
+    height: auto !important;
+}
+
+textarea.input-edit-value-result {
+    width: 99% !important;
+    min-height: 60px !important;
+    height: auto !important;
+}
+
+td[class*="target-"] {
+    text-align: center;
+    vertical-align: middle;
+}
+
+.line-check-edit, .FE0, .FE1, .FE2, .FE3, .totalMonthTarget, .totaTodayPlan, .totalMTD, .totalGrap, .gap {
+    text-align: center;
+}
+
+.k-grid tbody .k-button, .k-ie8 .k-grid tbody button.k-button {
+    min-width: 0 !important;
+}
+
+.k-grid td {
+    white-space: pre-line;
+}
+
+.firt-ssc-pro {
+    min-width: 262px;
+}
+
+.ssc-pro {
+    min-width: 90px;
+}
+
+.header-ssc-pro-first {
+    min-width: 32px;
+}
+
+.remark-float > span {
+    float: left;
+    text-align: left;
+}
+
+.remark-float > textarea {
+    float: left;
+    text-align: left;
+}
+
+.line-edit-productplanning.production-val {
+    text-align: center;
+}
+
+.ssc-pro-fe {
+    background-color: #F5F5DC;
+}
+
+.ssc-pro-total {
+    background-color: #E0FFFF;
+}
+
+.line-cols {
+    text-align: center;
+}
+
+.production-val {
+    text-align: center;
+}
+/*.k-grid td {
+  
+    white-space: normal !important;
+  
+}*/
+#resultMakingConfig td {
+    border: 1px solid #d5d5d5 !important;
+}
+
+#resultPackingConfig td {
+    border: 1px solid #d5d5d5 !important;
+}
+
+#resultPackingConfig th {
+    border: 1px solid #d5d5d5 !important;
+    background-color: blue;
+    color: white;
+}
+
+#resultMakingConfig th {
+    border: 1px solid #d5d5d5 !important;
+    background-color: blue;
+    color: white;
+}
+
+.avoidEditResult {
+    background-color: #aeaeae !important;
+}
+
+.btn-info, .btn-info:focus, .btn-info:active {
+    background: none repeat scroll 0 0 #8ebc00 !important;
+    border-color: #8ebc00;
+    color: #fff;
+}
+
+    .btn-info:hover {
+        background: none repeat scroll 0 0 #228b22 !important;
+        border-color: #228b22;
+        color: #fff;
+    }
+
+
+/* customize css for kendo grid - table role = "grid"*/
+td[data-container-for] {
+    padding: 2px 8px 2px 2px;
+}
+
+    td[data-container-for] textarea {
+        width: 100%;
+    }
+
+
+.k-i-close, .k-delete, .k-group-delete {
+    background-position: -30px -16px !important;
+}
+
+
+/*#region Create Button on toolbar grid classification*/
+
+.k-grid-add {
+    font-size: 14px;
+    font-weight: bold;
+    line-height: 1.5;
+    padding: 2px 10px;
+    background: #8ebc00;
+    color: #fff !important;
+    border-radius: 5px;
+    text-decoration: none !important;
+}
+
+    .k-grid-add > span {
+        margin-bottom: 4px;
+    }
+
+    .k-grid-add:hover {
+        background: #228b22;
+        text-decoration: none;
+    }
+/*#endregion*/
+
+/*#region template of popup editor Popup classification*/
+.popup-editor-attribute-classification > span.k-invalid-msg {
+    margin: 2px 0px 10px 0px;
+    font-weight: bold;
+    position: static;
+    display: inline-block;
+    color: red;
+    float: left;
+}
+
+.popup-editor-attribute-classification label {
+    display: block;
+    text-align: right;
+    height: 28px;
+    vertical-align: middle;
+    width: 30%;
+    float: left;
+    line-height: 28px;
+    margin: 0px 15px 10px 0px;
+}
+
+.popup-editor-attribute-classification input {
+    /*height: 40px;*/
+    width: 50%;
+    display: block;
+    text-align: left;
+    float: left;
+    margin-bottom: 0px;
+}
+
+.popup-editor-attribute-classification:nth-child(3) label {
+    display: block;
+    text-align: right;
+    height: 85px;
+    vertical-align: middle;
+    width: 30%;
+    float: left;
+    line-height: 85px;
+    margin: 0px 15px 0px 0px;
+}
+
+.popup-editor-attribute-classification textarea {
+    width: 50%;
+    display: block;
+    text-align: left;
+    float: left;
+    height: 85px;
+    margin-bottom: 10px;
+}
+
+.popup-editor-attribute-classification p {
+    /*margin: 6px;
+        background-position: -48px -64px;
+        background-color: blue;*/
+    vertical-align: middle;
+    line-height: 35px;
+    font-size: 20px;
+    color: red;
+    margin: 7px;
+}
+
+.k-input.k-invalid {
+    border: 1px solid red;
+}
+/*#classification-code[aria-invalid] {
+        border: 1px solid #f00;
+    }
+    #classification-name[aria-invalid] {
+        border: 1px solid #f00;
+    }*/
+/*#endregion*/
+
+
+/*#region Delete Button on toolbar grid Quality Alert */
+
+.k-grid-delete {
+    font-size: 14px;
+    font-weight: bold;
+    line-height: 1.5;
+    padding: 2px 10px;
+    background: #8ebc00;
+    color: #fff !important;
+    border-radius: 5px;
+    text-decoration: none !important;
+}
+
+    .k-grid-delete > span {
+        margin-bottom: 4px;
+    }
+
+    .k-grid-delete:hover {
+        background: #228b22;
+        text-decoration: none;
+    }
+/*#endregion*/
+
+
+/*#region template of popup editor Quality Alert*/
+.qualityalert-editer-popup-container div {
+    padding: 0px;
+}
+
+.qualityalert-editer-popup-container label {
+    padding: 0px;
+    line-height: 28px;
+}
+
+.qualityalert-editer-popup-container .k-invalid-msg {
+    display: block;
+    color: red;
+}
+
+.qualityalert-editer-popup-container .k-picker-wrap.k-state-default {
+    height: 28px;
+}
+
+.qualityalert-editer-popup-container .col-md-6.col-md-offset-1 > input[type=text] {
+    width: 100%;
+}
+
+.qualityalert-editer-popup-container textarea {
+    width: 100%;
+}
+/*
+.qualityalert-editer-popup-container .col-md-6.col-md-offset-1 > span {
+    width: 100%;
+}*/
+
+.qualityalert-editer-popup-container .col-md-6.col-md-offset-1 > .k-widget {
+    width: 100%;
+}
+
+.qualityalert-editer-popup-container .k-picker-wrap.k-state-default > input {
+    height: 23px;
+}
+
+.qualityalert-editer-popup-container .form-group.col-md-6, .form-group.col-md-12 {
+    margin-bottom: 7px;
+}
+
+.qualityalert-editer-popup-container .col-md-4.control-label {
+    margin-bottom: 0px;
+}
+
+.qualityalert-editer-popup-container #numBlockQA-div-popupeditor > span.k-widget.k-numerictextbox > span.k-numeric-wrap {
+    max-height: 26px;
+}
+
+.qualityalert-editer-popup-container #followUpAction {
+    margin-left: 4.166%;
+    width: 75%;
+}
+/*#endregion*/
+
+/*#region Quality Alert filter region*/
+.qualityalert-fillter-group > button {
+    width: 100%;
+    text-align: left;
+    margin-bottom: 10px;
+}
+
+    .qualityalert-fillter-group > button > span {
+        margin-right: 5px;
+    }
+
+.qualityalert-fillter-group > div {
+    margin-bottom: 10px;
+}
+
+.qualityalert-fillter-group span.k-input {
+    padding: 0px;
+}
+
+.qualityalert-fillter-group span.k-widget.k-datetimepicker, .qualityalert-fillter-group span.k-widget.k-datepicker {
+    max-width: 200px;
+}
+
+.qualityalert-fillter-group span.k-widget.k-combobox {
+    width: 100%;
+    max-width: 200px;
+}
+
+.qualityalert-fillter-group > #filter-region > .col-sm-12 {
+    margin-bottom: 5px;
+}
+/*#endregion*/
+
+
+/*#region popup confirm delete Quality Alert*/
+.k-widget.k-window {
+    border-radius: 5px;
+    overflow: hidden;
+}
+
+#yesBtnDeleteConfirm {
+    margin-top: 20px;
+    width: 50%;
+    float: left;
+}
+
+#noBtnDeleteConfirm {
+    margin-top: 20px;
+    float: left;
+    width: 50%;
+}
+
+#textOfDeleteConfirm {
+    font-weight: bold;
+    margin: 10px 5px 0px 5px;
+}
+/*#endregion*/
+
+
+
+
+/*#region popup confirm delete Quality Alert*/
+
+#alert-datetime-popupeditor > div > span > span > span.k-invalid-msg {
+    background-color: white;
+    border: none;
+    box-shadow: none;
+}
+
+    #alert-datetime-popupeditor > div > span > span > span.k-invalid-msg > span {
+        display: none;
+    }
+/*#endregion*/
+
+/*#region numblock datetimepicker on popup editor Quality Alert*/
+#popup-editor-div-numblock-attribute-qualityalert > div > span {
+    height: 30px;
+}
+
+    #popup-editor-div-numblock-attribute-qualityalert > div > span > span {
+        height: 26px;
+    }
+
+#popup-editor-div-numblock-attribute-qualityalert input {
+    line-height: 26px;
+    height: 26px;
+}
+
+#popup-editor-div-numblock-attribute-qualityalert > div > span > span > span > span:first-child > span {
+    top: 11px;
+    left: 5px;
+}
+
+#popup-editor-div-numblock-attribute-qualityalert > div > span > span > span > span:last-child span {
+    top: 21px;
+    left: 5px;
+}
+/*#endregion*/
+
+
+/*#region template of popup editor Quality Alert*/
+.popup-editor-attribute-usermanager span.k-invalid-msg {
+    margin: 2px 0px 10px 0px;
+    font-weight: bold;
+    position: static;
+    display: inline-block;
+    color: red;
+    float: left;
+}
+
+.popup-editor-attribute-usermanager label {
+    display: block;
+    text-align: right;
+    height: 28px;
+    vertical-align: middle;
+    width: 40%;
+    float: left;
+    line-height: 28px;
+    margin: 0px 15px 10px 0px;
+}
+
+.popup-editor-attribute-usermanager > a#reset-password {
+    display: block;
+    text-align: right;
+    height: 28px;
+    vertical-align: middle;
+    width: 40%;
+    float: left;
+    line-height: 28px;
+    margin: 0px 15px 10px 0px;
+}
+
+.popup-editor-attribute-usermanager > input#input-reset-password {
+}
+
+.popup-editor-attribute-usermanager > input {
+    width: 50%;
+    display: block;
+    text-align: left;
+    float: left;
+    margin-bottom: 0px;
+}
+
+.popup-editor-attribute-usermanager > .k-widget.k-multiselect.k-header {
+    width: 50%;
+    display: block;
+    text-align: left;
+    float: left;
+    margin-bottom: 10px;
+}
+/*#endregion*/
+
+
+/*#region Line management*/
+.department-filter {
+    height: 34px;
+}
+
+    .department-filter > span {
+        float: right;
+    }
+/*#endregion*/
+
+/*#region delete-issue button on toolbar issue*/
+#delete-issue {
+    font-size: 14px;
+    font-weight: bold;
+    line-height: 1.5;
+    padding: 2px 10px;
+    background: #8ebc00;
+    color: #fff;
+    border-radius: 5px;
+    text-decoration: none;
+    height: 28px;
+}
+
+    #delete-issue:hover {
+        background: #228b22;
+        text-decoration: none;
+    }
+/*#endregion*/
+
+
+/*#region change color of tab kendo ui*/
+.box .header-tabs .nav-tabs > li > a {
+    background-color: #abfcf5;
+}
+
+    .box .header-tabs .nav-tabs > li > a:before {
+        background-color: #abfcf5;
+    }
+
+    .box .header-tabs .nav-tabs > li > a:after {
+        background-color: #abfcf5;
+    }
+/*#endregion*/
+
+
+/*position fixed class*/
+.fixed {
+    top: 0;
+    position: fixed;
+    width: auto;
+    border: none;
+    z-index: 999;
+}
+
+/*absctact scrollbar*/
+#scrollbar {
+    bottom: 0;
+    position: fixed;
+    overflow-x: scroll;
+}
+
+    #scrollbar div {
+        height: 1px;
+    }
+
+
+#issue-grid .k-grid-header, #qualityAlert-grid .k-grid-header {
+    padding: 0 !important;
+}
+
+#issue-grid .k-grid-content, #qualityAlert-grid .k-grid-content {
+    overflow-y: hidden;
+    overflow-x: hidden;
+}
+
+/*#region popup confirm delete User Role*/
+.delete-confirm {
+    margin-top: 20px;
+    width: 50%;
+    float: left;
+}
+
+.delete-cancel {
+    margin-top: 20px;
+    float: left;
+    width: 50%;
+}
+
+.delete-message {
+    font-weight: bold;
+    margin: 10px 5px 0px 15px;
+}
+/*#endregion*/
+
+/*#region text align center*/
+.text_align_center {
+    text-align: center !important;
+}
+
+.text_align_left {
+    text-align: left !important;
+}
+/*#endregion*/
+
+/*#region delete-supplier button on toolbar supplier*/
+#delete-suppliers {
+    font-size: 14px;
+    font-weight: bold;
+    line-height: 1.5;
+    padding: 2px 10px;
+    background: #8ebc00;
+    color: #fff;
+    border-radius: 5px;
+    text-decoration: none;
+    height: 28px;
+}
+
+    #delete-suppliers:hover {
+        background: #228b22;
+        text-decoration: none;
+    }
+/*#endregion*/
+
+/*#region supplier fillter div*/
+.supplier-filter {
+    margin-bottom: 10px;
+    height: 35px;
+}
+
+    .supplier-filter input {
+        margin-right: 20px;
+        float: left;
+        width: 25%;
+        height: 30px;
+    }
+
+    .supplier-filter button {
+        float: left;
+        width: 100px;
+        height: 30px;
+        line-height: 0px;
+    }
+/*#endregion*/
+
+/*#region delete-supplier button on toolbar supplier*/
+#delete-categories {
+    font-size: 14px;
+    font-weight: bold;
+    line-height: 1.5;
+    padding: 2px 10px;
+    background: #8ebc00;
+    color: #fff;
+    border-radius: 5px;
+    text-decoration: none;
+    height: 28px;
+}
+
+    #delete-categories:hover {
+        background: #228b22;
+        text-decoration: none;
+    }
+/*#endregion*/
+
+/*#region category fillter div*/
+.category-filter {
+    margin-bottom: 10px;
+    height: 35px;
+}
+
+    .category-filter input {
+        margin-right: 20px;
+        float: left;
+        width: 25%;
+        height: 30px;
+    }
+
+    .category-filter button {
+        float: left;
+        width: 100px;
+        height: 30px;
+        line-height: 0px;
+    }
+/*#endregion*/
+
+/*#region delete button template on toolbar*/
+.delete-button-template {
+    font-size: 14px;
+    font-weight: bold;
+    line-height: 1.5;
+    padding: 2px 10px;
+    background: #8ebc00;
+    color: #fff;
+    border-radius: 5px;
+    text-decoration: none;
+    height: 28px;
+}
+
+    .delete-button-template:hover {
+        background: #228b22;
+        text-decoration: none;
+    }
+
+.toolbar-button-template {
+    font-size: 14px;
+    font-weight: bold;
+    line-height: 1.5;
+    padding: 2px 10px;
+    background: #8ebc00;
+    color: #fff;
+    border-radius: 5px;
+    text-decoration: none;
+    height: 28px;
+}
+/*#endregion*/
+
+/*region file upload score card*/
+.fileUpload {
+    position: relative;
+    overflow: hidden;
+    margin: 1px;
+    /*height: 22px;*/
+}
+
+    .fileUpload input.upload {
+        position: absolute;
+        top: 0;
+        right: 0;
+        margin: 0;
+        padding: 0;
+        font-size: 20px;
+        cursor: pointer;
+        opacity: 0;
+        filter: alpha(opacity=0);
+    }
+/*end region*/
+
+/*region filter score card*/
+.scoreCard-fillter-group.row {
+    margin-bottom: 10px;
+}
+
+    .scoreCard-fillter-group.row > span {
+        margin-left: 20px;
+        line-height: 28px;
+    }
+
+        .scoreCard-fillter-group.row > span.col-sm-1.col-sm-offset-1 {
+            width: 75px;
+        }
+
+    .scoreCard-fillter-group.row > button {
+        width: 100px;
+        height: 28px;
+        line-height: 14px;
+        margin-left: 10px;
+    }
+
+td.availableEdit {
+    background-color: lightblue;
+}
+
+.fontbold {
+    font-weight: bold;
+    color: black;
+}
+/*end region*/
+
+/*#region scorecard-export-button-template*/
+.btn-group i {
+    margin-right: 5px;
+}
+
+.btn-group .btn {
+    color: white;
+    background-color: #8ebc00;
+    border-color: #789f01;
+}
+
+    .btn-group .btn:hover {
+        background-color: #228b22;
+        border-color: #228b22;
+    }
+
+.dropdown-menu .divider {
+    border-top: 1px solid #393838 !important;
+}
+/*#endregion*/
+
+/*#region supplier fillter div*/
+.classificaionDefect-filter {
+    margin-bottom: 10px;
+    height: 35px;
+}
+
+    .classificaionDefect-filter input {
+        margin-right: 20px;
+        float: left;
+        width: 25%;
+        height: 30px;
+    }
+
+    .classificaionDefect-filter button {
+        float: left;
+        width: 100px;
+        height: 30px;
+        line-height: 0px;
+    }
+/*#endregion*/
+
+/*#region SCMeasure fillter div*/
+.scMeasure-filter {
+    margin-bottom: 10px;
+    height: 35px;
+}
+
+    .scMeasure-filter input {
+        margin-right: 20px;
+        float: left;
+        width: 25%;
+        height: 30px;
+    }
+
+    .scMeasure-filter button {
+        float: left;
+        width: 100px;
+        height: 30px;
+        line-height: 0px;
+    }
+/*#endregion*/
+
+.display_none {
+    display: none;
+}
+
+
+/*#region popup confirm delete User Role*/
+.yes-confirm {
+    margin-top: 20px;
+    width: 50%;
+    float: left;
+}
+
+.no-cancel {
+    margin-top: 20px;
+    float: left;
+    width: 50%;
+}
+
+.title-message {
+    font-weight: bold;
+    margin: 10px 5px 0px 15px;
+}
+/*#endregion*/
+
+/*region classification defect mutiselect fix item middle*/
+.k-multiselect-wrap li {
+    margin: 1px 0 1px 1px !important;
+}
+/*#endregion*/
+
+/*#region QA report*/
+#reporttable-grid tbody td {
+    padding: 2px;
+}
+/*#endregion*/

@@ -1,0 +1,276 @@
+﻿@{
+
+    //page title
+    ViewBag.Title = "Category";
+    Layout = "~/Views/Shared/_KendoUILayout.cshtml";
+}
+<script src="@Url.Content("~/Scripts/kendo/2014.1.318/kendo.web.min.js")"></script>
+
+<div class="category-filter">
+    <input type="text" id="searchByCategoryName-txt" placeholder="Category Name" class="form-control" />
+    <button id="searchCategory-btn" class="form-control" title="Search">Search</button>
+</div>
+
+<div id="category-grid"></div>
+
+<script id="category-delete-button-template" type="text/x-kendo-template">
+    <button id="delete-categories" class="k-button" onclick="deleteCategoriesClick()" title="Delete Selected">Delete Selected</button>
+</script>
+
+<script type="text/x-kendo-template" id="windowTemplateDeleteConfirm">
+    <p class="delete-message">Do you want to delete these Categories?</p>
+    <input class="k-button delete-confirm" type="button" value="Yes" />
+    <input class="k-button delete-cancel" type="button" value="No" />
+</script>
+
+<script>
+    $(document).ready(function () {
+
+        //get search data when gird read or reload
+        function getSearchStrData() {
+            return {
+                CategoryName: $("#searchByCategoryName-txt").val(),
+            };
+        }
+
+        var datasource = new kendo.data.DataSource({
+            type: "json",
+            transport: {
+                read: {
+                    url: "@Html.Raw(Url.Action("List", "Category"))",
+                    type: "POST",
+                    dataType: "json",
+                    data: getSearchStrData
+                },
+                update: {
+                    url: "@Html.Raw(Url.Action("Update", "Category"))",
+                    type: "POST",
+                    dataType: "json",
+                    complete: function (e) {
+                        if (e.responseJSON != undefined && e.responseJSON.status == "success")
+                            $("#category-grid").data("kendoGrid").dataSource.read();
+                    }
+                },
+                create: {
+                    url: "@Html.Raw(Url.Action("Create", "Category"))",
+                    type: "POST",
+                    dataType: "json",
+                    complete: function (e) {
+                        if (e.responseJSON != undefined && e.responseJSON.status == "success")
+                            $("#category-grid").data("kendoGrid").dataSource.read();
+                    }
+                }
+            },
+            schema: {
+                data: "Data",
+                total: "Total",
+                errors: "Errors",
+                model: {
+                    id: "Id",
+                    fields: {
+                        Id: { editable: false, defaultValue: 0 },
+                        Name: { editable: true, validation: { required: true } },
+                        Note: { editable: true },
+                        DisplayOrder: { editable: true, type: "number" }
+                    }
+                }
+            },
+            error: function (e) {
+                display_kendoui_grid_error(e);
+            },
+            pageSize: 10,
+            serverPaging: true,
+            serverFiltering: true,
+            serverSorting: true
+        });
+
+        function textInputNameInitialize(container, options) {
+            $('<input type="text" name="' + options.field + '" style="width: 320px;" class="k-input k-textbox" required/>')
+                .appendTo(container);
+        }
+
+        function textEditorNoteInitialize(container, options) {
+            $('<textarea name="' + options.field + '"  cols="50" rows="3" style="width: 320px;" class="k-input k-textbox"/>')
+                .appendTo(container);
+        };
+
+        $("#category-grid").kendoGrid({
+            dataSource: datasource,
+            pageable: {
+                refresh: true,
+                pageSizes: ["5", "10", "15", "20"]
+            },
+            editable: {
+                mode: "popup",
+                //default title of popup editor
+                window: {
+                    title: "Create Category",
+                }
+            },
+            edit: function (e) {
+
+                //edit size of popup window
+                $(".k-edit-form-container").parent().width(500).data("kendoWindow").center();
+                $(".k-edit-buttons.k-state-default").width(484);
+
+                //change title popup editor
+                if (e.model.Id != '')
+                    e.container.kendoWindow("title", "Modify Category");
+
+                //remove lable and input of check_row when edit or create
+                $('label[for=check_row]').parent().remove();
+                $('div[data-container-for=check_row]').remove();
+
+                $('div[data-container-for=DisplayOrder] .k-widget.k-numerictextbox').width(320);
+            },
+            toolbar: ["create", { template: $("#category-delete-button-template").html() }],
+            scrollable: false,
+            columns: [
+                {
+                    field: "check_row", title: " ",
+                    width: 30,
+                    template: "<input type='checkbox' value=#= Id# class='sel' />",
+                    attributes: { class: "text_align_center" }
+                },
+                {
+                    field: "Name",
+                    title: "Name",
+                    width: 200,
+                    headerAttributes: { class: "text_align_center" },
+                    //attributes: { class: "text_align_center" },
+                    editor: textInputNameInitialize
+                },
+                {
+                    field: "DisplayOrder",
+                    title: "DisplayOrder",
+                    width: 200,
+                    headerAttributes: { class: "text_align_center" },
+                    attributes: { class: "text_align_center" },
+                    format: "n0",
+                    template: "#=DisplayOrder#",
+                },
+                {
+                    field: "Note",
+                    title: "Note",
+                    width: 200,
+                    headerAttributes: { class: "text_align_center" },
+                    //attributes: { class: "text_align_center" },
+                    editor: textEditorNoteInitialize
+                },
+                {
+                    command: [
+                        {
+                            name: "edit",
+                            text: { update: "Save Changes", cancel: "Cancel" }
+                        },
+                    ],
+                    title: "&nbsp;",
+                    attributes: { class: "text_align_center" },
+                    width: "250px"
+                }
+            ],
+        });
+
+        function display_kendoui_grid_error(e) {
+            if (e.errors) {
+                if ((typeof e.errors) == 'string') {
+                    //single error
+                    //display the message
+                    alert(e.errors);
+                } else {
+                    //array of errors
+                    //source: http://docs.kendoui.com/getting-started/using-kendo-with/aspnet-mvc/helpers/grid/faq#how-do-i-display-model-state-errors?
+                    var message = "The following errors have occurred:";
+                    //create a message containing all errors.
+                    $.each(e.errors, function (key, value) {
+                        if (value.errors) {
+                            message += "\n";
+                            message += value.errors.join("\n");
+                        }
+                    });
+                    //display the message
+                    alert(message);
+                }
+            } else {
+                alert(e.xhr.responseText);
+            }
+        }
+
+        //show edit popup when double click on row on grid
+        $("#category-grid").delegate("tbody>tr", "dblclick", function () {
+            if (!$(this).hasClass('k-grid-edit-row')) {
+                $("#category-grid").data("kendoGrid").editRow($(this));
+            }
+        })
+
+        deleteCategoriesClick = function (e) {
+            if ($("#category-grid").find("input:checked").length <= 0)
+                return;
+            deleteCategories();
+        };
+
+        function deleteCategories() {
+            //define delete popup comfirm
+            var kendoWindow = $("<div id='window'/>").kendoWindow({
+                title: "Delete Categories",
+                visible: false,
+                width: "400px",
+                resizable: false,
+                modal: true,
+                viewable: false,
+                content: {
+                    template: $("#windowTemplateDeleteConfirm").html()
+                }
+            });
+
+            kendoWindow.data("kendoWindow")
+                .content($("#windowTemplateDeleteConfirm").html())
+                .center().open();
+
+            //get array of id to delete
+            function deletionData() {
+                var ids = [];
+                $("#category-grid").find("input:checked").each(function (i, value) {
+                    ids.push($(value).val());
+                });
+                return ids;
+            }
+
+            kendoWindow.find(".delete-confirm,.delete-cancel")
+                .click(function () {
+                    if ($(this).hasClass("delete-confirm")) {
+                        $.ajax({
+                            url: "@Html.Raw(Url.Action("DeleteCategories", "Category"))",
+                            type: "POST",
+                        dataType: "json",
+                        data: {
+                            listId: deletionData()
+                        },
+                        success: function (result) {
+                            console.log(result);
+                            if (result.status != undefined && result.status == "success")
+                                $('#category-grid').data('kendoGrid').dataSource.read();
+                            else
+                                alert(result.Content);
+                        }
+                    });
+                    }
+
+                kendoWindow.data("kendoWindow").close();
+            })
+            .end();
+        }
+
+        //searchByCategoryName textbox press enter event
+        $("#searchByCategoryName-txt").keyup(function (event) {
+            if (event.keyCode == 13) {
+                $("#searchCategory-btn").click();
+            }
+        });
+
+        //searchCategory button click event
+        $("#searchCategory-btn").click(function (e) {
+            $("#category-grid").data("kendoGrid").dataSource.read();
+        });
+    });
+</script>

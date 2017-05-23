@@ -1,0 +1,167 @@
+﻿<!DOCTYPE html>
+
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title>PG - @ViewBag.Title</title>
+
+    <link href="@Url.Content("~/Content/kendo.common.min.css")" rel="stylesheet" type="text/css" />
+    <link href="@Url.Content("~/Content/kendo.metro.min.css")" rel="stylesheet" type="text/css" />
+    <!-- STYLESHEETS --><!--[if lt IE 9]><script src="js/flot/excanvas.min.js"></script><script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script><script src="http://css3-mediaqueries-js.googlecode.com/svn/trunk/css3-mediaqueries.js"></script><![endif]-->
+    <!-- Cloud css-->
+    <link href="@Url.Content("~/resources/css/responsive.min.css")" rel="stylesheet" type="text/css" />
+    <link href="@Url.Content("~/resources/css/cloud-admin.min.css")" rel="stylesheet" type="text/css" />
+    <link href="@Url.Content("~/resources/css/themes/utopia.css")" rel="stylesheet" type="text/css" />
+    <link href="@Url.Content("~/resources/font-awesome/css/font-awesome.min.css")" rel="stylesheet" type="text/css" />
+    
+    <!-- /Cloud css-->
+	<!-- JQUERY UI-->
+	<link rel="stylesheet" type="text/css" href="@Url.Content("~/resources/js/jquery-ui-1.10.3.custom/css/custom-theme/jquery-ui-1.10.3.custom.min.css")" />
+    <!-- DATE PICKER -->
+	<link rel="stylesheet" type="text/css" href="@Url.Content("~/resources/js/datepicker/themes/default.min.css")" />
+	<link rel="stylesheet" type="text/css" href="@Url.Content("~/resources/js/datepicker/themes/default.date.min.css")" />
+	<link rel="stylesheet" type="text/css" href="@Url.Content("~/resources/js/datepicker/themes/default.time.min.css")" />
+    <link href="~/Content/Site.css" rel="stylesheet" />
+    <!-- JQUERY -->
+    @*<script src="@Url.Content("/resources/js/jquery/jquery-2.0.3.min.js")"></script>*@
+    <script src="@Url.Content("~/Scripts/jquery-1.10.2.min.js")"></script>
+    
+    @Scripts.Render("~/bundles/jqueryval")
+
+    <!-- JQUERY UI-->
+    <script src="@Url.Content("~/resources/js/jquery-ui-1.10.3.custom/js/jquery-ui-1.10.3.custom.min.js")"></script>
+    <!-- BOOTSTRAP -->
+    <script src="@Url.Content("~/resources/bootstrap/js/bootstrap.min.js")"></script>
+    <!-- DATE PICKER -->
+    <link rel="stylesheet" type="text/css" href="@Url.Content("~/resources/js/datepicker/themes/default.min.css")" />
+    <link rel="stylesheet" type="text/css" href="@Url.Content("~/resources/js/datepicker/themes/default.date.min.css")" />
+    <link rel="stylesheet" type="text/css" href="@Url.Content("~/resources/js/datepicker/themes/default.time.min.css")" />
+	
+
+    <script type="text/javascript" src="@Url.Content("~/resources/js/jQuery-Cookie/jquery.cookie.min.js")"></script>
+    <script type="text/javascript" src="@Url.Content("~/resources/js/json2.js")"></script>
+    <script type="text/javascript" src="@Url.Content("~/Scripts/common.js")"></script>
+
+</head>
+<body>
+    <!-- HEADER -->
+    <div class="overlay-loading" style="position: fixed; width: 100%; height: 100%; background-color: #000000; background-color: rgba(0,0,0,0.3); display: block; z-index: 999999; top: 0; left: 0;">
+        <div class="overlay-loading-img" style="-ms-border-radius: 5px; border-radius: 5px; background-color: #000000; background-color: rgba(0, 0, 0, 0.7); padding: 10px; width: 52px; top: 50%; position: fixed; left: 50%;">
+            <img src="/Content/img/15.gif" alt="" style="padding-left: 4px;" />
+        </div>
+    </div>
+    <header class="navbar clearfix" id="header">
+        <div class="container">
+            <div class="navbar-brand">
+                <!-- COMPANY LOGO -->
+                <a href="@Url.Action("Index", "Home")">
+                    <img src="@Url.Content("~/Content/img/logo.png")" alt="Cloud Admin Logo" class="img-responsive" height="30" width="120">
+                </a>
+                <!-- /COMPANY LOGO -->
+                <!-- SIDEBAR COLLAPSE -->
+                <div id="sidebar-collapse" class="sidebar-collapse btn">
+                    <i class="fa fa-bars"
+                       data-icon1="fa fa-bars"
+                       data-icon2="fa fa-bars"></i>
+                    
+                </div>
+              
+                <!-- /SIDEBAR COLLAPSE -->
+            </div>
+
+            @*@Html.Partial("_LoginPartial")*@
+
+            @Html.Action("LoginPartial","Common")
+        </div>
+
+    </header>
+    <!--/HEADER -->
+    <!-- PAGE -->
+    <section id="page">
+        <!-- SIDEBAR -->
+        <div id="sidebar" class="sidebar">
+            <div class="sidebar-menu nav-collapse">
+                @*<div class="divide-20"></div>
+                <!-- SEARCH BAR -->
+                <div id="search-bar">
+                    <input class="search" type="text" placeholder="Search"><i class="fa fa-search search-icon"></i>
+                </div>
+                <!-- /SEARCH BAR -->*@
+                <!-- SIDEBAR MENU -->
+                @*@Html.Partial("_LeftNavigation")*@
+                @Html.Partial("_LeftNavigation")
+                
+                <!-- /SIDEBAR MENU -->
+            </div>
+        </div>
+        <!-- /SIDEBAR -->
+        <div id="main-content">
+            <div class="container">
+                <div class="row">
+                    <div id="content" class="col-lg-12" style="min-height: 0px !important">
+                        <!-- PAGE HEADER-->
+                        <div class="row">
+                            <div class="col-sm-12">
+                                <div class="page-header cus-page-header">
+                                    <!-- BREADCRUMBS -->
+                                  @*  <ul class="breadcrumb">
+                                        <li>
+                                            <i class="fa fa-home"></i>
+                                            <a href="#">Home</a>
+                                        </li>
+                                        <li>  <h4 class="content-title pull-left">@ViewBag.Title</h4></li>
+                                    </ul>*@
+                                    <!-- /BREADCRUMBS -->
+                                    <div class="clearfix">
+                                        <h3 class="content-title pull-left">@ViewBag.Title</h3>
+                                        @RenderSection("daterangepicker", required: false)
+                                    </div>
+                                    <div class="description"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- /PAGE HEADER -->
+                        <!-- USER -->
+                        <div class="row">
+                            <div class="col-md-12 full-screen" >
+                                @RenderBody()
+                            </div>
+                        </div>
+                        <!-- /USER -->
+                        @*<div class="footer-tools">
+                                <span class="go-top">
+                                    <i class="fa fa-chevron-up"></i> Top
+                                </span>
+                            </div>*@
+</div><!-- /CONTENT-->
+                </div>
+            </div>
+        </div>
+    </section>
+    <!--/PAGE -->
+    <!-- JAVASCRIPTS -->
+    <!-- Placed at the end of the document so the pages load faster -->
+
+
+    <script src="@Url.Content("/resources/js/script.js")"></script>
+
+    <script>
+        jQuery(document).ready(function () {
+            App.setPage("mini_sidebar");  //Set current page
+            App.init(); //Initialise plugins and elements
+            $(window).load(function () {
+                $('.overlay-loading').hide();
+            });
+            $(document).ajaxStart(function () {
+                $('.overlay-loading').show();
+            });
+            $(document).ajaxStop(function () {
+                $('.overlay-loading').hide();
+            });
+        });
+    </script>
+    @RenderSection("bottomjs", required: false)
+
+    <!-- /JAVASCRIPTS -->
+</body>
+</html>

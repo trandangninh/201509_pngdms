@@ -1,0 +1,164 @@
+﻿@{
+
+    //page title
+    ViewBag.Title = "Department";
+    Layout = "~/Views/Shared/_KendoUILayout.cshtml";
+}
+<script src="@Url.Content("~/Scripts/kendo/2014.1.318/kendo.web.min.js")"></script>
+
+<div id="department-grid"></div>
+<script id="tooltip-template" type="text/x-kendo-template">
+    <!--<span class = "k-widget k-tooltip k-tooltip-validation k-invalid-msg" > <span class = "k-icon k-warning" > </span>#=message#</span>-->
+    <span class="k-invalid-msg">#=message#</span>
+</script>
+<script>
+    $(document).ready(function () {
+        isCreating = false;
+        //$("#department-grid").kendoValidator();
+        $("#department-grid").kendoGrid({
+            dataSource: {
+                type: "json",
+                transport: {
+                    read: {
+                        url: "@Html.Raw(Url.Action("List", "Department"))",
+                        type: "POST",
+                        dataType: "json"
+                    },
+                    update: {
+                        url: "@Html.Raw(Url.Action("Update", "Department"))",
+                        type: "POST",
+                        dataType: "json",
+                        complete: function(e) {
+                            $("#department-grid").data("kendoGrid").dataSource.read();
+                        }
+                    },
+                    destroy: {
+                        url: "@Html.Raw(Url.Action("Delete", "Department"))",
+                        type: "POST",
+                        dataType: "json"
+                    },
+                    create: {
+                        url: "@Html.Raw(Url.Action("Create", "Department"))",
+                        type: "POST",
+                        dataType: "json",
+                        complete: function (e) {
+                            $("#department-grid").data("kendoGrid").dataSource.read();
+                        }
+                    }
+                },
+                schema: {
+                    data: "Data",
+                    total: "Total",
+                    errors: "Errors",
+                    model: {
+                        id: "Id",
+                        fields: {
+                            Name: { editable: true },
+                            Active: { editable: true, type: "boolean", defaultValue: true },
+                            Order: { editable: true, type: "number", defaultValue: "" }
+                        }
+                    }
+                },
+                error: function (e) {
+                    display_kendoui_grid_error(e);
+                    //this.cancelChanges();
+                },
+                pageSize: 10,
+                serverPaging: true,
+                serverFiltering: true,
+                serverSorting: true
+            },
+            pageable: {
+                refresh: true,
+                pageSizes: ["5", "10", "15", "20"]
+            },
+            editable: "inline",
+            edit: function (e) {
+                ////custom validate message
+                //e.sender.editable.validatable._errorTemplate = kendo.template($('#tooltip-template').html());
+                //if (isCreating) {
+                //    //change title popup editor
+                //    e.container.kendoWindow("title", "Create New Department");
+                //    //change tex (save changes --> create) popup editor
+                //    $(".k-grid-update").contents().filter(function () {
+                //        return this.nodeType == 3;
+                //    })[0].nodeValue = "Create"
+                //    isCreating = false;
+                //}
+            },
+            toolbar: ["create"],
+            scrollable: false,
+            columns: [
+                {
+                    field: "Name",
+                    title: "Department Name",
+                    width: 400
+                },
+                {
+                    field: "Active",
+                    title: "Active",
+                    width: 100,
+                    headerAttributes: { style: "text-align:center" },
+                    attributes: { style: "text-align:center" },
+                    template: '<img src="@Url.Content("~/Content/img/")active-#=Active#.gif" />'
+                },
+                {
+                    field: "Order",
+                    title: "Order",
+                    width: 100,
+                    attributes: { style: "text-align:center" },
+                    format: "",
+                },
+                {
+                    command: [
+                        {
+                            name: "edit",
+                            text: { update: "Save Changes", cancel: "Cancel" }
+                        }
+                    ],
+                    width: 200
+                }
+            ]
+        });
+        $(".k-grid-add").on("click", function () {
+            isCreating = true;
+        });
+        function display_kendoui_grid_error(e) {
+            if (e.errors) {
+                if ((typeof e.errors) == 'string') {
+                    //single error
+                    //display the message
+                    alert(e.errors);
+                } else {
+                    //array of errors
+                    //source: http://docs.kendoui.com/getting-started/using-kendo-with/aspnet-mvc/helpers/grid/faq#how-do-i-display-model-state-errors?
+                    var message = "The following errors have occurred:";
+                    //create a message containing all errors.
+                    $.each(e.errors, function (key, value) {
+                        if (value.errors) {
+                            message += "\n";
+                            message += value.errors.join("\n");
+                        }
+                    });
+                    //display the message
+                    alert(message);
+                }
+            } else {
+                alert(e.xhr.responseText);
+            }
+        }
+    });
+</script>
+
+
+@*template of popup editor*@
+<script class="k-popup" id="popup_editor" type="text/x-kendo-template">
+    <div id="abc">
+        <div class="popup-editor-attribute-department">
+            <label>Name</label>
+            <input id="department-name" class="k-textbox" type="text" name="Name" data-bind="value:Name" required />
+            <div style="clear: both;"></div>
+        </div>
+    </div>
+</script>
+

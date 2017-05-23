@@ -1,0 +1,185 @@
+﻿@model Web.Models.QualityAlert.QualityAlertReportModel
+@{
+    ViewBag.Title = "Report";
+    Layout = "~/Views/Shared/_KendoUILayout.cshtml";
+}
+
+<script src="@Url.Content("~/Scripts/kendo/2014.1.318/kendo.all.min.js")"></script>
+
+<div class="scoreCard-fillter-group row">
+    <span class="pull-left">Time range:</span>
+    <div class="col-sm-8">
+        <select id="timerange_multicbx"></select>
+    </div>
+    <button class="form-control pull-left" onclick="report()" title="Search">Report</button>
+</div>
+
+<div id="tabstrip">
+    <ul>
+        <li class="k-state-active">
+            <i class="fa fa-list-alt" aria-hidden="true"></i>
+            %Defect on Supplier
+        </li>
+        <li>
+            <i class="fa fa-bar-chart" aria-hidden="true"></i>
+            %Defect on Supplier Chart
+        </li>
+        <li>
+            <i class="fa fa-pie-chart" aria-hidden="true"></i>
+            #Defect by Supplier
+        </li>
+    </ul>
+    <div>
+        <span class="rainy">&nbsp;</span>
+        @Html.Partial("_ReportTable", Model.MonthList)
+    </div>
+    <div>
+        <span class="sunny">&nbsp;</span>
+        <div id="chart"></div>
+    </div>
+    <div>
+        <span class="sunny">&nbsp;</span>
+        @Html.Action("DefectChart")
+    </div>
+</div>
+
+<script>
+    $("#tabstrip").kendoTabStrip({
+        animation: {
+            open: {
+                effects: "fadeIn"
+            }
+        },
+        activate: function () {
+            chart.data("kendoChart").refresh();
+            pieChart.data("kendoChart").refresh();
+        }
+    });
+
+    var dataSourceTimeRange = new kendo.data.DataSource({
+        data: [
+          { Id: -1, Name: 'Quarter' },
+          { Id: 0, Name: 'Jul' },
+          { Id: 1, Name: 'Aug' },
+          { Id: 2, Name: 'Sep' },
+          { Id: 3, Name: 'Oct' },
+          { Id: 4, Name: 'Nov' },
+          { Id: 5, Name: 'Dec' },
+          { Id: 6, Name: 'Jan' },
+          { Id: 7, Name: 'Feb' },
+          { Id: 8, Name: 'Mar' },
+          { Id: 9, Name: 'Apr' },
+          { Id: 10, Name: 'May' },
+          { Id: 11, Name: 'Jun' }
+        ]
+    });
+
+    $("#timerange_multicbx").kendoMultiSelect({
+        dataTextField: "Name",
+        dataValueField: "Id",
+        dataSource: dataSourceTimeRange,
+        optionLabel: "--- Quarter ---",
+        placeholder: "--- Quarter ---",
+        autoClose: false,
+        select: function (e) {
+            var dataItem = this.dataSource.view()[e.item.index()];
+            var values = this.value();
+            if (e.item.index() === 0) {
+                this.value([]);
+            } else if (values.indexOf(-1) !== -1) {
+                this.value([]);
+            }
+        }
+    });
+
+    var timeRangeMultiCbx = $("#timerange_multicbx").data("kendoMultiSelect");
+
+    timeRangeMultiCbx.value([@Model.MonthList]);
+
+    var timeRangeValue = timeRangeMultiCbx.value();
+
+    if (timeRangeValue.length === 0 || timeRangeValue[0] === -1) {
+        for (var i = 6; i < 18; i++) {
+            grid.data("kendoGrid").hideColumn(i);
+        }
+    }
+    else {//hide Quater and show by months
+        grid.data("kendoGrid").hideColumn(2);
+        grid.data("kendoGrid").hideColumn(3);
+        grid.data("kendoGrid").hideColumn(4);
+        grid.data("kendoGrid").hideColumn(5);
+
+        var tem = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].filter(function (i) {
+            return timeRangeValue.indexOf(i) < 0;
+        });
+
+        tem.forEach(function (item, index, arr) {
+            grid.data("kendoGrid").hideColumn(item + 6);
+        });
+    }
+
+    var chart = $("#chart").kendoChart({
+        title: {
+            text: "Quality alert report"
+        },
+        legend: {
+            position: "top"
+        },
+        seriesDefaults: {
+            type: "line",
+            style: "smooth"
+        },
+        series: [
+
+            @foreach(var item in Model.Items)
+                    {
+                        <text>
+                    {
+                        data: [@item.Data],
+                        name: "@item.Name",
+                        color: "@item.Color",
+                        axis: "l100km"
+                    },
+                    </text>
+                    }
+        ],
+        valueAxes: [{
+            name: "l100km",
+            title: { text: "%Complaint/delivery" },
+            color: "#4e4141",
+            min: 0,
+            max: 100
+        }],
+        categoryAxis: {
+            categories: [@Html.Raw(Model.SuplierList)],
+            // Align the first two value axes to the left
+            // and the last two to the right.
+            //
+            // Right alignment is done by specifying a
+            // crossing value greater than or equal to
+            // the number of categories.
+            axisCrossingValues: [0, 0, 20, 20],
+            labels: {
+                visible: true,
+                rotation: 330
+            }
+        },
+        tooltip: {
+            visible: true,
+            format: "{0.00}%",
+            template: "#= series.name #: #= value #%"
+        }
+    });
+
+    function additionData() {
+        return {
+            MonthIds: timeRangeMultiCbx.value()
+        }
+    }
+
+    function report() {
+        window.location.href = '/QualityAlert/Report?month=' + additionData().MonthIds;
+    }
+
+</script>
+

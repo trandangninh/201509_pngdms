@@ -1,0 +1,446 @@
+﻿<style>
+    .k-numerictextbox {
+        width: 98%;
+    }
+
+    .col-md-offset-1 {
+        margin-left: 3%;
+    }
+</style>
+
+<div class="qualityalert-editer-popup-container">
+    <div class="form-group col-md-12">
+        <label class="col-md-4 control-label  text-right">Alert Date:</label>
+        <div class="col-md-6 col-md-offset-1">
+            <input id="popup-editor-alertdatetime-attribute-qualityalert"
+                   class="" type="date"
+                   name="AlertDateTime"
+                   data-bind="value:AlertDateTime"
+                   required
+                   placeholder="Ngày giờ xảy ra QA" />
+        </div>
+        <div class="form-group col-md-6 hidden">
+            <label class="col-md-4 control-label  text-right">Owner:</label>
+            <div class="col-md-6 col-md-offset-1">
+                <input type="text"
+                       name="Owner"
+                       id="popup-editor-owner-attribute-qualityalert"
+                       data-role="combobox"
+                       data-bind="value:Owner"
+                       data-value-field="Id"
+                       data-text-field="Name"
+                       data-source="dataSourceOwner"
+                       placeholder="-- Choose Owner --" />
+            </div>
+        </div>
+    </div>
+
+    <div class="form-group col-md-12">
+        <label class="col-md-4 control-label  text-right">Line:</label>
+        <div class="col-md-6 col-md-offset-1">
+            <input type="text"
+                   name="Line"
+                   id="popup-editor-line-attribute-qualityalert"
+                   data-role="combobox"
+                   data-bind="value:Line"
+                   data-value-field="Id"
+                   data-text-field="LineName"
+                   data-source="dataSourceLine"
+                   placeholder="Line xảy ra QA" />
+        </div>
+    </div>
+
+    <div class="form-group col-md-12">
+        <label class="col-md-4 control-label  text-right">Machine:</label>
+        <div class="col-md-6 col-md-offset-1">
+            <input id="popup-editor-machine-attribute-qualityalert" class="k-textbox" type="text"
+                   name="Machine"
+                   data-bind="value:Machine"
+                   placeholder="Cụm máy xảy ra QA " />
+        </div>
+        <div class="form-group col-md-6 hidden">
+            <label class="col-md-4 control-label  text-right">When:</label>
+            <div class="col-md-6 col-md-offset-1">
+                <input id="popup-editor-when-attribute-qualityalert"
+                       type="date"
+                       data-role="datepicker"
+                       name="When"
+                       data-bind="value:When"
+                       value=""
+                       placeholder="Choose Date" />
+            </div>
+        </div>
+    </div>
+
+    <div class="form-group col-md-12">
+        <label class="col-md-4 control-label  text-right">Found by:</label>
+        <div class="col-md-6 col-md-offset-1">
+            <input id="popup-editor-usernamecreate-attribute-qualityalert" class="k-textbox" type="text"
+                   name="UserNameCreated"
+                   data-bind="value:UserNameCreated"
+                   placeholder="P&G user name_ viết Hoa" />
+        </div>
+    </div>
+
+    <div class="form-group col-md-12">
+        <label class="col-md-4 control-label  text-right">Found by Function:</label>
+        <div class="col-md-6 col-md-offset-1">
+            <input type="text"
+                   name="FoundByFunction"
+                   id="popup-editor-FoundByFunction-attribute-qualityalert"
+                   data-role="combobox"
+                   data-bind="value:FoundByFunction"
+                   data-value-field="Id"
+                   data-text-field="Name"
+                   data-source="dataSourceFoundByFunction"
+                   onchange="filterClassification()"
+                   placeholder="Found by function" />
+        </div>
+    </div>
+
+    <div class="form-group col-md-12">
+        <label class="col-md-4 control-label  text-right">Alert Classification:</label>
+        <div class="col-md-6 col-md-offset-1">
+            <input type="text"
+                   name="Classification"
+                   id="popup-editor-alertclassification-attribute-qualityalert"
+                   class="Classification"
+                   data-role="combobox"
+                   data-value-field="Id"
+                   data-text-field="Name"
+                   data-bind="value:Classification"
+                   data-source="dataSourceClassification"
+                   onchange="countClassificationSame()"
+                   placeholder="---  None ---" />
+        </div>
+        <label for="count-quality-alert"></label>
+    </div>
+
+    <div class="form-group col-md-12">
+        <label class="col-md-4 control-label  text-right">Description:</label>
+        <div class="col-md-6 col-md-offset-1">
+            <textarea class="k-textbox" rows="3" name="Description" data-bind="value:Detail" required placeholder="Mô tả, số mẫu phát hiện, line.., tổn thất" />
+        </div>
+    </div>
+
+    <!--Quality Alert related to materials-->
+    <div class="form-group col-md-12">
+        <label class="col-md-4 control-label  text-right">Quality Alert related to materials:</label>
+        <div class="col-md-6 col-md-offset-1">
+            <label><input type="radio" value="true" name="QARelatedToMaterials" data-bind="checked: QARelatedToMaterials" required/> Yes</label>
+            <label><input type="radio" value="false" name="QARelatedToMaterials" data-bind="checked: QARelatedToMaterials" required/> No</label>
+
+            @*radio button can not require in custom template -> so, must add hidden input to show or hide message*@
+            <input type="text" value="" name="QARelatedToMaterials" required hidden/>
+            <span class="k-invalid-msg" data-for="QARelatedToMaterials"></span>
+        </div>
+    </div>
+
+    @*add Quantity Alert related to Material radio checkbox*@
+    <div id="divQARelatedToFG" class="form-group col-md-12">
+        <label class="col-md-4 control-label  text-right">Quantity Alert related to FG:</label>
+        <div class="col-md-6 col-md-offset-1">
+            <label><input type="radio" value="true" name="QARelatedToFG" data-bind="checked: QARelatedToFG" required/> Yes</label>
+            <label><input type="radio" value="false" name="QARelatedToFG" data-bind="checked: QARelatedToFG" required/> No</label>
+            <input type="text" value="" name="QARelatedToFG" required hidden />
+        </div>
+    </div>
+
+    <div id="divQARelatedToFGNo" class="collapse">
+        <div class="form-group col-md-12">
+            <label class="col-md-4 control-label  text-right">GCAS:</label>
+            <div class="col-md-6 col-md-offset-1">
+                <input id="popup-editor-gcas-attribute-qualityalert" class="k-textbox" type="text" name="GCAS" data-bind="value:GCAS" maxlength="8" placeholder="GCAS" />
+            </div>
+        </div>
+
+        <div class="form-group col-md-12">
+            <label class="col-md-4 control-label  text-right">SAP Lot:</label>
+            <div class="col-md-6 col-md-offset-1">
+                <input class="k-textbox" type="text" name="SAPLot" data-bind="value:SAPLot" data-required-msg="SAP Lot is required" placeholder="SAP Lot" />
+            </div>
+        </div>
+
+        <div class="form-group col-md-12">
+            <label class="col-md-4 control-label  text-right">Defected Qty:</label>
+            <div class="col-md-6 col-md-offset-1" id="numDefectedQty-div-popupeditor">
+                <input id="popup-editor-defectedQty-attribute-qualityalert"
+                       type="number"
+                       min="0" max="9999999"
+                       value=""
+                       name="DefectedQty"
+                       data-bind="value:DefectedQty"
+                       maxlength="6"
+                       placeholder="Số lượng bị defected" />
+            </div>
+            <div class="form-group col-md-6 hidden">
+                <label class="col-md-4 control-label  text-right">Defect Repeat:</label>
+                <div class="col-md-6 col-md-offset-1">
+                    <input type="radio" value="1" name="defectRepeat" data-bind="checked: DefectRepeat.Id" />
+                    <label>Yes</label>
+                    <input type="radio" value="2" name="defectRepeat" data-bind="checked: DefectRepeat.Id" />
+                    <label>No</label>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-group col-md-12">
+            <label class="col-md-4 control-label  text-right">Blocked Qty:</label>
+            <div class="col-md-6 col-md-offset-1" id="numBlockQA-div-popupeditor">
+                <input id="popup-editor-numblock-attribute-qualityalert"
+                       type="number"
+                       min="0" max="9999999"
+                       value=""
+                       name="NumBlock"
+                       data-bind="value:NumBlock"
+                       maxlength="6"
+                       placeholder="Số lượng bị blocked" />
+            </div>
+            <div class="form-group col-md-6 hidden">
+                <label class="col-md-4 control-label  text-right">Complaint Type:</label>
+                <div class="col-md-6 col-md-offset-1">
+                    <input type="radio" value="1" name="complaintType" data-bind="checked: ComplaintType.Id" />
+                    <label>C</label>
+                    <input type="radio" value="2" name="complaintType" data-bind="checked: ComplaintType.Id" />
+                    <label>FB</label>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="form-group col-md-12">
+        <label class="col-md-4 control-label  text-right">Immediately Action:</label>
+        <div class="col-md-6 col-md-offset-1">
+            <textarea class="k-textbox" cols="30" rows="3" name="Action" data-bind="value:Action" placeholder="Hành động tức thời" />
+        </div>
+        <div class="form-group col-md-6 hidden">
+            <label class="col-md-4 control-label  text-right">Supplier reply date:</label>
+            <div class="col-md-6 col-md-offset-1">
+                <input type="date"
+                       id="popup-editor-supplierreplydate-attribute-qualityalert"
+                       data-role="datepicker"
+                       name="When"
+                       data-bind="value:SupplierReplyDate"
+                       value=""
+                       placeholder="Choose Date" />
+            </div>
+        </div>
+    </div>
+
+    <div class="hideWhenRelatedToMaterials">
+
+        <div class="form-group col-md-12">
+            <label class="col-md-4 control-label  text-right">% PR loss(due to PM issue):</label>
+            <div class="col-md-6 col-md-offset-1">
+                <input type="number"
+                       data-role="numerictextbox"
+                       min="0" max="9999999"
+                       name="PRLossPercent"
+                       data-bind="value:PRLossPercent"
+                       maxlength="6"
+                       placeholder="%PRLoss" />
+            </div>
+        </div>
+
+        <div class="form-group col-md-12">
+            <label class="col-md-4 control-label  text-right">Number of Stop(due to PM issue):</label>
+            <div class="col-md-6 col-md-offset-1">
+                <input id="popup-editor-numStop-attribute-qualityalert"
+                       type="number"
+                       data-role="numerictextbox"
+                       min="0" max="9999999"
+                       value=""
+                       name="NumStop"
+                       data-bind="value:NumStop"
+                       maxlength="6"
+                       placeholder="Stop" />
+            </div>
+        </div>
+
+        <div class="form-group col-md-12">
+            <label class="col-md-4 control-label  text-right">Downtime(due to PM issue):</label>
+            <div class="col-md-6 col-md-offset-1">
+                <input type="text"
+                       class="k-textbox"
+                       name="DownTime"
+                       data-bind="value:DownTime"
+                       placeholder="DownTime" />
+            </div>
+        </div>
+
+        <div class="form-group col-md-12">
+            <label class="col-md-4 control-label  text-right">Effort loss (PGer):</label>
+            <div class="col-md-5 col-md-offset-1">
+                <input id="popup-editor-pGerEffortLoss-attribute-qualityalert"
+                       type="number"
+                       data-role="numerictextbox"
+                       min="0" max="9999999"
+                       name="PGerEffortLoss"
+                       data-bind="value:PGerEffortLoss"
+                       maxlength="6"
+                       placeholder="Effort loss(PGer)" />
+            </div>
+            <label class="col-md-1 text-right">minutes</label>
+        </div>
+
+        <div class="form-group col-md-12">
+            <label class="col-md-4 control-label  text-right">Effort loss (Contractor):</label>
+            <div class="col-md-5 col-md-offset-1">
+                <input id="popup-editor-contractorEffortLoss-attribute-qualityalert"
+                       type="number"
+                       data-role="numerictextbox"
+                       min="0" max="9999999"
+                       name="ContractorEffortLoss"
+                       data-bind="value:ContractorEffortLoss"
+                       maxlength="6"
+                       placeholder="Effort loss(Contractor)" />
+            </div>
+            <label class="col-md-1 text-right">minutes</label>
+        </div>
+
+        <div class="form-group col-md-12">
+            <label class="col-md-4 control-label  text-right">Material Name:</label>
+            <div class="col-md-6 col-md-offset-1">
+                <input type="text"
+                       class="k-textbox"
+                       name="Material"
+                       @*data-role="text"*@
+                       data-bind="value:Material"
+                       @*data-value-field="Id"
+                           data-text-field="Name"*@
+                       @*data-source="dataSourceMaterial"*@
+                       placeholder="Copy from SAP" />
+            </div>
+
+            <div class="form-group col-md-6 hidden">
+                <label class="col-md-4 control-label  text-right">Returned Qty:</label>
+                <div class="col-md-6 col-md-offset-1">
+                    <input id="popup-editor-quantityReturn-attribute-qualityalert"
+                           type="number"
+                           data-role="numerictextbox"
+                           min="0" max="9999999"
+                           value=""
+                           name="QuantityReturn"
+                           data-bind="value:QuantityReturn"
+                           maxlength="6"
+                           placeholder="QuantityReturn" />
+                </div>
+            </div>
+        </div>
+
+        <div class="form-group col-md-12">
+            <label class="col-md-4 control-label  text-right">Supplier Lot:</label>
+            <div class="col-md-6 col-md-offset-1">
+                <input class="k-textbox" type="text" name="SupplierLot" data-bind="value:SupplierLot" placeholder="SupplierLot" />
+            </div>
+            <div class="form-group col-md-6" style="display: none;">
+                <label class="col-md-4 control-label  text-right">Alert Classification:</label>
+                <div class="col-md-6 col-md-offset-1">
+                    <input type="text"
+                           name="Classification"
+                           id="popup-editor-alertclassification-attribute-qualityalert"
+                           data-role="combobox"
+                           data-value-field="Id"
+                           data-text-field="Name"
+                           data-bind="value:Classification"
+                           data-source="dataSourceClassification"
+                           placeholder="---  None ---" />
+                </div>
+            </div>
+        </div>
+
+        <div class="form-group col-md-12">
+            <label class="col-md-4 control-label  text-right">Supplier Name:</label>
+            <div class="col-md-6 col-md-offset-1">
+                <input type="text"
+                       name="Supplier"
+                       data-role="combobox"
+                       data-bind="value: Supplier"
+                       data-value-field="Id"
+                       data-text-field="Name"
+                       data-source="dataSourceSupplier"
+                       data-change="supplierCbxChange"
+                       placeholder="---  Choose Supplier ---" />
+            </div>
+
+            <div class="form-group col-md-6 hidden">
+                <label class="col-md-4 control-label  text-right">Defect Classification:</label>
+                <div class="col-md-6 col-md-offset-1">
+                    <input type="text"
+                           name="ClassificationDefect"
+                           id="popup-editor-defectclassification-attribute-qualityalert"
+                           data-role="combobox"
+                           data-value-field="Id"
+                           data-text-field="Name"
+                           data-bind="value:ClassificationDefect"
+                           data-source="dataSourceClassificationDefect"
+                           placeholder="---  Choose Classification Defect ---" />
+                </div>
+            </div>
+        </div>
+
+        <div class="form-group col-md-12 hidden">
+            <div class="form-group col-md-6">
+                <label class="col-md-4 control-label  text-right">Category:</label>
+                <div class="col-md-6 col-md-offset-1">
+                    <input type="text"
+                           name="Category"
+                           id="popup-editor-category-attribute-qualityalert"
+                           data-role="combobox"
+                           data-bind="value:Category"
+                           data-value-field="Id"
+                           data-text-field="Name"
+                           data-source="dataSourceCategory"
+                           placeholder="Category" />
+                </div>
+            </div>
+
+            <div class="form-group col-md-6">
+                <label class="col-md-4 control-label  text-right">Date Informed to supplier:</label>
+                <div class="col-md-6 col-md-offset-1">
+                    <input type="date"
+                           id="popup-editor-dateinformed-attribute-qualityalert"
+                           data-role="datepicker"
+                           name="InformedToSupplierDate"
+                           data-bind="value:InformedToSupplierDate"
+                           value=""
+                           placeholder="Choose Date" />
+                </div>
+            </div>
+        </div>
+
+        <div class="form-group col-md-12">
+            <label class="col-md-4 control-label  text-right">Status:</label>
+            <div class="col-md-6 col-md-offset-1">
+                <input type="text"
+                       name="Status"
+                       id="popup-editor-status-attribute-qualityalert"
+                       data-role="combobox"
+                       data-bind="value:Status"
+                       data-value-field="Id"
+                       data-text-field="Name"
+                       data-source="dataSourceQualityAlertStatus" />
+            </div>
+
+            <div class="form-group col-md-12 hidden">
+                <label class="col-md-2 control-label  text-right">Follow Up Action:</label>
+                <div class="">
+                    <textarea id="followUpAction" class="k-textbox" rows="3" name="FollowUpAction" data-bind="value:FollowUpAction" placeholder="Mô tả, số mẫu phát hiện, line.., tổn thất" />
+                </div>
+            </div>
+        </div>
+    </div>
+    @*<div class="form-group col-md-6">
+            <label class="col-md-4 control-label  text-right">Cost impacted:</label>
+            <div class="col-md-6 col-md-offset-1">
+                <input type="number"
+                       data-role="numerictextbox"
+                       min="0" max="9999999"
+                       value=""
+                       name="CostImpacted"
+                       data-bind="value:CostImpacted"
+                       maxlength="6"
+                       placeholder="CostImpacted" />
+            </div>
+        </div>*@
+</div>

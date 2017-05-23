@@ -1,0 +1,669 @@
+﻿@using Entities.Domain
+@using Service.Users
+
+@{
+    ViewBag.Title = "Measure Management";
+    Layout = "~/Views/Shared/_KendoUILayout.cshtml";
+}
+
+
+
+<div class="row">
+    <div class="col-md-12">
+        <!-- BOX -->
+        <div class="box border blue">
+            <div class="box-title">
+                <h4><i class="fa fa-user"></i><span class="hidden-inline-mobile">  </span></h4>
+            </div>
+            <div class="box-body">
+
+
+                <div class="tabbable header-tabs">
+                    <ul class="nav nav-tabs">
+
+                        <li><a href="#supply" data-toggle="tab"><i class="fa fa-edit"></i> <span class="hidden-inline-mobile">Measure Supply Chain </span></a></li>
+
+                        <li class="active"><a href="#making" data-toggle="tab"><i class="fa fa-question"></i> <span class="hidden-inline-mobile">Measure Packing - Making </span></a></li>
+
+                    </ul>
+                    <div class="tab-content">
+                        <!-- Result -->
+
+
+                        <div class="tab-pane fade in active" id="making">
+                            @*<div class="form-group" style="height: 30px">
+                                <div class="pull-left " style="padding-right:0; margin-bottom:5px">
+                                    <button class="btn btn-info btn-info-custom" id="Making-Config" title="Send Mail">Making config data</button>
+                                </div>
+                                
+
+                            </div>*@
+
+                            
+                            <div class="department-filter">
+                                <div class="pull-right " style="padding-right:0; margin-bottom:5px ; margin-left: 20px">
+                                    <button class="btn btn-info btn-info-custom" id="Dds-Config" title="Dds Config">Config data</button>
+                                </div>
+                                <input id="dms_cbx" />
+                                <span style="margin: 5px;">DMS:</span>
+                                <input id="department_cbx" />
+                                <span style="margin: 5px;">Department:</span>
+                            </div>
+
+                            <div id="grid"></div>
+                            <input type="submit" id="btnRefresh" name="btnRefresh" style="display: none" />
+                        </div>
+
+                        <!-- /Result -->
+                        <!-- Issue -->
+                        <div class="tab-pane fade" id="supply">
+                            <div id="measure-supplygrid"></div>
+                        </div>
+                        <!-- /Issue -->
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+@section bottomjs
+{
+    <script src="@Url.Content("~/Scripts/kendo/2014.1.318/kendo.web.min.js")"></script>
+    <script>
+        $(document).ready(function() {
+
+            var UserDS = [
+                @{
+                    var userService = DependencyResolver.Current.GetService<IUserService>();
+                    var listUsername = userService.GetAllUsersAsync().Where(u => u.Active).Select(p => p.Username).ToList();
+
+                }
+                @for (var i = 0; i < listUsername.Count(); i++)
+                {
+                    var username = listUsername[i];
+                    <text>
+
+                     "@(Html.Raw(HttpUtility.JavaScriptStringEncode(username.ToString())))"
+                            </text>
+                    if (i != listUsername.Count - 1)
+                    {
+                        <text>,</text>
+                    }
+                }
+            ];
+
+            function ownerDisplay(data) {
+                if (data.ListUsername != "")
+                    return data.ListUsername.join(', ');
+                else return '';
+            }
+
+            function noteDisplay(data) {
+                if (data.Note == "")
+                    return '';
+                else return data.Note;
+            }
+
+
+            function ownerEditor(container, options) {
+                $("<select required multiple='multiple' data-bind='value:" + options.field + "'/>").appendTo(container).kendoMultiSelect({
+                    dataSource: options.values,
+                    suggest: true,
+                });
+            }
+
+            $(document).ready(function () {
+                //get data source for dmsCombobox
+                var allDmsAttributes = new kendo.data.DataSource({
+                    transport: {
+                        read: {
+                            dataType: "json",
+                            type: "POST",
+                            url: "@Html.Raw(Url.Action("GetAllDmsForView", "Dms"))",
+                            data: departmentTransport
+                }
+                }
+            });
+                //get data source for departmentCombobox
+                var dataSourceDepartment = new kendo.data.DataSource({
+                    transport: {
+                        read: {
+                            dataType: "json",
+                            type: "POST",
+                            url: "@Html.Raw(Url.Action("GetAllDepartment", "Department"))"
+                        }
+                    }
+                });
+
+                //difine departmentCombobox
+                $("#department_cbx").kendoComboBox({
+                    dataTextField: "Name",
+                    dataValueField: "Id",
+                    dataSource: dataSourceDepartment,
+                    height: 100,
+                    index: 0,
+                    change: function (e) {
+                        $("#dms_cbx").data("kendoComboBox").dataSource.read();
+                    }
+                });
+
+                //difine dmsCombobox
+                var comboboxDapartment = $("#department_cbx").data("kendoComboBox");
+                $("#dms_cbx").kendoComboBox({
+                    dataTextField: "Code",
+                    dataValueField: "Id",
+                    dataSource: allDmsAttributes,
+                    height: 100,
+                    //index: 0,
+                    dataBound: function (e) {
+                        //default index = 0
+                        comboboxDms.select(0);
+                        $("#grid").data("kendoGrid").dataSource.read();
+                    },
+                    change: function (e) {
+                        $("#grid").data("kendoGrid").dataSource.read();
+                    }
+                });
+                           
+                var comboboxDms = $("#dms_cbx").data("kendoComboBox");
+
+                $('#Dds-Config').click(function () {
+                    //alert("/DdsConfig/Index/" + kendo.toString(comboboxDapartment.value()));
+                    window.location.href = "/DdsConfig/Index/" + kendo.toString(comboboxDapartment.value());;
+                });
+
+
+                var datasource = new kendo.data.DataSource({
+                    type: "json",
+                    transport: {
+                        read: {
+                            url: "@Html.Raw(Url.Action("List", "Measure"))",
+                            type: "POST",
+                            dataType: "json",
+                            data: dmsTransport
+
+                        },
+                        destroy: {
+                            url: "@Html.Raw(Url.Action("Delete", "Measure"))",
+                            type: "POST",
+                            dataType: "json",
+
+                        },
+                        create: {
+                            url: "@Html.Raw(Url.Action("Create", "Measure"))",
+                            type: "POST",
+                            dataType: "json",
+                            data: creationData
+                            //data: serialize
+                        },
+                        update: {
+                            url: "@Html.Raw(Url.Action("Update", "Measure"))",
+                            type: "POST",
+                            dataType: "json",
+                            data: updationData
+                            //data: serialize
+                        }
+                    },
+                    schema: {
+                        data: "Data",
+                        total: "Total",
+                        errors: "Errors",
+                        model: {
+                            id: "Id",
+                            fields: {
+                                Id: { editable: false, defaultValue: 0 },
+                                MeasureCode: {
+                                    editable: true,
+                                    validation:
+                                    {
+                                        required: true,
+                                        min: 1
+                                    }
+                                },
+                                MeasureName: {
+                                    editable: true
+                                },
+                                Target: {
+                                    editable: true,
+                                    validation:
+                                    {
+                                        required: true,
+                                    }
+                                },
+                                Unit: {
+                                    editable: true,
+                                    validation:
+                                    {
+                                        required: true,
+                                    }
+                                },
+                                Note: {
+                                    editable: true,
+
+                                },
+                                ListUsername: {
+                                    validation:
+                                    {
+                                        required: true,
+                                    }
+                                },
+                                MeasureType: {
+                                    editable: true,
+                                    defaultValue: { Id: "0", Name: "" }
+                                },
+
+                                Dms: {
+                                    editable: true,
+                                    defaultValue: { Id: "0", Code: "--  Choose Dms  --" }
+                                },
+                                Order: {
+                                    type: "number"
+                                },
+                                Active: {
+                                    type: "boolean"
+                                },
+                            }
+                        }
+                    },
+                    requestEnd: function(e) {
+
+                        if (e.type == "create" || e.type == "update") {
+
+                            if (e.response.status != 'success') {
+                                alert(e.response.status);
+                                //this.read();
+                            } else {
+                                this.read();
+                            }
+
+                        }
+                    },
+                    error: function(e) {
+                        display_kendoui_grid_error(e);
+                        // Cancel the changes
+                        //this.cancelChanges();
+                    },
+
+                    pageSize: 10,
+                    serverPaging: true,
+                    serverFiltering: true,
+                    serverSorting: true
+                });
+
+
+                $("#grid").kendoGrid({
+                    dataSource: datasource,
+                    pageable: {
+                        refresh: true,
+                        pageSizes: ["5", "10", "15", "20"]
+                    },
+                    height: 'auto',
+                    edit: function(e) {
+                        {
+                            if (e.model.Id == "") {
+                                if (allTypeAttributes.length > 0) {
+                                    e.model.TypeId = allTypeAttributes[0].Id;
+                                }
+                                if (allDmsAttributes.length > 0) {
+                                    e.model.DmsId = allDmsAttributes[0].Id;
+                                }
+                            }
+                        }
+                    },
+                    editable: {
+                        confirmation: true,
+                        mode: "inline"
+                    },
+                    scrollable: false,
+                    toolbar: ["create"],
+                    edit: editorFunction,
+                    columns: [
+                        //{
+                        //    field: "Dms",
+                        //    title: "Dms",
+                        //    width: 250,
+                        //    editor: dmsDropDownEditor,
+                        //    template: "#=Dms.Code#"
+                        //},
+                        {
+                            field: "MeasureCode",
+                            title: "Measure Code",
+                            width: 250,
+                            template: '#:MeasureCode#'
+                        },
+                        {
+                            field: "MeasureName",
+                            title: "Measure Name",
+                            width: 250,
+                            template: '#:MeasureName#'
+                        },
+                        {
+                            field: "MeasureType",
+                            title: "Progress",
+                            width: 250,
+                            editor: typeDropDownEditor,
+                            template: "#=MeasureType.Name#"
+                        },
+                        {
+                            field: "Target",
+                            title: "Target",
+                            width: 150,
+
+                            template: "#:Target#"
+                        },
+                        {
+                            field: "Unit",
+                            title: "Unit",
+                            width: 150,
+                            template: "#:Unit#"
+                        },
+                        {
+                            field: "Note",
+                            title: "Note",
+                            width: 250,
+                            template: noteDisplay
+                        },
+                        {
+                            field: "ListUsername",
+                            title: "Owner",
+                            width: 250,
+                            template: ownerDisplay,
+                            editor: ownerEditor,
+                            values: UserDS,
+                        },
+                        {
+                            field: "Order",
+                            title: "Order",
+                            width: 100,
+                            format: "n0",
+                            template: "#=Order#"
+                        },
+                        {
+                            field: "Active",
+                            title: "Active",
+                            width: 100,
+                            template: '<img src="@Url.Content("~/Content/img/")active-#=Active#.gif" />'
+                        },
+                        {
+                            command: [
+                                {
+                                    name: "edit",
+                                    text: "",
+                                    template: "<a class='k-button k-grid-edit' href='' style='min-width:16px;'><span class='k-icon k-edit'></span></a>"
+                                }
+                            ],
+                            width: 50
+                        }
+                    ]
+                }).on("click", ".k-grid-edit", function(){
+                    $(".k-grid-update").html("<span class='k-icon k-update'></span>").css("min-width","16px").removeClass("k-button-icontext");
+                    $(".k-grid-cancel").html("<span class='k-icon k-cancel'></span>").css("min-width","16px").removeClass("k-button-icontext");
+                }).on("click", ".k-grid-add", function() {
+                    $(".k-grid-update").html("<span class='k-icon k-update'></span>").css("min-width","16px").removeClass("k-button-icontext");
+                    $(".k-grid-cancel").html("<span class='k-icon k-cancel'></span>").css("min-width","16px").removeClass("k-button-icontext");
+                });
+
+                function editorFunction(e) {
+                    if (e.model.Id != '') {
+                        //not allow edit MeasureCode
+                        //e.container.find("input[name=MeasureCode]").attr("disabled", "true");
+                        //e.container.find("input[name=MeasureCode]").css("border", "none");
+                    }
+                    else//event create button
+                    {
+                    }
+                }
+
+                function departmentTransport() {
+                    return { departmentId: comboboxDapartment.value() }
+                }
+
+                function dmsTransport() {
+                    return { dmsId: comboboxDms.value() }
+                }
+
+                function creationData() {
+                    return { dmsId: comboboxDms.value() }
+                }
+                
+                function updationData() {
+                    return { dmsId: comboboxDms.value() }
+                }
+
+
+
+
+
+
+
+
+                //Supply Chain measure
+                var datasourceSupplyChain = new kendo.data.DataSource({
+                    type: "json",
+                    transport: {
+                        read: {
+                            url: "@Html.Raw(Url.Action("List", "MeasureSupplyChain"))",
+                            type: "POST",
+                            dataType: "json",
+
+                        },
+                        destroy: {
+                            url: "@Html.Raw(Url.Action("Delete", "MeasureSupplyChain"))",
+                            type: "POST",
+                            dataType: "json",
+
+                        },
+                        create: {
+                            url: "@Html.Raw(Url.Action("Create", "MeasureSupplyChain"))",
+                            type: "POST",
+                            dataType: "json",
+                            data: serialize
+                        },
+                        update: {
+                            url: "@Html.Raw(Url.Action("Update", "MeasureSupplyChain"))",
+                            type: "POST",
+                            dataType: "json",
+                            data: serialize
+                        }
+                    },
+                    schema: {
+                        data: "Data",
+                        total: "Total",
+                        errors: "Errors",
+                        model: {
+                            id: "Id",
+                            fields: {
+                                DmsCode: {
+                                    editable: false,
+                                    validation:
+                                    {
+                                        required: true,
+                                        min: 1
+                                    }
+                                },
+                                MeasureSupplyChainName: {
+                                    editable: true,
+                                    validation:
+                                    {
+                                        required: true,
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    requestEnd: function(e) {
+
+                        if (e.type == "create" || e.type == "update") {
+
+                            if (e.response.status != 'success') {
+
+                                this.read();
+                            } else {
+                                this.read();
+                            }
+
+                        }
+                    },
+                    error: function(e) {
+                        display_kendoui_grid_error(e);
+                        // Cancel the changes
+                        this.cancelChanges();
+                    },
+
+                    pageSize: 10,
+                    serverPaging: true,
+                    serverFiltering: true,
+                    serverSorting: true
+                });
+
+
+                $("#measure-supplygrid").kendoGrid({
+                    dataSource: datasourceSupplyChain,
+                    pageable: {
+                        refresh: true,
+                    },
+                    height: 'auto',
+
+                    edit: function(e) {
+                        {
+
+                        }
+                    },
+                    editable: {
+                        confirmation: true,
+                        mode: "inline"
+                    },
+                    scrollable: false,
+                    toolbar: [],
+                    columns: [
+                        {
+                            field: "DmsCode",
+                            title: "DmsCode",
+                            width: 250,
+                            template: '#:DmsCode#'
+                        },
+                        {
+                            field: "MeasureSupplyChainName",
+                            title: "Measure",
+                            width: 250,
+                            template: '#:MeasureSupplyChainName#'
+                        },
+                        {
+                            command: [
+                                {
+                                    name: "edit",
+                                    text: "",
+                                    template: "<a class='k-button k-grid-edit' href='' style='min-width:16px;'><span class='k-icon k-edit'></span></a>"
+                                }
+                            ],
+                            width: 50
+                        }
+                    ]
+                }).on("click", ".k-grid-edit", function(){
+                    $(".k-grid-update").html("<span class='k-icon k-update'></span>").css("min-width","16px").removeClass("k-button-icontext");
+                    $(".k-grid-cancel").html("<span class='k-icon k-cancel'></span>").css("min-width","16px").removeClass("k-button-icontext");
+                }).on("click", ".k-grid-add", function() {
+                    $(".k-grid-update").html("<span class='k-icon k-update'></span>").css("min-width","16px").removeClass("k-button-icontext");
+                    $(".k-grid-cancel").html("<span class='k-icon k-cancel'></span>").css("min-width","16px").removeClass("k-button-icontext");
+                });
+
+            });
+
+
+            function serialize(data) {
+                for (var property in data) {
+                    if ($.isArray(data[property])) {
+                        serializeArray(property, data[property], data);
+                    }
+                }
+            }
+
+            function serializeArray(prefix, array, result) {
+                for (var i = 0; i < array.length; i++) {
+                    if ($.isPlainObject(array[i])) {
+                        for (var property in array[i]) {
+                            result[prefix + "[" + i + "]." + property] = array[i][property];
+                        }
+                    } else {
+                        result[prefix + "[" + i + "]"] = array[i];
+                    }
+                }
+            }
+
+
+
+
+
+
+            var allTypeAttributes = new kendo.data.DataSource({
+                transport: {
+                    read: {
+                        dataType: "json",
+                        type: "POST",
+                        url: "@Html.Raw(Url.Action("GetAllTypeMeasureForView", "Measure"))"
+                    }
+                }
+    ,
+                schema: {
+                    parse: function (data) {
+                        data.unshift({ Id: "0", Name: "--  Choose Measure Type  --" });
+                        return data;
+                    }
+                }
+            });
+
+            function dmsDropDownEditor(container, options) {
+                $("<input required data-text-field='Code' data-value-field='Id' data-bind='value:" + options.field + "'/>")
+                    .appendTo(container)
+                    .kendoDropDownList({
+                        autoBind: false,
+                        dataSource: allDmsAttributes
+                    });
+            }
+
+            function typeDropDownEditor(container, options) {
+                $("<input required data-text-field='Name' data-value-field='Id' data-bind='value:" + options.field + "'/>")
+                    .appendTo(container)
+                    .kendoDropDownList({
+                        autoBind: false,
+                        dataSource: allTypeAttributes
+                    });
+            }  
+        })
+    </script>
+
+    <script type="text/javascript">
+        $(document).ready(function() {
+
+
+            $('#Making-Config').click(function() {
+                window.location.href = "/MakingConfig/Index";
+            });
+            $('#Packing-Config').click(function() {
+                window.location.href = "/PackingConfig/Index";
+            });
+            $('#FK-Config').click(function () {
+                window.location.href = "/DdsConfig/Index/3";
+            });
+            
+            $('#btnRefresh').click(function() {
+                //refresh grid
+                var grid = $("#grid").data('kendoGrid');
+                grid.dataSource.read();
+                //return false to don't reload a page
+                return false;
+            });
+        });
+    </script>
+    <script>
+        $(document).ready(function() {
+            $("#nav-dashboard").addClass("active");
+            $(".dashboard-measure").addClass("active");
+        });
+    </script>
+}
+
+
+
+

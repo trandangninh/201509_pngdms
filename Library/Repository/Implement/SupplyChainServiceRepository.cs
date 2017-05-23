@@ -1,0 +1,28 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Data.Entity;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using Entities.Domain;
+using RepositoryPattern.Repositories;
+
+namespace Repository.Implement
+{
+
+    public static class SupplyChainServiceRepository
+    {
+        public static Task<SupplyChainService> GetSupplyChainServiceByIdAsync(this IRepositoryAsync<SupplyChainService> repository, int SupplyChainServiceId)
+        {
+
+            if (SupplyChainServiceId == 0)
+            {
+                throw new ArgumentException("Null or empty argument: SupplyChainServiceId");
+            }
+            return repository
+                .Table
+                .FirstOrDefaultAsync(x => x.Id == SupplyChainServiceId);
+
+        }
+    }
+}

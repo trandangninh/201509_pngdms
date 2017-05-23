@@ -1,0 +1,627 @@
+﻿@using Entities.Domain
+@using RepositoryPattern.Infrastructure
+@using Service.Interface
+@using Service.Security
+@using Service.Users
+@using Entities.Domain.Users;
+@model Web.Models.SupplyChain.SupplyChainModel
+@{
+    ViewBag.Title = "Supply Chain ";
+    Layout = "~/Views/Shared/_KendoUILayout.cshtml";
+    var userAllowInSupplyChainService = DependencyResolver.Current.GetService<Service.Interface.IUserAllowInSupplyChainService>();
+    var permissionService = EngineContext.Current.Resolve<IPermissionService>();
+    var workContext = EngineContext.Current.Resolve<Utils.IWorkContext>();
+}
+<script src="@Url.Content("~/Scripts/kendo/2014.1.318/kendo.web.min.js")"></script>
+<div class="form-group">
+
+    <div class="pull-right " style="padding-right:0; margin-bottom:5px">
+        <input id="datepicker"  class="datepicker-fullscreen" style="width: 150px;" />
+    </div>
+
+</div>
+
+<div class="row">
+    <div class="col-md-12">
+        <!-- BOX -->
+        <div class="box border blue">
+            <div class="box-title">
+                <h4><i class="fa fa-user"></i><span class="hidden-inline-mobile">  </span></h4>
+            </div>
+            <div class="box-body">
+
+
+                <div class="tabbable header-tabs">
+                    <ul class="nav nav-tabs">
+                        @if ((workContext.CurrentUser != null && ((workContext.CurrentUser.Departments.Any(d => d.Id == Model.DepartmentId)) || workContext.CurrentUser.IsAdmin())))
+                        {
+                            if (permissionService.Authorize(PermissionProvider.ViewAttendance) || permissionService.Authorize(PermissionProvider.WriteAttendance))
+                            {
+                                <text>
+                                    <li>
+                                        <a href="#tabattendance" data-toggle="tab">
+                                            <i class="fa fa-dot-circle-o"></i>
+                                            <span class="hidden-inline-mobile">Attendance</span>
+                                        </a>
+                                    </li>
+                                </text>
+                            }
+                            if (permissionService.Authorize(PermissionProvider.ViewIssues) || permissionService.Authorize(PermissionProvider.WriteIssues))
+                            {
+                                <text>
+                                    <li>
+                                        <a href="#tabissue" data-toggle="tab">
+                                            <i class="fa fa-edit"></i>
+                                            <span class="hidden-inline-mobile">Issue daily</span>
+                                        </a>
+                                    </li>
+                                </text>
+                            }
+                        }
+                        @*<li class="active"><a href="#tabresult" data-toggle="tab"><i class="fa fa-question"></i> <span class="hidden-inline-mobile">Result daily </span></a></li>*@
+
+                        @if (userAllowInSupplyChainService.CheckUserByDMSTypeNotAsync(DmsType.Productionlanning, User.Identity.Name))
+                        {
+                            <li><a href="#tabresult-dms-productionplanning" data-toggle="tab"><span class="hidden-inline-mobile">DMS Production Planning</span></a></li>
+                        }
+                        
+                        @if (userAllowInSupplyChainService.CheckUserByDMSTypeNotAsync(DmsType.Service, User.Identity.Name))
+                        {
+                            <li><a href="#tabresult-dms-service" data-toggle="tab"><span class="hidden-inline-mobile">Service</span></a></li>
+                        }
+                        
+                        @if (userAllowInSupplyChainService.CheckUserByDMSTypeNotAsync(DmsType.DDS, User.Identity.Name))
+                        {
+                            <li><a href="#tabresult-dms-dds" data-toggle="tab"><span class="hidden-inline-mobile">DDS</span></a></li>
+                        }
+                        
+                        @if (userAllowInSupplyChainService.CheckUserByDMSTypeNotAsync(DmsType.MPSA, User.Identity.Name))
+                        {
+                            <li><a href="#tabresult-dms-mpsa" data-toggle="tab"><span class="hidden-inline-mobile">MPSA</span></a></li>
+                        }
+                        
+                        @if (userAllowInSupplyChainService.CheckUserByDMSTypeNotAsync(DmsType.FPQ, User.Identity.Name))
+                        {
+                            <li><a href="#tabresult-dms-fpq" data-toggle="tab"><span class="hidden-inline-mobile">FPQ</span></a></li>
+                        }
+                        
+                        @if (userAllowInSupplyChainService.CheckUserByDMSTypeNotAsync(DmsType.HSE, User.Identity.Name))
+                        {
+                            <li class="active"><a href="#tabresult-dms-hse" data-toggle="tab"><span class="hidden-inline-mobile">HS&E</span></a></li>
+                        }
+                        
+
+                    </ul>
+                    <div class="tab-content">
+                        <!-- Result Dms hs&e -->
+                        @if (userAllowInSupplyChainService.CheckUserByDMSTypeNotAsync(DmsType.HSE, User.Identity.Name))
+                        {
+                            <div class="tab-pane fade in active" id="tabresult-dms-hse">
+                                @Html.Partial("SupplyChainHSEForEmployeeNotUpdate", Model)
+                            </div>
+                        }                     
+                        <!-- /Result Dms hs&e -->
+                        <!-- Result Dms fpq -->
+                        @if (userAllowInSupplyChainService.CheckUserByDMSTypeNotAsync(DmsType.FPQ, User.Identity.Name))
+                        {
+                            <div class="tab-pane fade" id="tabresult-dms-fpq">
+                                @Html.Partial("SupplyChainFPQForEmployeeNotUpdate", Model)
+                            </div>
+                        }
+                        
+                        <!-- /Result Dms fpq -->
+                        <!-- Result Dms mpsa -->
+                        @if (userAllowInSupplyChainService.CheckUserByDMSTypeNotAsync(DmsType.MPSA, User.Identity.Name))
+                        {
+                            <div class="tab-pane fade" id="tabresult-dms-mpsa">
+                                @Html.Partial("SupplyChainMPSAForEmployeeNotUpdate", Model)
+                            </div>
+                        }
+                        
+                        <!-- /Result Dms mpsa -->
+                        <!-- Result Dms dds -->
+                        @if (userAllowInSupplyChainService.CheckUserByDMSTypeNotAsync(DmsType.DDS, User.Identity.Name))
+                        {
+                            <div class="tab-pane fade" id="tabresult-dms-dds">
+                                @Html.Partial("SupplyChainDDSForEmployeeNotUpdate", Model)
+                            </div>
+                        }
+                        
+                        <!-- /Result Dms dds -->
+                        <!-- Result Dms service -->
+                        @if (userAllowInSupplyChainService.CheckUserByDMSTypeNotAsync(DmsType.Service, User.Identity.Name))
+                        {
+                            <div class="tab-pane fade" id="tabresult-dms-service">
+                                @Html.Partial("SupplyChainServiceForEmployeeNotUpdate", Model)
+                            </div>
+                        }
+                        
+                        <!-- /Result Dms service -->
+                        <!-- Result Dms productionplanning -->
+                        @if (userAllowInSupplyChainService.CheckUserByDMSTypeNotAsync(DmsType.Productionlanning, User.Identity.Name))
+                        {
+                            <div class="tab-pane fade" id="tabresult-dms-productionplanning">
+                                @Html.Partial("SupplyChainProductionPlanningForEmployeeNotUpdate", Model)
+                            </div>
+                        }
+                        
+                        <div class="tab-pane fade " id="tabresult-product">
+                            @Html.Partial("_ProductionPlanningForEmployee", Model)
+                        </div>
+                        @if ((workContext.CurrentUser != null && ((workContext.CurrentUser.Departments.Any(d => d.Id == Model.DepartmentId)) || workContext.CurrentUser.IsAdmin())))
+                        {
+                            if (permissionService.Authorize(PermissionProvider.ViewIssues) || permissionService.Authorize(PermissionProvider.WriteIssues))
+                            {
+                                <text>
+                                    <div class="tab-pane fade" id="tabissue">
+                                        @Html.Action("Issue", "DdsMeeting", new {departmentId = Model.DepartmentId, date = Model.Date})
+                                    </div>
+                                </text>
+                            }
+                            if (permissionService.Authorize(PermissionProvider.ViewAttendance) || permissionService.Authorize(PermissionProvider.WriteAttendance))
+                            {
+                                <text>
+                                    <div class="tab-pane fade" id="tabattendance">
+                                        @Html.Action("Attendance", "DdsMeeting", new {departmentId = Model.DepartmentId, date = Model.Date})
+                                    </div>
+                                </text>
+                            }
+                        }
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+@section bottomjs
+{
+  
+<script>
+    //choose default tab
+    $('.nav.nav-tabs li:last-child').addClass("active");
+    //choose default tab content
+    $('.tab-pane:first-child').addClass("in active");
+
+    var IsEditting = false;
+    var currentDate;
+    var oldval = 0;
+    function issueAdditionalData() {
+        return {
+            Date: "@Model.Date",
+            DepartmentId: "7",
+        };
+    }
+    function issueCreationData() {
+        return {
+            departmentId: "7"
+        };
+    }
+    $(document).ready(function() {
+
+        function getURLParameter(name) {
+            return decodeURIComponent(
+                (location.search.match(RegExp("[?|&]" + name + '=(.+?)(&|$)')) || [, null])[1]
+            );
+        }
+
+        var date = getURLParameter('date');
+        if (date != "null") {
+            currentDate = date;
+            $("#datepicker").val(date);
+        } else {
+            $("#datepicker").val($.datepicker.formatDate('mm/dd/yy', new Date()));
+            currentDate = $.datepicker.formatDate('mm/dd/yy', new Date());
+
+        }
+
+        // date picker
+
+
+        $(".datepicker-fullscreen").kendoDatePicker({
+            max: new Date(),
+            origin: "top right",
+            position: "bottom right",
+            change: function() {
+                window.location.href = "/SupplyChain?date=" + 
+                kendo.toString(this.value(), 'd');
+            }
+
+        });
+
+        var alluserAttributes = [
+            @{
+                    var userService = DependencyResolver.Current.GetService<IUserService>();
+            var listUsername = userService.GetAllUsersAsync().ToList();
+        }
+
+            @for (int i = 0; i < listUsername.Count; i++)
+        {
+            var type = listUsername[i];
+            <text>
+{
+    Id: "@type.Id.ToString()",
+    Name: "@(Html.Raw(HttpUtility.JavaScriptStringEncode(type.Username)))"
+}
+</text>
+            if (i != listUsername.Count - 1)
+            {
+                <text>,</text>
+            }
+        }
+        ];
+
+
+        var allStatusAttributes = [
+            @{
+                var listType = new List<IssueStatus>()
+                {
+                                   IssueStatus.Open,
+                                   IssueStatus.Delayed,
+                                   IssueStatus.Closed
+        };
+        }
+
+                @for (int i = 0; i < listType.Count; i++)
+        {
+                    var type = listType[i];
+                    <text>
+        {
+            Id: @((int) type),
+            Name: "@(Html.Raw(HttpUtility.JavaScriptStringEncode(type.ToString())))"
+        }
+            </text>
+                    if (i != listType.Count - 1)
+                {
+                        <text>,</text>
+                }
+                }
+        ];
+
+        function userDropDownEditor(container, options) {
+            $('<input required data-text-field="Name" data-value-field="Id" data-bind="value:UserAssignedId"/>')
+                .appendTo(container)
+                .kendoDropDownList({
+                    dataTextField: "Name",
+                    dataValueField: "Id",
+                    dataSource: alluserAttributes
+
+                });
+        }
+
+        //search
+        ////search
+        //$('#SearchKeyword').bind("input", function (e) {
+        //    if (this.value.length >= 3 || e.keyCode == 13 || e.keyCode == 8 || e.keyCode == 46 || this.value.length == 0) {
+        //        var grid = $("#issuegrid").data('kendoGrid');
+        //        grid.dataSource.page(1); //new search. Set page size to 1
+        //        grid.dataSource.read();
+
+        //    }
+        //    return false;
+        //});
+        ////function additionalData() {
+        ////    return {
+        ////        SearchKeyword: $('#SearchKeyword').val()
+        ////    };
+        ////}
+        function additionalData() {
+            return {
+                //SearchKeyword: $('#SearchKeyword').val(),
+                Datetime: currentDate,
+                Type: "@((int)IssueType.SupplyChain)"
+            };
+        }
+
+
+        function display_kendoui_grid_error(e) {
+            if (e.errors) {
+                if ((typeof e.errors) == 'string') {
+                    //single error
+                    //display the message
+                    alert(e.errors);
+                } else {
+                    //array of errors
+                    var message = "The following errors have occurred:";
+                    //create a message containing all errors.
+                    $.each(e.errors, function(key, value) {
+                        if (value.errors) {
+                            message += "\n";
+                            message += value.errors.join("\n");
+                        }
+                    });
+                    //display the message
+                    alert(message);
+                }
+            } else {
+                alert('Error happened');
+            }
+        }
+
+        var TypeIssue = '@((int) IssueType.SupplyChain)', a;
+
+        function serialize(data) {
+            data["date"] = currentDate;
+            data["TypeId"] = TypeIssue;
+            for (var property in data) {
+                if ($.isArray(data[property])) {
+                    serializeArray(property, data[property], data);
+                }
+                if (data[property]==null) {
+                    data[property] = " ";
+                }
+            }
+        }
+
+        function serializeArray(prefix, array, result) {
+            for (var i = 0; i < array.length; i++) {
+                if ($.isPlainObject(array[i])) {
+                    for (var property in array[i]) {
+                        result[prefix + "[" + i + "]." + property] = array[i][property];
+                    }
+                } else {
+                    result[prefix + "[" + i + "]"] = array[i];
+                }
+
+
+            }
+        }
+
+        function statusDropDownEditor(container, options) {
+            $('<input required data-text-field="Name" data-value-field="Id" data-bind="value:StatusId"/>')
+                .appendTo(container)
+                .kendoDropDownList({
+                    autoBind: false,
+                    dataSource: allStatusAttributes,
+
+                });
+        }
+        var datasource = new kendo.data.DataSource({
+            type: "json",
+            transport: {
+                read: {
+                    url: "@Html.Raw(Url.Action("List", "Issue"))",
+                    type: "POST",
+                    dataType: "json",
+                    data: additionalData
+                },
+                destroy: {
+                    url: "@Html.Raw(Url.Action("Delete", "Issue"))",
+                    type: "POST",
+                    dataType: "json"
+                },
+                create: {
+                    url: "@Html.Raw(Url.Action("Create", "Issue"))",
+                    type: "POST",
+                    dataType: "json",
+                    data: serialize
+                },
+                update: {
+                    url: "@Html.Raw(Url.Action("Update", "Issue"))",
+                    type: "POST",
+                    dataType: "json",
+                    data: serialize
+                }
+            },
+            schema: {
+                data: "Data",
+                total: "Total",
+                errors: "Errors",
+                model: {
+                    id: "Id",
+                    fields: {
+                        CreatedDate: {
+                            editable: false,
+                        },
+                        Content: {
+                            editable: true,
+                            validation:
+                        {
+                            required: true,
+                            min: 1
+                        }
+                        },
+                        NextStep: {
+                            editable: true,
+
+                            validation:
+                        {
+                            required: true,
+                        }
+                        },
+
+                        UserAssigned: {
+                            editable: true,
+                            type: "string",
+                            validation:
+                        {
+                            required: true,
+                        }
+                        },
+                        TypeId: {
+                            type: "string",
+
+                        },
+                        UserAssignedId: { editable: true, type: "string" },
+
+                        Status: {
+                            editable: true,
+                            type: "string",
+                            validation:
+                        {
+                            required: true,
+                        }
+                        },
+                        StatusId: { editable: true, type: "number" },
+                        date: {
+                            type: "string",
+                        },
+                        ActionPlan: {
+                            editable: true,
+                            type: "string",
+                            validation:
+                        {
+                            required: false,
+                        }
+                        },
+                        When: {
+                            editable: true,
+                            type: "string",
+                            validation:
+                        {
+                            required: false,
+                        }
+                        },
+                        Note: {
+                            editable: true,
+                            type: "string",
+                            validation:
+                        {
+                            required: false,
+                        }
+                        },
+                        SystemFixDMSLinkage: {
+                            editable: true,
+                            type: "string",
+                            validation:
+                        {
+                            required: false,
+                        }
+                        }
+                    }
+                }
+            },
+            requestEnd: function(e) {
+                if (e.type == "create" || e.type == "update") {
+                    this.read();
+                }
+            },
+            error: function(e) {
+                display_kendoui_grid_error(e);
+                // Cancel the changes
+                this.cancelChanges();
+            },
+
+            pageSize: 10,
+            serverPaging: true,
+            serverFiltering: true,
+            serverSorting: true
+        });
+
+
+        //$("#issuegrid").kendoGrid({
+        //    dataSource: datasource,
+        //    pageable: {
+        //        refresh: true,
+        //    },
+        //    height: 'auto',
+        //    edit: function(e) {
+        //        if (e.model.Id == "") {
+
+        //            //little hack here
+        //            //pre-select the first value of kendoui dropdownlist datasource
+        //            //for some reasons (maybe, bug) it always sends 0
+        //            ////if no value has been selected (changed) in the dropdownlist
+        //            if (alluserAttributes.length > 0) {
+        //                //e.model.MeasureTypeId = allMeasureTypeAttributes[0].Name;
+
+        //                e.model.UserAssignedId = alluserAttributes[0].Id;
+
+        //            }
+
+        //            if (allStatusAttributes.length > 0) {
+        //                e.model.StatusId = allStatusAttributes[0].Id;
+        //            }
+
+
+        //        }
+        //    },
+        //    editable: {
+        //        confirmation: true,
+        //        mode: "inline"
+        //    },
+        //    scrollable: false,
+        //    columns: [
+               
+        //            {
+        //                field: "Content",
+        //                title: "Issues",
+        //                width: 250,
+        //                template: "#=(Content == null) ? ' ' : Content #",
+                       
+        //            },
+        //            {
+        //                field: "ActionPlan",
+        //                title: "Follow up action",
+        //                width: 250,
+        //                template: "#=(ActionPlan == null) ? ' ' : ActionPlan #",
+                      
+        //            },
+        //            {
+        //                field: "UserAssignedId",
+        //                title: "Owner",
+        //                width: 250,
+        //                editor: userDropDownEditor,
+        //                template: "#:UserAssigned#"
+
+        //            }, {
+        //                field: "WhenDue",
+        //                title: "When",
+        //                width: 120,
+                       
+        //                format: '{0:MM/dd/yyyy}',
+        //            },
+        //            {
+        //                field: "StatusId",
+        //                title: "Status",
+        //                width: 250,
+        //                editor: statusDropDownEditor,
+        //                template: "#:Status#"
+        //            },
+        //            {
+        //                field: "Note",
+        //                title: "Note",
+        //                width: 250,
+        //                template: "#=(Note == null) ? ' ' : Note #",
+                     
+        //            },
+        //            {
+        //                field: "SystemFixDMSLinkage",
+        //                title: "System Fix <br/>DMS Linkage",
+        //                width: 250,
+        //                template: "#=(SystemFixDMSLinkage == null) ? ' ' : SystemFixDMSLinkage #"
+        //            },
+
+        //            {
+        //                field: "When",
+        //                title: "When",
+        //                width: 120,
+        //                format: '{0:MM/dd/yyyy}',
+                       
+        //            },
+        //            {
+        //                field: "CreatedDate",
+        //                title: "Create Date",
+        //                width: 100,
+        //                template: '#:CreatedDate#'
+        //            }
+        //    ]
+        //});
+        //attendance
+       
+        //set class active
+        $(".sub-result").last().addClass("active");
+        $(".sub-tab-pane").first().addClass("active").addClass("in");
+
+        $("#nav-meeting").addClass("active");
+        $(".meeting-suplychain").addClass("active");
+        $(".panel-collapse").first().removeClass("collapse").addClass("in");
+        //set readonly datepicker
+
+        $('#datepicker').prop('readonly', true);
+    });
+
+</script>
+}
+
+

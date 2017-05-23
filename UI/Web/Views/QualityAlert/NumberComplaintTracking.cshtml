@@ -1,0 +1,135 @@
+﻿@model Web.Models.QualityAlert.NumberComplaintTrackingChartModel
+@{
+    ViewBag.Title = "Report";
+    Layout = "~/Views/Shared/_KendoUILayout.cshtml";
+}
+@*<link href="@Url.Content("~/Content/kendo.common-material.min.css")" rel="stylesheet" type="text/css" />*@
+<script src="@Url.Content("~/Scripts/kendo/2014.1.318/kendo.all.min.js")"></script>
+<a href='/ScoreCard' class='k-button k-button-icontext btn-info-custom' title=" Back to Scorecard" style="padding: 5px;">
+    <span class="k-icon k-i-arrow-w"></span>Back to Scorecard
+</a>
+<div class="demo-section k-content wide">
+    <div id="chart"></div>
+</div>
+<script>
+    function createChart() {
+        $("#chart").kendoChart({
+            title: {
+                text: "@Model.SuplierName supplier"
+            },
+            legend: {
+                position: "bottom",
+                item: {
+                    visual: function (e) {
+                        var color = e.options.markers.background;
+                        var labelColor = e.options.labels.color;
+                        var rect = new kendo.geometry.Rect([0, 0], [800, 50]);
+                        var pathRect = new kendo.geometry.Rect([0, 0], [300, 0]);
+                        var layout = new kendo.drawing.Layout(rect, {
+                            spacing: 5,
+                            alignItems: "center"
+                        });
+                        var label = new kendo.drawing.Text(e.series.name, [0, 0], {
+                            fill: {
+                                color: labelColor
+                            }
+                        });
+                        var layout2 = new kendo.drawing.Layout(rect, {
+                            spacing: -150
+                        });
+                        var pathA = kendo.drawing.Path.fromRect(pathRect, {
+                            stroke: {
+                                width: 0
+                            }
+                        });
+                        layout2.append(pathA, label);
+
+
+                        var marker = new kendo.drawing.Path({
+                            fill: {
+                                color: color
+                            },
+                            stroke: {
+                                color: "#ccc"
+                            }
+                        }).moveTo(0, 0).lineTo(10, 0).lineTo(10, 10).lineTo(0,10).close();
+
+
+                        layout.append(marker, layout2);
+                        layout.reflow()
+
+                        return layout;
+                    }
+                }
+            },
+            seriesDefaults: {
+                type: "bar",
+                stack: true,
+                gap: 0.5
+            },
+            series: [
+                @foreach (var item in Model.Items)
+                {
+                        <text>
+                        {
+                            data: [@item.Data],
+                            name: "@item.Name",
+                            color: "@item.Color",
+                            //visual: function (e) {
+                            //    //create the default visual
+                            //    var visual = e.createVisual();
+                            //    //scale it so that it has the predefined size
+                            //    visual.transform(kendo.geometry.transform().scale(1, 1.5, e.rect.center()));
+                            //    return visual;
+                            //}
+                        },
+                    </text>
+                }],
+            valueAxes: [{
+                //max: 20,
+                line: {
+                    visible: false
+                },
+                minorGridLines: {
+                    visible: true
+                },
+                @*@{
+                    int unit = 1;
+                    var max = Model.Items.OrderByDescending(x => x.Data).FirstOrDefault();
+                    if(max != null)
+                    {
+                        unit = (int.Parse(max.Data) / 6) >= 1 ? (int.Parse(max.Data) / 6) : 1;
+                    }
+                    <text>
+                        majorUnit: unit
+                    </text>
+                }*@
+               
+            }],
+            categoryAxis: {
+                categories: [@Html.Raw(Model.MonthList)],
+                majorGridLines: {
+                    visible: false
+                }
+            },
+            tooltip: {
+                visible: true,
+                template: "#= series.name #: #= value #"
+            },
+            chartArea: {
+                height: 500
+            }
+        });
+    }
+    $(document).ready(createChart);
+    $(window).on("resize", function () {
+        kendo.resize($(".k-chart"));
+    });
+</script>
+<style>
+    .k-chart {
+        height: 800px;
+        width: auto;
+    }
+</style>
+

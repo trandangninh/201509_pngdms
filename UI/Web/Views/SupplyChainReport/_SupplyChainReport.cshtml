@@ -1,0 +1,89 @@
+﻿@using Entities.Domain
+@using Service.Interface
+@model List<Web.Models.SupplyChain.SupplyChainModel>
+@{
+    ViewBag.Title = "Supply Chain ";
+    Layout = null;
+    var userAllowInSupplyChainService = DependencyResolver.Current.GetService<IUserAllowInSupplyChainService>();
+}
+
+
+<div class="row">
+    <div class="col-md-12">
+        <!-- BOX -->
+        <div class="box border blue">
+            <div class="box-title">
+                <h4><i class="fa fa-user"></i><span class="hidden-inline-mobile">  </span></h4>
+            </div>
+            <div class="box-body">
+                <div class="tabbable header-tabs user-profile">
+                    <ul class="nav nav-tabs">
+                        <li><a href="#service_overview" data-toggle="tab"><i class="fa fa-dot-circle-o"></i> <span class="hidden-inline-mobile">Service</span></a></li>
+                        
+                            <li><a href="#productionplanning_overview" data-toggle="tab"><i class="fa fa-dot-circle-o"></i> <span class="hidden-inline-mobile"> ProductionPlanning</span></a></li>
+                       
+                            <li><a href="#mpsa_overview" data-toggle="tab"><i class="fa fa-dot-circle-o"></i> <span class="hidden-inline-mobile">MPSA</span></a></li>
+                        
+                            <li><a href="#fpq_overview" data-toggle="tab"><i class="fa fa-dot-circle-o"></i> <span class="hidden-inline-mobile">FPQ</span></a></li>
+                       
+                            <li><a href="#dds_overview" data-toggle="tab"><i class="fa fa-dot-circle-o"></i> <span class="hidden-inline-mobile">DDS</span></a></li>
+                        
+                            <li class="active"><a href="#hse_overview" data-toggle="tab"><i class="fa fa-dot-circle-o"></i> <span class="hidden-inline-mobile">HS&E</span></a></li>
+                       
+                    </ul>
+
+                    <div class="tab-content">
+                        <!-- OVERVIEW -->
+                        
+                            <div class="tab-pane fade in active" id="hse_overview">
+
+                                @Html.Partial("SupplyChainHSEForEmployeeNotUpdate", Model)
+
+
+                            </div>
+                        
+                        <!-- /OVERVIEW -->
+                        <!-- EDIT ACCOUNT -->
+                      
+                            <div class="tab-pane fade" id="dds_overview">
+
+                                @Html.Partial("SupplyChainDDSForEmployeeNotUpdate", Model)
+
+                            </div>
+                        
+                        <!-- /EDIT ACCOUNT -->
+                        <!-- HELP -->
+                       
+                            <div class="tab-pane fade" id="fpq_overview">
+                                @Html.Partial("SupplyChainFPQForEmployeeNotUpdate", Model)
+
+                            </div>
+                        
+                            <div class="tab-pane fade" id="mpsa_overview">
+                                @Html.Partial("SupplyChainMPSAForEmployeeNotUpdate", Model)
+
+                            </div>
+                       
+                            <div class="tab-pane fade" id="productionplanning_overview">
+                                @Html.Partial("SupplyChainProductionPlanningForEmployeeNotUpdate", Model)
+
+                            </div>
+                       
+                            <div class="tab-pane fade" id="service_overview">
+                                @Html.Partial("SupplyChainServiceForEmployeeNotUpdate", Model)
+
+                            </div>
+                        
+                        <!-- /HELP -->
+                    </div>
+                </div>
+                <!-- /USER PROFILE -->
+
+                
+
+
+
+            </div>
+        </div>
+    </div>
+</div>

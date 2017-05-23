@@ -1,0 +1,94 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 14
+VisualStudioVersion = 14.0.25420.1
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Framework", "Framework", "{94D61C4C-D324-481F-BE70-05685A9BFF59}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Library", "Library", "{C030A9C3-F8BB-42B3-9A4D-CFEFFCDFABEA}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "UI", "UI", "{12E87042-3230-4532-9CBD-F1D15854B14F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "1.RepositoryPattern", "Framework\RepositoryPattern\1.RepositoryPattern.csproj", "{7EFAA7C0-D715-446F-BBD9-51C44F72AF14}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "2.RepositoryPatternEF6", "Framework\RepositoryPatternEF6\2.RepositoryPatternEF6.csproj", "{A6C5A991-35A8-421D-80BA-80A87EA25A54}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "3.ServicePattern", "Framework\ServicePattern\3.ServicePattern.csproj", "{31360631-F933-4F2D-ACCB-C730615549FE}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "4.Entities", "Library\Entities\4.Entities.csproj", "{0CA71F45-5E58-443E-870D-C59667AA935F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "6.Service", "Library\Service\6.Service.csproj", "{D90918C7-DBBD-4BBF-BDBA-15ACD9186C20}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "5.Repository", "Library\Repository\5.Repository.csproj", "{00D8024D-33DB-4E96-A460-BF22CF1174F3}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "0.Utils", "Library\Utils\0.Utils.csproj", "{F753B30B-1E0E-4CF0-93C5-901F9B5DB46D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Web", "UI\Web\Web.csproj", "{D47E204E-5150-4888-B851-5BC563A81A57}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".nuget", ".nuget", "{65935386-96B1-4040-A667-3D9D12F2D25D}"
+	ProjectSection(SolutionItems) = preProject
+		.nuget\NuGet.Config = .nuget\NuGet.Config
+		.nuget\NuGet.exe = .nuget\NuGet.exe
+		.nuget\NuGet.targets = .nuget\NuGet.targets
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nois.Web.Framework", "UI\Nois.Web.Framework\Nois.Web.Framework.csproj", "{9DDF1A35-8A51-4058-8DFB-F78297D9666C}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{7EFAA7C0-D715-446F-BBD9-51C44F72AF14}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7EFAA7C0-D715-446F-BBD9-51C44F72AF14}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7EFAA7C0-D715-446F-BBD9-51C44F72AF14}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7EFAA7C0-D715-446F-BBD9-51C44F72AF14}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A6C5A991-35A8-421D-80BA-80A87EA25A54}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A6C5A991-35A8-421D-80BA-80A87EA25A54}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A6C5A991-35A8-421D-80BA-80A87EA25A54}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A6C5A991-35A8-421D-80BA-80A87EA25A54}.Release|Any CPU.Build.0 = Release|Any CPU
+		{31360631-F933-4F2D-ACCB-C730615549FE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{31360631-F933-4F2D-ACCB-C730615549FE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{31360631-F933-4F2D-ACCB-C730615549FE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{31360631-F933-4F2D-ACCB-C730615549FE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0CA71F45-5E58-443E-870D-C59667AA935F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0CA71F45-5E58-443E-870D-C59667AA935F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0CA71F45-5E58-443E-870D-C59667AA935F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0CA71F45-5E58-443E-870D-C59667AA935F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D90918C7-DBBD-4BBF-BDBA-15ACD9186C20}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D90918C7-DBBD-4BBF-BDBA-15ACD9186C20}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D90918C7-DBBD-4BBF-BDBA-15ACD9186C20}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D90918C7-DBBD-4BBF-BDBA-15ACD9186C20}.Release|Any CPU.Build.0 = Release|Any CPU
+		{00D8024D-33DB-4E96-A460-BF22CF1174F3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{00D8024D-33DB-4E96-A460-BF22CF1174F3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{00D8024D-33DB-4E96-A460-BF22CF1174F3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{00D8024D-33DB-4E96-A460-BF22CF1174F3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F753B30B-1E0E-4CF0-93C5-901F9B5DB46D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F753B30B-1E0E-4CF0-93C5-901F9B5DB46D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F753B30B-1E0E-4CF0-93C5-901F9B5DB46D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F753B30B-1E0E-4CF0-93C5-901F9B5DB46D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D47E204E-5150-4888-B851-5BC563A81A57}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D47E204E-5150-4888-B851-5BC563A81A57}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D47E204E-5150-4888-B851-5BC563A81A57}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D47E204E-5150-4888-B851-5BC563A81A57}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9DDF1A35-8A51-4058-8DFB-F78297D9666C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9DDF1A35-8A51-4058-8DFB-F78297D9666C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9DDF1A35-8A51-4058-8DFB-F78297D9666C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9DDF1A35-8A51-4058-8DFB-F78297D9666C}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{7EFAA7C0-D715-446F-BBD9-51C44F72AF14} = {94D61C4C-D324-481F-BE70-05685A9BFF59}
+		{A6C5A991-35A8-421D-80BA-80A87EA25A54} = {94D61C4C-D324-481F-BE70-05685A9BFF59}
+		{31360631-F933-4F2D-ACCB-C730615549FE} = {94D61C4C-D324-481F-BE70-05685A9BFF59}
+		{0CA71F45-5E58-443E-870D-C59667AA935F} = {C030A9C3-F8BB-42B3-9A4D-CFEFFCDFABEA}
+		{D90918C7-DBBD-4BBF-BDBA-15ACD9186C20} = {C030A9C3-F8BB-42B3-9A4D-CFEFFCDFABEA}
+		{00D8024D-33DB-4E96-A460-BF22CF1174F3} = {C030A9C3-F8BB-42B3-9A4D-CFEFFCDFABEA}
+		{F753B30B-1E0E-4CF0-93C5-901F9B5DB46D} = {C030A9C3-F8BB-42B3-9A4D-CFEFFCDFABEA}
+		{D47E204E-5150-4888-B851-5BC563A81A57} = {12E87042-3230-4532-9CBD-F1D15854B14F}
+		{9DDF1A35-8A51-4058-8DFB-F78297D9666C} = {12E87042-3230-4532-9CBD-F1D15854B14F}
+	EndGlobalSection
+EndGlobal

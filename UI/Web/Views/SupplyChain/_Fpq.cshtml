@@ -1,0 +1,347 @@
+﻿@using RepositoryPattern.Infrastructure
+@using Service.Users
+@model Web.Models.Supplychain.FpqModel
+<div class="row">
+    <div class="col-md-12">
+        <!-- BOX -->
+        <div class="box border orange">
+
+            <table id="supplychaingrid" class="table">
+                <thead>
+                    <tr>
+                        <th>DMS</th>
+                        <th>Measure</th>
+                        <th>Owner</th>
+                        @foreach (var name in Model.LineNames)
+                        {
+                            <text><th>@name</th></text>
+                        }
+                        <th class="remark-supplychain">Remark</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr data-measurecode="1" class="scdds-target">
+                        <td rowspan="5" class="scdds-DMS">FPQ</td>
+                        <td>Target</td>
+                        <td></td>
+                        <td colspan="@(Model.LineNames.Count + 1)" class=" lpd1 line-edit-fpq">
+                            <span>@Model.Target</span>
+                            <input class="input-edit-value-result" type="text" value="@Model.Target" />
+                        </td>
+                    </tr>
+                    @for (var i = 0; i < Model.Measures.Count; i++)
+                    {
+                        <text>
+                            <tr class="tr-edit" data-measurecode="@(i+1)">
+                                <td class="measurecode"><span>@Model.Measures[i].Name</span> <input class="input-edit-value-result" type="text" value="@Model.Measures[i].Id" /></td>
+                                <td class="owner line-edit-fpq">
+                                    <span>
+                                        @foreach (var user in Model.Measures[i].ListUsername)
+                                        {
+                                            <text> @user; </text>
+                                        }
+                                    </span>
+                                    <select class="drpowner hide" multiple="multiple" data-placeholder="Select owner...">
+                                        @{
+                                            var ownerservice = EngineContext.Current.Resolve<IUserService>();
+                                            var owner = ownerservice.GetAllUsersAsync(active:true).ToList();
+                                            var userAdmin = ownerservice.GetUserByUsernameAsync("Admin").Result;
+                                            if (userAdmin != null)
+                                            {
+                                                owner.Remove(userAdmin);
+                                            }
+                                        }
+                                        @foreach (var user in owner)
+                                        {
+                                            if (Model.Measures[i].ListUsername.Any(name => name == user.Username))
+                                            {
+                                                <option selected>@user.Username</option>
+                                            }
+                                            else
+                                            {
+                                                <option>@user.Username</option>
+                                            }
+                                        }
+                                    </select>
+
+                                </td>
+                                @for (var j = 0; j < Model.Measures[i].Lines.Count; j++)
+                                {
+                                    <text>
+                                        <td class="FRMK line-edit-fpq line-check-edit line-cols">
+                                            <span>@Model.Measures[i].Lines[j].Value </span>
+                                            <input class="input-edit-value-result" type="text" value="@Model.Measures[i].Lines[j].Value" />
+                                        </td>
+                                    </text>
+                                }
+                                <td class="remark not-enter line-cols  line-edit-fpq line-check-edit remark-float">
+                                    <span>@Html.Raw(Model.Measures[i].Remark) </span>
+                                    <textarea class="input-edit-value-result not-enter" type="text" value="@Model.Measures[i].Remark">@Model.Measures[i].Remark</textarea>
+                                </td>
+                            </tr>
+                        </text>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+    var isEdittingFPQ = false;
+    var currentDate;
+    var oldval = 0;
+    $(document).ready(function () {
+
+
+        // gird supply chain\
+        var optional = $(".drpowner").kendoMultiSelect().data("kendoMultiSelect");
+        $("#tabresult td .input-edit-value-result").addClass("hide");
+        //$("#tabresult td select").addClass("hide");
+        var isEdittingFPQ = false;
+
+        function activeEditFPQ(e) {
+            e.children(".input-edit-value-result").removeClass("hide");
+            e.children("span").addClass("hide");
+            e.children(".k-multiselect").removeClass("hide");
+            $(".k-input").removeClass("hide");
+            e.children('input').addClass('input-editting');
+            e.children(".input-edit-value-result").select();
+            e.children("div").children("div").children(".input-edit-value-result").focus();
+            e.children(".input-edit-value-result").focus();
+            e.children(".drpowner").removeClass("hide");
+
+            oldval = $(e).children('input').val();
+            setTimeout(function () {
+                isEdittingFPQ = true;
+            }, 100);
+
+        }
+
+        var $table = jQuery("#supplychaingrid");
+        $table.on("tr.td.next", function (e, $input) {
+            isEdittingFPQ = true;
+            $input = $($input);
+            var $nextInRowTd = $input.parent(".line-check-edit").next();
+            if ($nextInRowTd.length > 0 && !$nextInRowTd.hasClass("not-edit")) {
+                activeEditFPQ($nextInRowTd);
+            } else {
+                var currentTdIndex = 2;
+                var $trParent = $input.parents("tr");
+                var $nextTr = $trParent.next();
+                if ($nextTr.length > 0 && $nextTr.hasClass("tr-edit")) {
+                    var $nextTd = $nextTr.children("td").eq(currentTdIndex);
+                    if ($nextTd.length > 0) {
+                        activeEditFPQ($nextTd);
+                    }
+                }
+            }
+
+        });
+
+
+
+
+        $(".line-edit-fpq").on('click', function () { // target
+
+            if (isEdittingFPQ == false) {
+                activeEditFPQ(jQuery(this));
+            }
+        });
+
+        function editvalueFPQ(e) {
+            var $input = jQuery(e);
+            var $tr = jQuery($input.parent().parent());
+            //if input exist and on edit mode
+            if ($input.length > 0 //if textbox is on active
+                    && isEdittingFPQ //if on edit mode
+            ) {
+
+                var newVal = $input.val();
+                if (newVal != oldval) { //validate new value
+                    var owner = $tr.children(".owner").children("div").children(".drpowner").val();
+                    var measureCode = $tr.data('measurecode');
+                    var lpd1 = $tr.children(".lpd1").children(".input-edit-value-result").val();
+                    var lpd2 = $tr.children(".lpd2").children(".input-edit-value-result").val();
+                    var lpd3 = $tr.children(".lpd3").children(".input-edit-value-result").val();
+                    var batch = $tr.children(".batch").children(".input-edit-value-result").val();
+                    var fr = $tr.children(".fr").children(".input-edit-value-result").val();
+                    var bottle = $tr.children(".bottle").children(".input-edit-value-result").val();
+                    var sachet = $tr.children(".sachet").children(".input-edit-value-result").val();
+                    var pouch = $tr.children(".pouch").children(".input-edit-value-result").val();
+                    var remark = $tr.children(".remark").children(".input-edit-value-result").val();
+                    $.ajax({
+                        url: '/SupplyChain/UpdateFPQ',
+                        type: 'POST',
+                        dataType: 'json',
+                        data: JSON.stringify({
+                            MeasureCode: measureCode,
+                            ListUsernameInSupplyChainFPQ: owner,
+                            LPD1: lpd1,
+                            LPD2: lpd2,
+                            LPD3: lpd3,
+                            Batch: batch,
+                            FR: fr,
+                            Bottle: bottle,
+                            Sachet: sachet,
+                            Pouch: pouch,
+                            Remark: remark,
+                            Date: currentDate
+                        }),
+                        contentType: 'application/json',
+
+                        success: function (data) {
+                            if (data.status == "success") {
+
+                                $input.parent().children('span').removeClass("hide"); //show span
+                                $input.parent().children('span').html(newVal.replace(/\n/g, "<br />"));
+                                $input.addClass("hide");
+                                $input.removeClass('input-editting');
+
+
+                            }
+                        }
+                    });
+                } else {
+                    //if value not change
+
+                    $input.parent().children('span').removeClass("hide"); //show span
+                    $input.addClass("hide");
+                    $input.removeClass('input-editting');
+
+                }
+
+            } else {
+
+            }
+            isEdittingFPQ = false; //remove edit mode
+        }
+
+        function validateDecimal(e) {
+
+            if (e.value.length > 0) {
+                var RE = /^[+-]?\d+(\.\d+)?$/;
+                if (RE.test(e.value)) {
+                    return true;
+                } else {
+                    return false;
+                }
+            } else {
+                return true;
+            }
+        }
+
+        var onEntering = false;
+        jQuery(".line-edit-fpq").children(".input-edit-value-result")
+        .keypress(function (event) {
+            //console.log("entert " + check + " char code " + event.which);
+            var charCode = event.which || event.keyCode;
+            if (charCode == 13) {
+
+                var td = $(this).parent("td");
+                if (!$(this).hasClass("not-enter")) {
+
+                    event.preventDefault();
+                    onEntering = true;
+                    editvalueFPQ(this);
+                    isEdittingFPQ = false;
+                    $table.trigger("tr.td.next", this);
+                    setTimeout(function () {
+                        onEntering = false;
+                    }, 300);
+                }
+
+            }
+
+        })
+        .blur(function (event) {
+            if (!onEntering) {
+
+
+                editvalueFPQ(this);
+                isEdittingFPQ = false;
+
+            }
+
+
+
+        });
+
+        //end gird supply chain
+        jQuery(".line-edit-fpq .k-input").on('blur', function () {
+
+            var $input = jQuery(this);
+            var $tr = jQuery($input.parent().parent().parent().parent());
+            console.log($input);
+            //if input exist and on edit mode
+            if ($input.length > 0 //if textbox is on active
+                    && isEdittingFPQ //if on edit mode
+                && $input.val() === ""
+            ) {
+
+
+                var owner = $input.parent().parent().children(".drpowner").val();
+                var measureCode = $tr.data('measurecode');
+                var lpd1 = $tr.children(".lpd1").children(".input-edit-value-result").val();
+                var lpd2 = $tr.children(".lpd2").children(".input-edit-value-result").val();
+                var lpd3 = $tr.children(".lpd3").children(".input-edit-value-result").val();
+                var batch = $tr.children(".batch").children(".input-edit-value-result").val();
+                var fr = $tr.children(".fr").children(".input-edit-value-result").val();
+                var bottle = $tr.children(".bottle").children(".input-edit-value-result").val();
+                var sachet = $tr.children(".sachet").children(".input-edit-value-result").val();
+                var pouch = $tr.children(".pouch").children(".input-edit-value-result").val();
+                var remark = $tr.children(".remark").children(".input-edit-value-result").val();
+                $.ajax({
+                    url: '/SupplyChain/UpdateFPQ',
+                    type: 'POST',
+                    data: JSON.stringify({
+                        MeasureCode: measureCode,
+                        ListUsernameInSupplyChainFPQ: owner,
+                        LPD1: lpd1,
+                        LPD2: lpd2,
+                        LPD3: lpd3,
+                        Batch: batch,
+                        FR: fr,
+                        Bottle: bottle,
+                        Sachet: sachet,
+                        Pouch: pouch,
+                        Remark: remark,
+                        Date: currentDate
+                    }),
+                    contentType: 'application/json',
+                    dataType: 'json',
+                    success: function (data) {
+                        if (data.status == "success") {
+
+                            $input.parent().parent().parent().children('span').removeClass("hide"); //show span
+                            var string = "";
+                            if (owner != null) {
+                                for (var i = 0; i < owner.length ; i++) {
+                                    string += owner[i] + "; ";
+                                }
+                            }
+                            $input.parent().parent().parent().children('span').html(string);
+                            $input.parent().parent().addClass("hide");
+                            $input.addClass("hide");
+                        }
+                    }
+                });
+
+
+            }
+            isEdittingFPQ = false; //remove edit mode
+
+            // check drop downlist owner null
+            if (
+                     $input.val() != ""
+            ) {
+                isEdittingFPQ = true;
+            }
+
+        });
+    });
+
+</script>
+
+
+

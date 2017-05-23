@@ -1,0 +1,87 @@
+﻿@using Entities.Domain
+@using Nois.Web.Framework.Kendoui;
+@using Service.Users
+@model Web.Models.SupplyChain.SupplyChainModel
+@{
+  
+    Layout = null;
+}
+
+
+<div class="row">
+    <div class="col-md-12">
+       
+
+           <div class="box border orange">
+
+                                <table id="supplychaingrid" class="table">
+                                    <thead>
+                                        <tr>
+                                            <th>DMS</th>
+                                            <th>Measure</th>
+                                            <th>Owner</th>
+                                            <th>Making</th>
+                                            <th>Packing</th>
+                                            <th>Common Area</th>
+                                            <th class="remark-supplychain">Remarks</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr class="scdds-target">
+                                            <td rowspan="3" class="scdds-DMS">
+                                                HS&E
+                                            </td>
+                                            <td>
+                                                Target
+                                            </td>
+                                            <td></td>
+                                            <td class="" id="target" colspan="3"><span>@Model.SupplyChainHSE[0].Making</span></td>
+                                            <td id="remark-target" class="remark-float"><span>@Html.Raw(Model.SupplyChainHSE[0].RemarkDisplay)</span> </td>
+                                        </tr>
+                                        <tr id="BOS-Completetion">
+                                            <td>
+                                                BOS-Completetion
+                                            </td>
+                                            <td class="">
+                                                <span>@Model.SupplyChainHSE[1].Owner</span>
+                                                @{
+                                                    var userService1 = DependencyResolver.Current.GetService<IUserService>
+                                                        ();
+                                                    var listUsername1 = userService1.GetAllUsersAsync().ToList();
+                                                }
+                                               
+                                            </td>
+                                            <td class="line-edit" colspan="3">
+                                                <div>
+                                                    <label class="text-strong-underline">BOS today:</label> <span>@Model.SupplyChainHSE[1].Making</span> 
+                                                </div>
+                                                <div>
+                                                    <label class="text-strong-underline">BOS done yesterday:</label> <span>@Model.SupplyChainHSE[1].Packing</span> 
+                                                </div>
+                                            </td>
+                                            <td class="line-edit"><span>@Html.Raw(Model.SupplyChainHSE[0].RemarkDisplay)</span> </td>
+                                        </tr>
+                                        <tr>
+                                            <td class="sc-measure  ">
+                                                BOS-Top Unsafe Behaviour
+                                            </td>
+                                            <td class="sc-owner ">
+                                                <span>@Model.SupplyChainHSE[2].Owner</span>
+                                                
+
+
+                                            </td>
+                                            <td class="sc-hse-making line-edit"><span>@Model.SupplyChainHSE[2].Making</span> </td>
+                                            <td class="sc-hse-packing line-edit scayt_disabled "><span>@Model.SupplyChainHSE[2].Packing</span> </td>
+                                            <td class="sc-hse-common line-edit"><span>@Model.SupplyChainHSE[2].CommonArea</span> </td>
+                                            <td class="sc-remark line-edit remark-float remark-float"><span>@Html.Raw(Model.SupplyChainHSE[0].RemarkDisplay)</span></td>
+                                        </tr>
+
+
+                                    </tbody>
+                                </table>
+
+                            </div>
+                   
+    </div>
+</div>

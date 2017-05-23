@@ -1,0 +1,408 @@
+﻿@{
+
+    //page title
+    ViewBag.Title = "Supplier";
+    Layout = "~/Views/Shared/_KendoUILayout.cshtml";
+}
+<script src="@Url.Content("~/Scripts/kendo/2014.1.318/kendo.web.min.js")"></script>
+
+<div class="supplier-filter">
+    <input type="text" id="searchBySupplierName-txt" placeholder="Supplier Name" class="form-control"/>
+    <input type="text" id="searchByVendorCode-txt" placeholder="Vendor Code" class="form-control"/>
+    <button id="searchSupplier-btn" class="form-control" title="Search">Search</button>
+</div>
+<div id="supplier-grid"></div>
+
+<script id="supplier-delete-button-template" type="text/x-kendo-template">
+    <button id="delete-suppliers" class="k-button" onclick="deleteSuppliersClick()" title="Delete Selected">Delete Selected</button>
+</script>
+
+<script type="text/x-kendo-template" id="windowTemplateDeleteConfirm">
+    <p class="delete-message">Do you want to delete the supplier(s)?</p>
+    <input class="k-button delete-confirm" type="button" value="Yes" />
+    <input class="k-button delete-cancel" type="button" value="No" />
+</script>
+
+<script>
+    $(document).ready(function () {
+
+        //get search data when gird read or reload
+        function getSearchStrData() {
+            return {
+                SupplierName: $("#searchBySupplierName-txt").val(),
+                VendorCode: $("#searchByVendorCode-txt").val()
+            };
+        }
+
+        var datasource = new kendo.data.DataSource({
+                type: "json",
+                transport: {
+                    read: {
+                        url: "@Html.Raw(Url.Action("List", "Supplier"))",
+                        type: "POST",
+                        dataType: "json",
+                        data: getSearchStrData
+                    },
+                    update: {
+                        url: "@Html.Raw(Url.Action("Update", "Supplier"))",
+                        type: "POST",
+                        dataType: "json",
+                        complete: function (e) {
+                            if (e.responseJSON != undefined && e.responseJSON.status == "success")
+                                $("#supplier-grid").data("kendoGrid").dataSource.read();
+                        }
+                    },
+                    @*destroy: {
+                        url: "@Html.Raw(Url.Action("Delete", "Supplier"))",
+                        type: "POST",
+                        dataType: "json",
+                        complete: function (e) {
+                            if (e.responseJSON != undefined && e.responseJSON.status != "success") {
+                                $("#supplier-grid").data("kendoGrid").dataSource.read();
+                                alert(e.responseJSON.Content);
+                            }
+                        }
+                    },*@
+                    create: {
+                        url: "@Html.Raw(Url.Action("Create", "Supplier"))",
+                        type: "POST",
+                        dataType: "json",
+                        complete: function (e) {
+                            if (e.responseJSON != undefined && e.responseJSON.status == "success")
+                                $("#supplier-grid").data("kendoGrid").dataSource.read();
+                        }
+                    }
+                },
+                schema: {
+                    data: "Data",
+                    total: "Total",
+                    errors: "Errors",
+                    model: {
+                        id: "Id",
+                        fields: {
+                            Id: { editable: false, defaultValue: 0 },
+                            Name: { editable: true, validation: { required: true } },
+                            Note: { editable: true },
+                            VendorCode: { editable: true, validation: { required: true } },
+                            VendorPrefixCode: { editable: true, validation: { required: true } },
+                            DisplayOrder: { editable: true, type: "number" },
+                            VendorContact: { editable: true },
+                            LocationType: { editable: true, defaultValue: { Name: '', Id: 2 } }
+                        }
+                    }
+                },
+                error: function (e) {
+                    display_kendoui_grid_error(e);
+                },
+                pageSize: 10,
+                serverPaging: true,
+                serverFiltering: true,
+                serverSorting: true
+        });
+
+        function textInputNameInitialize(container, options) {
+            $('<input type="text" name="' + options.field + '" style="width: 320px;" class="k-input k-textbox" required/>')
+                .appendTo(container);
+        }
+
+        function textInputVendorCodeInitialize(container, options) {
+            $('<input type="text" name="' + options.field + '" style="width: 320px;" class="k-input k-textbox" required/>')
+                .appendTo(container);
+        }
+
+        function textInputVendorPrefixCodeInitialize(container, options) {
+            $('<input type="text" name="' + options.field + '" style="width: 320px;" class="k-input k-textbox" required/>')
+                .appendTo(container);
+        }
+
+        function textInputVendorContactInitialize(container, options) {
+            $('<input type="text" name="' + options.field + '" style="width: 320px;" class="k-input k-textbox" />')
+                .appendTo(container);
+        }
+
+        function checkboxLocationTypeInitialize(container, options) {
+            $('<input type="radio" value="1" name="LocationType" data-bind="checked: LocationType.Id" />'
+                + '<label style="position: relative; margin: 0px 10px 0px 2px; top: -2px;">Local</label>'
+                + '<input type="radio" value="2" name="LocationType" data-bind="checked: LocationType.Id" />'
+                + '<label style="position: relative; margin: 0px 10px 0px 2px; top: -2px;">External</label>')
+                .appendTo(container);
+        }
+
+        //allow edit with but not allow edit format
+        //function textInputDisplayOrderInitialize(container, options) {
+        //    $('<input type="text" name="' + options.field + '" style="width: 220px;" data-type="number" data-role="numerictextbox" role="spinbutton"/>')
+        //        .appendTo(container);
+        //}
+
+        function textEditorNoteInitialize(container, options) {
+            $('<textarea name="' + options.field + '"  cols="50" rows="3" style="width: 320px;" class="k-input k-textbox"/>')
+                .appendTo(container);
+        };
+
+        $("#supplier-grid").kendoGrid({
+            dataSource: datasource,
+            pageable: {
+                refresh: true,
+                pageSizes: ["5", "10", "15", "20"]
+            },
+            editable: {
+                mode: "popup",
+                //default title of popup editor
+                window: {
+                    title: "Create Supplier",
+                }
+            },
+            edit: function (e) {
+
+                //edit size of popup window
+                $(".k-edit-form-container").parent().width(500).data("kendoWindow").center();
+                $(".k-edit-buttons.k-state-default").width(484);
+
+                //change title popup editor
+                if (e.model.Id != '')
+                    e.container.kendoWindow("title", "Modify Supplier");
+
+                //remove lable and input of check_row when edit or create
+                $('label[for=check_row]').parent().remove();
+                $('div[data-container-for=check_row]').remove();
+
+                $('div[data-container-for=DisplayOrder] .k-widget.k-numerictextbox').width(320);
+            },
+            toolbar: ["create", { template: $("#supplier-delete-button-template").html() }],
+            scrollable: false,
+            columns: [
+                {
+                    field: "check_row",
+                    title: " ",
+                    width: 30,
+                    attributes: { class: "text_align_center" },
+                    template: "<input type='checkbox' value=#= Id# class='sel' />"
+                },
+                {
+                    field: "Name",
+                    title: "Name",
+                    width: 200,
+                    headerAttributes: { class: "text_align_center" },
+                    //attributes: { class: "text_align_center" },
+                    editor: textInputNameInitialize
+                },
+                {
+                    field: "VendorCode",
+                    title: "Vendor Code",
+                    width: 200,
+                    headerAttributes: { class: "text_align_center" },
+                    //attributes: { class: "text_align_center" },
+                    editor: textInputVendorCodeInitialize
+                },
+                {
+                    field: "VendorPrefixCode",
+                    title: "Vendor Prefix Code",
+                    width: 200,
+                    headerAttributes: { class: "text_align_center" },
+                    //attributes: { class: "text_align_center" },
+                    editor: textInputVendorPrefixCodeInitialize
+                },
+                {
+                    field: "VendorContact",
+                    title: "Vendor Contact",
+                    width: 200,
+                    headerAttributes: { class: "text_align_center" },
+                    //attributes: { class: "text_align_center" },
+                    editor: textInputVendorContactInitialize
+                },
+                {
+                    field: "LocationType",
+                    title: "Location Type",
+                    width: 200,
+                    headerAttributes: { class: "text_align_center" },
+                    //attributes: { class: "text_align_center" },
+                    template: "#=LocationType.Id == 1 ? 'Local' : LocationType.Id == 2 ? 'External' : ''#",
+                    editor: checkboxLocationTypeInitialize
+                },
+                {
+                    field: "DisplayOrder",
+                    title: "Display Order",
+                    width: 200,
+                    headerAttributes: { class: "text_align_center" },
+                    attributes: { class: "text_align_center" },
+                    format: "n0",
+                    template: "#=DisplayOrder#",
+                    //editor: textInputDisplayOrderInitialize
+                },
+                {
+                    field: "Note",
+                    title: "Note",
+                    width: 200,
+                    headerAttributes: { class: "text_align_center" },
+                    //attributes: { class: "text_align_center" },
+                    editor: textEditorNoteInitialize
+                },
+                {
+                    command: [
+                        {
+                            name: "edit",
+                            text: { update: "Save Changes", cancel: "Cancel" }
+                        },
+                        //{
+                        //    text: 'Delete',
+                        //    click: deleteItem
+                        //}
+                    ],
+                    title: "&nbsp;",
+                    attributes: { class: "text_align_center" },
+                    width: "250px"
+                }
+            ],
+        });       
+
+        function display_kendoui_grid_error(e) {
+            if (e.errors) {
+                if ((typeof e.errors) == 'string') {
+                    //single error
+                    //display the message
+                    alert(e.errors);
+                } else {
+                    //array of errors
+                    //source: http://docs.kendoui.com/getting-started/using-kendo-with/aspnet-mvc/helpers/grid/faq#how-do-i-display-model-state-errors?
+                    var message = "The following errors have occurred:";
+                    //create a message containing all errors.
+                    $.each(e.errors, function (key, value) {
+                        if (value.errors) {
+                            message += "\n";
+                            message += value.errors.join("\n");
+                        }
+                    });
+                    //display the message
+                    alert(message);
+                }
+            } else {
+                alert(e.xhr.responseText);
+            }
+        }
+    });
+
+    //show edit popup when double click on row on grid
+    $("#supplier-grid").delegate("tbody>tr", "dblclick", function () {
+        if (!$(this).hasClass('k-grid-edit-row')) {
+            $("#supplier-grid").data("kendoGrid").editRow($(this));
+        }
+    });
+
+    function onCancel(e) {
+        $("#supplier-grid").data("kendoGrid").dataSource.read();
+    }
+
+    deleteSuppliersClick = function (e) {
+        if ($("#supplier-grid").find("input:checked").length <= 0)
+            return;
+        deleteSuppliers();
+    };
+
+    function deleteSuppliers() {
+        //define delete popup comfirm
+        var kendoWindow = $("<div id='window'/>").kendoWindow({
+            title: "Delete supplier(s)",
+            visible: false,
+            width: "400px",
+            resizable: false,
+            modal: true,
+            viewable: false,
+            content: {
+                template: $("#windowTemplateDeleteConfirm").html()
+            }
+        });
+
+        kendoWindow.data("kendoWindow")
+            .content($("#windowTemplateDeleteConfirm").html())
+            .center().open();
+
+        //get array of id to delete
+        function deletionData() {
+            var ids = [];
+            $("#supplier-grid").find("input:checked").each(function (i, value) {
+                ids.push($(value).val());
+            });
+            return ids;
+        }
+
+        kendoWindow.find(".delete-confirm,.delete-cancel")
+            .click(function () {
+                if ($(this).hasClass("delete-confirm")) {
+                    $.ajax({
+                        url: "@Html.Raw(Url.Action("DeleteSuppliers", "Supplier"))",
+                        type: "POST",
+                        dataType: "json",
+                        data: {
+                            listId: deletionData()
+                        },
+                        success: function (result) {
+                            if (result.status != undefined && result.status == "success")
+                                $('#supplier-grid').data('kendoGrid').dataSource.read();
+                            else
+                                alert(result.Content);
+                        }
+                    });
+                }
+                kendoWindow.data("kendoWindow").close();
+            })
+            .end();
+    }
+
+    //searchBySupplierName textbox press enter event
+    $("#searchBySupplierName-txt").keyup(function (event) {
+        if (event.keyCode == 13) {
+            $("#searchSupplier-btn").click();
+        }
+    });
+
+    //searchByVendorCode textbox press enter event
+    $("#searchByVendorCode-txt").keyup(function (event) {
+        if (event.keyCode == 13) {
+            $("#searchSupplier-btn").click();
+        }
+    });
+
+    //searchSupplier button click event
+    $("#searchSupplier-btn").click(function (e) {
+        $("#supplier-grid").data("kendoGrid").dataSource.read();
+    });
+</script>
+
+<script>
+
+/* Delete 1 item
+    function deleteItem(e) {
+        var dataItem = this.dataItem($(e.currentTarget).closest("tr"));
+
+        //define delete popup comfirm
+        var kendoWindow = $("<div id='window' />").kendoWindow({
+            title: "Delete Confirm",
+            visible: false,
+            width: "400px",
+            resizable: false,
+            modal: true,
+            viewable: false,
+            content: {
+                template: $("#windowTemplateDeleteConfirm").html()
+            }
+        });
+
+        kendoWindow.data("kendoWindow")
+            .content($("#windowTemplateDeleteConfirm").html())
+            .center().open();
+
+        kendoWindow.find(".delete-confirm,.delete-cancel")
+            .click(function () {
+                if ($(this).hasClass("delete-confirm")) {
+                    var grid = $("#supplier-grid").data("kendoGrid");
+                    grid.dataSource.remove(dataItem);
+                    grid.dataSource.sync();
+                    grid.refresh();
+                }
+
+                kendoWindow.data("kendoWindow").close();
+            })
+            .end();
+    }
+*/
+</script>

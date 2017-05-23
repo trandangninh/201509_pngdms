@@ -1,0 +1,3062 @@
+﻿@using Entities.Domain
+@using Microsoft.Ajax.Utilities
+@using Service.Common
+@using Service.Departments
+@using Service.Users
+@model Web.Models.Packing.MeetModel
+
+@*List<Web.Models.Packing.MeetingResultModel>*@
+@{
+    ViewBag.Title = "Packing Department DDS";
+    Layout = "~/Views/Shared/_KendoUILayout.cshtml";
+    var dmsCodes = Model.ListMeetingResultModel.Select(t => t.DmsCode).Distinct().ToList();
+    var listResults = new List<Web.Models.Packing.LineResult>();
+    var listLineName = new List<string>();
+    foreach (var result in Model.ListMeetingResultModel.Select(t => t.ListResult))
+    {
+        listResults.AddRange(result);
+        listLineName.AddRange(result.Select(lineResult => lineResult.LineName));
+    }
+    
+    listResults = listResults.DistinctBy(x => x.LineCode).ToList();
+    listLineName = listLineName.Distinct().ToList();
+    var _report = DependencyResolver.Current.GetService<IReportService>();
+    var _dmsService = DependencyResolver.Current.GetService<IDmsService>();
+}
+
+@if (listResults.Count > 0)
+{
+    <div class="form-group">
+
+        <div class="pull-right " style="padding-right:0; margin-bottom:5px">
+            <input id="datepicker"  class="datepicker-fullscreen" style="width: 150px;" />
+        </div>
+
+    </div>
+    <div class="row">
+        <div class="col-md-12">
+            <!-- BOX -->
+            <div class="box border blue">
+                <div class="box-title">
+                    <h4><i class="fa fa-user"></i><span class="hidden-inline-mobile">  </span></h4>
+                </div>
+                <div class="box-body">
+
+
+                    <div class="tabbable header-tabs">
+                        <ul class="nav nav-tabs">
+                            <li><a href="#tabattendance" data-toggle="tab"><i class="fa fa-dot-circle-o"></i> <span class="hidden-inline-mobile">Attendance</span></a></li>
+                            <li><a href="#tabtracking" data-toggle="tab"><i class="fa fa-edit"></i> <span class="hidden-inline-mobile">Tracking</span></a></li>
+
+                            <li><a href="#tabissue" data-toggle="tab"><i class="fa fa-edit"></i> <span class="hidden-inline-mobile">Issue daily</span></a></li>
+
+                            <li class="active"><a href="#tabresult" data-toggle="tab"><i class="fa fa-question"></i> <span class="hidden-inline-mobile">Result daily </span></a></li>
+
+                        </ul>
+                        <div class="tab-content">
+                            <!-- Result -->
+                            <div class="tab-pane fade in active" id="tabresult">
+                                <div class="form-group">
+                                    @if (Model.AttendanceModel != null && Model.permissionAttendance)
+                                    {
+
+                                        <div class="pull-left " style="padding-right:0; margin-bottom:5px">
+                                            <button class="btn btn-info btn-info-custom" id="send-mail" title="Send Mail">Send Mail</button>
+                                        </div>
+
+                                    }
+                                    <div class="pull-right" style="margin-bottom: 5px">
+                                        Line <input id="drpLine" value="" />
+                                    </div>
+                                </div>
+                                <div class="box border orange">
+
+                                    <table class="table" id="packing-result">
+                                        <thead>
+                                            <tr>
+                                                <th>DMS</th>
+                                                <th>IP/OP</th>
+                                                <th>Measure</th>
+                                                <th>Owner</th>
+                                                <th>Target</th>
+                                                <th>Unit</th>
+                                                @foreach (var str in listResults)
+                                                {
+                                                    var linec = str.LineCode.Replace("(", "").Replace(")", "");
+                                                    LineHardCodeType lc;
+                                                    Enum.TryParse(linec, out lc);
+                                                    var lci = (int)lc;
+
+
+                                                    <th class="linename  th-popup" title="@str.Remark" data-linecode="@lci">@str.LineName</th>
+                                                }
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @{
+    var evenRow = 0;
+                                            }
+                                            @foreach (var dmsCode in dmsCodes)
+                                            {
+                                                var currentRow = 0;
+                                                var totalDmsMeasures = 0;
+                                                evenRow++;
+                                                var data = Model.ListMeetingResultModel.Where(t => t.DmsCode == dmsCode);
+
+                                                totalDmsMeasures = data.Count();
+                                                if (totalDmsMeasures < 1)
+                                                {
+                                                    totalDmsMeasures = 1;
+                                                }
+                                                foreach (var meetingResultModel in data)
+                                                {
+                                                    currentRow++;
+                                                    if (evenRow % 2 != 0)
+                                                    {
+
+                                                        if (meetingResultModel.MeasureCode != NoisMainMeasureType.ScaptOnlineMSU.ToString())
+                                                        {
+                                                            <text>
+                                                                <tr class="eventRow tr-edit">
+                                                            </text>
+                                                        }
+                                                        else
+                                                        {
+                                                            <text>
+                                                            <tr class="tr-edit eventRow">
+                                                            </text>
+                                                        }
+                                                    }
+                                                    else
+                                                    {
+
+                                                        if (meetingResultModel.MeasureCode != NoisMainMeasureType.ScaptOnlineMSU.ToString())
+                                                        {
+                                                            <text>
+                                                            <tr class="tr-edit ">
+                                                            </text>
+                                                        }
+                                                        else
+                                                        {
+                                                            <text>
+                                                            <tr class="tr-edit">
+                                                            </text>
+                                                        }
+                                                    }
+
+                                                    if (currentRow == 1)
+                                                    {
+                                                        <text>
+                                                            <td rowspan="@totalDmsMeasures" class="dms-code-col depart-DMS" data="dms-code">@_dmsService.GetDmsByDmsCode(dmsCode).Result.Description</td>
+                                                        </text>
+                                                    }
+                                                    switch (meetingResultModel.MeasureType)
+                                                    {
+                                                        case "Null":
+                                                            <text>
+                                                                <td data="MeasureMeasureType" class="measure-type-col"></td></text>
+                                                            break;
+                                                        case "IPorOP":
+                                                        <text>
+                                                            <td data="MeasureMeasureType" class="measure-type-col">IP/OP</td></text>
+                                                            break;
+                                                        default:
+                                                        <text>
+                                                            <td data="MeasureType" class="measure-type-col">@meetingResultModel.MeasureType</td></text>
+                                                            break;
+                                                    }
+                                                    <text>
+                                                        <td data="MeasureName">@meetingResultModel.MeasureName</td>
+                                                        <td data="Owner" class="owner-col">@meetingResultModel.Owner</td>
+                                                        <td data="Target" class="target-col">@meetingResultModel.Target</td>
+                                                        <td data="Unit" class="unit-col">@meetingResultModel.Unit</td>
+                                                    </text>
+
+
+                                                    foreach (var str in listResults)
+                                                    {
+                                                        var lineValue = meetingResultModel.ListResult.Single(s => s.LineCode == str.LineCode);
+                                                        DmsCode dmsc;
+                                                        Enum.TryParse(dmsCode, out dmsc);
+                                                        var dmsci = (int)dmsc;
+
+                                                        var measurec = meetingResultModel.MeasureCode;
+                                                        NoisMainMeasureType mc;
+                                                        Enum.TryParse(measurec, out mc);
+                                                        var mci = (int)mc;
+
+                                                        var linec = str.LineCode.Replace("(", "").Replace(")", "");
+                                                        LineHardCodeType lc;
+                                                        Enum.TryParse(linec, out lc);
+                                                        var lci = (int)lc;
+
+                                                        if (mci != 16 && mci != (int)NoisMainMeasureType.PR && mci != (int)NoisMainMeasureType.QualityAlert && mci != (int)NoisMainMeasureType.TotalPO
+                                                            && mci != (int)NoisMainMeasureType.ActualScrapOnLine
+
+                                                            && mci != (int)NoisMainMeasureType.AmountOfBulkProduceDay
+                                                            //&& mci != (int)NoisMainMeasureMeasureType.ScaptOnlineMSU
+                                                             && mci != (int)NoisMainMeasureType.MPSA
+                                                            )
+                                                        {
+                                                            <text>
+
+                                                                <td class="line-editable @lineValue.ReadOnlyClassCss @_report.checkColorPacking(meetingResultModel.Target, lineValue.Result) line-check " data-mscode="@mci-@lci" data-linecode="@lci" data-mci="@mci" data-linename="@str.LineName" title="">
+
+                                                            </text>
+                                                        }
+
+                                                        if (mci == (int)NoisMainMeasureType.ActualScrapOnLine)
+                                                        {
+                                                            <text>
+
+                                                            <td class="line-editable actualScrapOnLine @_report.checkColorPacking(meetingResultModel.Target, lineValue.Result) @lineValue.ReadOnlyClassCss line-check " data-mscode="@mci-@lci" data-linecode="@lci" data-mci="@mci" data-linename="@str.LineName" title="">
+                                                                <span class="hide" id="popup-type-model">@mci</span>
+                                                            </text>
+                                                        } if (mci == (int)NoisMainMeasureType.AmountOfBulkProduceDay)
+                                                        {
+                                                            <text>
+
+                                                            <td class="line-editable amountOfBulkProduceDay @_report.checkColorPacking(meetingResultModel.Target, lineValue.Result) line-check @lineValue.ReadOnlyClassCss" data-mscode="@mci-@lci" data-linecode="@lci" data-mci="@mci" data-linename="@str.LineName" title="">
+                                                                <span class="hide" id="popup-type-model">@mci</span>
+                                                            </text>
+                                                        }
+                                                         if (mci == (int)NoisMainMeasureType.MPSA)
+                                                        {
+                                                            <text>
+
+                                                <td class=" line-check @_report.checkColorPacking(meetingResultModel.Target, lineValue.Result) @lineValue.ReadOnlyClassCss " data-mscode=" @mci -@lci" data-linecode="@lci" data-mci="@mci" data-linename="@str.LineName" title="">
+                                                    <span class="hide" id="popup-type-model">@mci</span>
+                                            </text>
+                                                        }
+                                                      
+
+                                                        if (mci == (int)NoisMainMeasureType.TotalPO)
+                                                        {
+                                                            <text>
+                                                          
+
+                                                        <td class="line-editable totalPO @_report.checkColorPacking(meetingResultModel.Target, lineValue.Result) line-check @lineValue.ReadOnlyClassCss" data-mscode="@mci-@lci" data-linecode="@lci" data-mci="@mci" data-linename="@str.LineName" title="">
+                                                            <span class="hide" id="popup-type-model">@mci</span>
+                                                            </text>
+                                                        }
+                                                        if (mci == (int)NoisMainMeasureType.POMissed)
+                                                        {
+                                                            <text>
+                                                                <td class="line-editable-popup pOMissed @_report.checkColorPacking(meetingResultModel.Target, lineValue.Result) @str.LineCode.Replace(" (","").Replace(")","").Trim() td-popup line-check " data-linecode=" @str.LineCode" data-linename="@str.LineName" data-mscode="@mci-@lci" title="">
+                                                                    <span class="hide" id="popup-type-model">@mci</span>
+                                                            </text>
+                                                        }
+
+                                                        if (mci == (int)NoisMainMeasureType.PR)
+                                                        {
+                                                            <text>
+<td class="line-editable-popup @_report.checkColorPacking(meetingResultModel.Target, lineValue.Result) @str.LineCode.Replace(" (", "" ).Replace(")", "" ).Trim() td-popup line-check" data-linecode="@str.LineCode" data-linename="@str.LineName" data-mscode="@mci-@lci" title="">
+                                                            <span class="hide" id="popup-type-model">@mci</span>
+                                                            </text>
+                                                        }
+                                                        if (mci == (int)NoisMainMeasureType.QualityAlert)
+                                                        {
+                                                            <text>
+                                                        <td class="line-editable-popup @_report.checkColorPacking(meetingResultModel.Target, lineValue.Result) @str.LineCode.Replace(" (", "" ).Replace(")", "" ).Trim() td-popup line-check" data-linecode="@str.LineCode" data-linename="@str.LineName" data-mscode="@mci-@lci" title="">
+                                                            <span class="hide" id="popup-type-model">@mci</span>
+                                                            </text>
+                                                        }
+
+                                                        <div class="line-edit-span">@lineValue.Result</div>
+
+                                                        <input value="@lineValue.Result" required type="text" class="hide line-edit-value" data-dmscode="@dmsci" data-measurecode="@mci" data-linecode="@lci" data-target="@meetingResultModel.Target" />
+
+
+
+                                                            @:  </td>
+
+
+
+
+                                                    }
+
+
+                                                 
+                                                                @: </tr>
+
+
+                                                }
+                                            }
+
+                                        </tbody>
+                                    </table>
+                                    <div id="bottom_anchor"></div>
+                                </div>
+
+                            </div>
+                            <!-- /Result -->
+                            <!-- Issue -->
+                            <div class="tab-pane fade" id="tabissue">
+                                <div id="issuegrid"></div>
+                            </div>
+                            <!-- /Issue -->
+                            <!-- Tracking -->
+                            <!-- Tracking -->
+                            <div class="tab-pane fade" id="tabtracking">
+                                <div class="form-group" style="height: 22px">
+                                    <div class="pull-left col-xs-2" style="margin-bottom: 5px; padding-left: 0;">
+                                        <a id="import-excel" class="btn btn-info btn-info-custom" href="#" title="import data">Import Data </a>
+                                    </div>
+                                    <div class="pull-right" style="margin-bottom: 5px">
+                                        Line <input id="drpLineTracking" value="" />
+                                    </div>
+                                </div>
+                                <div id="trackinggrid"></div>
+                            </div>
+
+                            <div class="modal fade" id="tracking-model" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+                                <form method="post" name="frmimport" id="frmimport" class="frmimport" enctype="multipart/form-data" target="ifrsendmail">
+
+                                    <div class="modal-dialog">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Cancel</span></button>
+                                                <h4 class="modal-title" id="myModalLabel"> Import Data </h4>
+                                            </div>
+                                            <div class="modal-body">
+                                                <table style="width:100%">
+
+                                                    <tr>
+                                                        <td>Input File</td>
+                                                        <td>
+                                                            <input class="excell-file" onsubmit="return false" id="postedFileId" name="postedFile" type="file" />
+                                                        </td>
+                                                    </tr>
+                                                </table>
+
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button id="btn-close" type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                                                <button id="btn-frmimport" type="button" class="btn btn-primary">Import</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+
+                            <!-- /Tracking -->
+                            <!-- /Tracking -->
+                            <!-- Attendance -->
+                            @if (Model.permissionAttendance)
+                            {
+                                <div class="tab-pane fade" id="tabattendance">
+                                  
+                                    <div class="validation-summary-errors">
+                                        <ul id="ResultInfo" style="list-style: none" class="pull-left"></ul>
+                                    </div>
+                                    <div>
+                                        @*if don't have meeting, admin can create*@
+                                        @if (Model.AttendanceModel != null)
+                                        {
+                                            <span style="display: none" id="hiddenIdOfAttandence">@Model.AttendanceModel.Id</span>
+                                        }
+
+                                        <div class="box border orange">
+                                            <div class="box-title">
+                                                <h4><i class="fa fa-gear"></i>Attendance Manage</h4>
+                                                <div class="tools">
+                                                    <input type="submit" id="createAttendance" name="save" value="Save" class="btn btn-info btn-info-custom" />
+                                                </div>
+                                            </div>
+                                            <div class="box-body">
+                                                @{
+                                                    var userService = DependencyResolver.Current.GetService<IUserService>();
+                                                    var userAllowInMeetingService = DependencyResolver.Current.GetService<Service.Interface.IUserAllowInMeetingService>();
+                                                    var listUsername = userAllowInMeetingService.GetByMeetingType(MeetingType.Packing).Result;
+                                                }
+                                                @if (listUsername.Count == 0)
+                                                {
+                                                    <text>No permissions defined</text>
+                                                }
+                                                else
+                                                {
+                                                    <script type="text/javascript">
+                                                        $(document).ready(function () {
+
+
+                                                            $('#selectall').click(function () {
+
+                                                                $('.allow').prop('checked', $(this).is(':checked')).change();
+                                                            });
+
+
+                                                        });
+                                                    </script>
+                                                    <table class="table table-hover permission">
+                                                        <thead>
+                                                            <tr>
+                                                                <th scope="col">
+                                                                    @*<strong>Admin.Configuration.ACL.Permission</strong>*@
+                                                                    <strong>User</strong>
+                                                                </th>
+
+                                                                <th scope="col">
+                                                                    <input type="checkbox" id="selectall" />
+                                                                    <strong>Attendance</strong>
+
+                                                                </th>
+
+                                                            </tr>
+                                                        </thead>
+                                                        @{
+                                                            bool altRow = true;
+                                                        }
+                                                        <tbody>
+                                                            @foreach (var pr in listUsername)
+                                                            {
+                                                                altRow = !altRow;
+                                                                <tr>
+                                                                    <td>
+                                                                        <span>@userService.GetUserByIdAsync(pr.UserId).Result.Username</span>
+                                                                    </td>
+
+                                                                    <td>
+                                                                        @{
+                                                                            var allowed = false;
+                                                                            if (Model.AttendanceModel != null)
+                                                                            {
+                                                                                //Khang comment allowed = Model.AttendanceModel.ListUserIdInAttendance.Any(u => u == pr.UserId);
+                                                                            }
+
+                                                                        }
+                                                                        <input class="allow" type="checkbox" value="@(pr.UserId)" name="Username" @(allowed ? " checked=checked" : null) />
+                                                                    </td>
+
+                                                                </tr>
+                                                            }
+                                                        </tbody>
+                                                    </table>
+                                                }
+                                            </div>
+                                        </div>
+
+
+
+                                        @*admin edit*@
+
+
+                                    </div>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="tab-pane fade" id="tabattendance">
+
+                                    @if (Model.AttendanceModel != null)
+                                    {
+                                        <table>
+                                            <tr>
+                                                <td>
+                                                    User Created :
+                                                </td>
+                                                <td>
+                                                    <span>@Model.AttendanceModel.UserCreated</span>
+                                                </td>
+                                            </tr>
+
+                                            <tr>
+                                                <td>
+                                                    Meeting date:
+                                                </td>
+                                                <td>
+                                                    @Html.DisplayTextFor(p => p.AttendanceModel.CreatedDate)
+
+                                                </td>
+                                            </tr>
+                                          
+                                            <tr>
+                                                <td>
+                                                    Attendance users:
+                                                </td>
+                                                <td>
+                                                    @String.Join(",", Model.AttendanceModel.ListUsernameInAttendance);
+
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td>
+                                                    Absent users:
+                                                </td>
+                                                <td>
+                                                    @String.Join(",", Model.AttendanceModel.ListUsernameNotInAttendance);
+
+                                                </td>
+                                            </tr>
+                                          
+                                        </table>
+                                    }
+                                    else
+                                    {
+                                        <span>There's no meeting in this day</span>
+                                    }
+                                </div>
+                            }
+                            <!-- /Attendance -->
+                            
+                            <!-- popup -->
+
+                            <div class="modal fade " id="myModel" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+                                <div class="modal-dialog">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Cancel</span></button>
+                                            <h4 class="modal-title" id="myModalLabel"> Update PO Missed</h4>
+                                        </div>
+                                        <div class="modal-body">
+                                               <form class="form-horizontal" role="form">
+                                                <div class="form-group">
+                                                    <label class="col-sm-4 control-label">Reason Code - PO Missed due to Making</label>
+                                                    <div class="col-sm-8">
+                                                        <input type="text" class="form-control ReasonCodePOMissedduetoMaking" placeholder="Reason Code - PO Missed due to Making">
+                                                    </div>
+                                                </div>
+                                                 <div class="form-group">
+                                                     <label class="col-sm-4 control-label">Remark</label>
+                                                     <div class="col-sm-8">
+                                                         <input type="text" class="form-control ReasonCodePOMissedduetoMakingRemark" placeholder="Remark">
+                                                     </div>
+                                                 </div>
+                                                <div class="form-group">
+                                                    <label class="col-sm-4 control-label">Reason Code - PO Missed due to Packing</label>
+                                                    <div class="col-sm-8">
+                                                        <input type="text" class="form-control ReasonCodePOMissedduetoPacking" placeholder="Reason Code - PO Missed due to Packing">
+                                                    </div>
+                                                </div>
+                                                 <div class="form-group">
+                                                     <label class="col-sm-4 control-label">Remark</label>
+                                                     <div class="col-sm-8">
+                                                         <input type="text" class="form-control ReasonCodePOMissedduetoPackingRemark" placeholder="Remark">
+                                                     </div>
+                                                 </div>
+                                                <div class="form-group">
+                                                    <label class="col-sm-4 control-label">Reason Code - PO Missed due to Planning</label>
+                                                    <div class="col-sm-8">
+                                                        <input type="text" class="form-control ReasonCodePOMissedduetoPlanning" placeholder="Reason Code - PO Missed due to Planning">
+                                                    </div>
+                                                </div>
+                                                <div class="form-group">
+                                                    <label class="col-sm-4 control-label">Remark</label>
+                                                    <div class="col-sm-8">
+                                                        <input type="text" class="form-control ReasonCodePOMissedduetoPlanningRemark" placeholder="Remark">
+                                                    </div>
+                                                </div>
+                                            </form>
+                                          
+                                            <input id="popup-type" type="hidden" value="" />
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-default btn-close" data-dismiss="modal">Cancel</button>
+                                            <button type="button" class="btn btn-primary btn-save">Save</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            
+                            <div class="modal fade " id="pr-popup" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+                                <div class="modal-dialog">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Cancel</span></button>
+                                            <h4 class="modal-title" id="myModalLabel">Update FR</h4>
+                                        </div>
+                                        <div class="modal-body">
+                                            <div class="line-popup ">
+                                                <form class="form-horizontal" role="form">
+                                                    <div class="form-group">
+                                                        <label class="col-sm-4 control-label">PR Last Day</label>
+                                                        <div class="col-sm-8">
+                                                            <input class="pr-PRLastDay form-control" type=" text" />
+                                                        </div>
+                                                    </div>
+                                                    <div class="form-group">
+                                                        <label class="col-sm-4 control-label">PR Last Day Remark</label>
+                                                        <div class="col-sm-8"><input class="pr-PRLastDay-Remark form-control" type=" text" /></div>
+                                                    </div>
+                                                    <div class="form-group">
+                                                        <label class="col-sm-4 control-label">PRMTD</label>
+                                                        <div class="col-sm-8">
+                                                            <input class="pr-PRMTD form-control" type="text" />
+                                                        </div>
+                                                    </div>
+                                                    <div class="form-group">
+                                                        <label class="col-sm-4 control-label">PRMTD Remark</label>
+                                                        <div class="col-sm-8">
+                                                            <input class="pr-PRMTD-Remark form-control" type="text" />
+
+
+                                                        </div>
+                                                    </div>
+                                                </form>
+                                            </div>
+                                            <input id="pr-popup-type" type="hidden" value="" />
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-default pr-btn-close" data-dismiss="modal">Cancel</button>
+                                            <button type="button" class="btn btn-primary pr-btn-save">Save</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="modal fade " id="quality-popup" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+                                <div class="modal-dialog">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Cancel</span></button>
+                                            <h4 class="modal-title" id="myModalLabel">Update FPQ</h4>
+                                        </div>
+                                       <div class="modal-body">
+                                            <form class="form-horizontal" role="form">
+                                                <div class="form-group">
+                                                    <label class="col-sm-4 control-label">Quality Alert</label>
+                                                    <div class="col-sm-8">
+                                                        <input type="text" class="form-control quality-value" placeholder="Quality Alert">
+                                                    </div>
+                                                </div>
+                                                <div class="form-group">
+                                                    <label class="col-sm-4 control-label">Remark</label>
+                                                    <div class="col-sm-8">
+                                                        <input type="text" class="form-control quality-remark" placeholder="Remark">
+                                                    </div>
+                                                </div>
+                                            </form>
+                                           
+                                            <input id="pr-popup-type" type="hidden" value="" />
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-default quality-btn-close" data-dismiss="modal">Cancel</button>
+                                            <button type="button" class="btn btn-primary quality-btn-save">Save</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="modal fade " id="line-popup" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+                                <div class="modal-dialog">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Cancel</span></button>
+                                            <h4 class="modal-title" id="myModalLabel">Line Remark</h4>
+                                        </div>
+                                        <div class="modal-body">
+                                            <form class="form-horizontal" role="form">
+                                                <div class="form-group">
+                                                    <label class="col-sm-3 control-label">Remark</label>
+                                                    <div class="col-sm-8">
+                                                        <textarea type="text" class="form-control input-line-remark" placeholder="Remark"></textarea>
+                                                    </div>
+                                                </div>
+                                            </form>
+
+                                            <input id="line-popup-code" type="hidden" value="" />
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-default btn-line-close" data-dismiss="modal">Cancel</button>
+                                            <button type="button" class="btn btn-primary btn-line-save">Save</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- /popup -->
+
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+}
+else
+{
+    <div>
+        Opp! Admin didn’t assign any line for you so that you can update information.Please contact admin for it!!!
+    </div>
+}
+@section bottomjs{
+    <script src="@Url.Content("~/Scripts/kendo/2014.1.318/kendo.web.min.js")"></script>
+    <script>
+        var isEditting = false;
+        var currentDate;
+        var oldval = 0;
+        $(document).ready(function() {
+
+            function getURLParameter(name) {
+                return decodeURIComponent(
+                    (location.search.match(RegExp("[?|&]" + name + '=(.+?)(&|$)')) || [, null])[1]
+                );
+            }
+
+            var date = getURLParameter('date');
+            if (date != "null") {
+                currentDate = date;
+                $("#datepicker").val(date);
+            } else {
+                $("#datepicker").val($.datepicker.formatDate('mm/dd/yy', new Date()));
+                currentDate = $.datepicker.formatDate('mm/dd/yy', new Date());
+
+            }
+
+
+            function activeEdit(e) {
+                if ($(e).hasClass('allowEditResult')) {
+                    $(e).children('.line-edit-span').hide();
+                    $(e).children('input').removeClass('hide');
+                    $(e).children('input').addClass('input-editting');
+                    $(e).children('input').select();
+                    $(e).children('input').focus();
+
+                    oldval = $(e).children('input').val();
+                    setTimeout(function() {
+                        isEditting = true;
+                    }, 100);
+                }
+                if ($(e).hasClass('avoidEditResult')) {
+
+                    $table.trigger("tr.td.next", e.children("input"));
+                }
+
+            }
+
+            $(".line-editable").click(function() {
+                if (isEditting == false) {
+                    activeEdit(this);
+                }
+            });
+
+            var $table = jQuery("#packing-result");
+
+            function checkNullorEmty(number) {
+
+                if (number.length == 0 || number == "NaN" || !$.isNumeric(number))
+                    return 0;
+                return number;
+            }
+
+            $table.on("tr.td.next", function(e, $input) {
+                $input = $($input);
+                var $nextInRowTd = $input.parent(".line-check").next();
+                if ($nextInRowTd.length > 0) {
+                    if (!$nextInRowTd.hasClass("hide")) {
+
+                        activeEdit($nextInRowTd);
+                    } else {
+                        var currentTdIndex = $input.parent(".line-check").index();
+                        var totalCurrentTd = $input.parents("tr").children("td").length;
+                        var totalNesTd = $input.parents("tr").next().children("td").length;
+                        if (totalCurrentTd > totalNesTd) {
+                            currentTdIndex -= 1;
+                        }
+                        if (totalCurrentTd < totalNesTd) {
+                            currentTdIndex += 1;
+                        }
+                        var $nextTr = $input.parents("tr").next();
+                        if ($nextTr.length > 0 && $nextTr.hasClass("tr-edit")) {
+                            $nextTd = $nextTr.children("td").eq(currentTdIndex);
+
+                            if (currentTdIndex == -1) {
+                                $nextTr.children(".td-popup").first().click();
+                            } else {
+                                if ($nextTd.length > 0) {
+                                    if ($nextTd.hasClass("td-popup")) {
+                                        $nextTd.click();
+                                    } else {
+
+                                        activeEdit($nextTd);
+                                    }
+
+                                } else {
+                                    $nextTr = $input.parents("tr").next().next();
+                                    var $nextTd = $nextTr.children("td").eq(currentTdIndex);
+                                    if ($nextTd.length > 0) {
+                                        if ($nextTd.hasClass("td-popup")) {
+                                            $nextTd.click();
+                                        } else {
+
+                                            activeEdit($nextTd);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                    }
+
+
+                } else {
+
+                    var $trParent = $input.parents("tr");
+
+                    var $nextTr = $trParent.next();
+                    var currentTdIndex = $input.parent(".line-check").index();
+                    var totalCurrentTd = $input.parents("tr").children("td").length;
+                    var totalNesTd = $input.parents("tr").next().children("td").length;
+
+                    if (totalCurrentTd > totalNesTd) {
+                        currentTdIndex -= 1;
+                    }
+                    if (totalCurrentTd < totalNesTd) {
+                        currentTdIndex += 1;
+                    }
+                    if (!$nextTr.children(".line-check").first().hasClass("hide")) {
+                        currentTdIndex = $nextTr.children(".line-check").first().index();
+                    }
+
+                    if ($nextTr.length > 0 && $nextTr.hasClass("tr-edit")) {
+
+                        if (currentTdIndex == -1) {
+                            $nextTr.children(".td-popup").first().click();
+                        } else {
+                            var $nextTd = $nextTr.children("td").eq(currentTdIndex);
+
+                            if ($nextTd.length > 0) {
+                                if ($nextTd.hasClass("td-popup")) {
+                                    $nextTd.click();
+                                } else {
+
+                                    activeEdit($nextTd);
+                                }
+                            }
+                        }
+                    } else {
+                        $nextTr = $input.parents("tr").next().next();
+                        var $nextTd = $nextTr.children("td").eq(currentTdIndex);
+                        // console.log($nextTd);
+                        if ($nextTd.length > 0) {
+                            if ($nextTd.hasClass("td-popup")) {
+                                $nextTd.click();
+                            } else {
+
+                                activeEdit($nextTd);
+                            }
+                        }
+                    }
+                }
+
+            });
+
+            var formatNewTargetBackground = function() {
+                var $input = jQuery(".input-editting");
+
+                //if input exist and on edit mode
+                if ($input.length > 0 //if textbox is on active
+                        && isEditting //if on edit mode
+                ) {
+
+                    var newVal = $input.val();
+
+                    var target = $input.data('target').toString(); //get tartet
+                    var dmsCode = $input.data('dmscode'); //get dmsCode
+                    var measureCode = $input.data('measurecode'); //get measure code
+                    var lineCode = $input.data('linecode'); //get line code
+                    if (newVal != oldval) {
+                        //validate new value
+                        if (measureCode == 15) {
+                            $.ajax({
+                                url: '/SupplyChain/UpdateSupplyChainMPSATotalPO',
+                                type: 'POST',
+                                dataType: 'json',
+                                data: {
+                                    linceCode: lineCode,
+                                    MeasureCode: 2,
+                                    result: newVal,
+                                    CreatedDate: currentDate
+                                },
+                                success: function(data) {
+
+                                }
+                            });
+                        }
+                        $.ajax({
+                            url: '/Packing/UpdateMeetingResult',
+                            type: 'POST',
+                            dataType: 'json',
+                            data: {
+                                dmscode: dmsCode,
+                                lineCode: lineCode,
+                                measureCode: measureCode,
+                                result: newVal,
+                                date: currentDate
+                            },
+                            success: function(data) {
+                                if (data.status == "success") {
+
+                                    $input.parent().children('.line-edit-span').show(); //show span
+                                    $input.parent().children('.line-edit-span').html(newVal); // update new value to span
+                                    $input.addClass('hide'); //hide the textbox
+                                    $input.removeClass('input-editting'); //remove edit class to the textbox
+                                    //add color
+                                    // TARGET DON'T CONTAIN CALCULATIONS: target.indexOf(">")<0 && target.indexOf("<") < 0
+                                    if (target.indexOf(">") >= 0) {
+
+                                        target = parseFloat(target.replace(">=", ""));
+                                        newVal = parseFloat(newVal);
+                                        if (!isNaN(target)) {
+                                            if (target <= newVal) {
+                                                $input.parent().removeClass("no-match-target");
+                                                $input.parent().removeClass("exception-target").addClass("match-target");
+                                            } else {
+                                                $input.parent().removeClass("no-match-target");
+                                                $input.parent().removeClass("exception-target").addClass("no-match-target");
+                                            }
+                                        }
+                                    } else if (target.indexOf("<") >= 0) {
+                                        //   // console.log("index-<"+target.indexOf("<"));
+                                        target = parseFloat(target.replace("<=", ""));
+                                        newVal = parseFloat(newVal);
+
+                                        if (target >= newVal) {
+                                            //  // console.log(2.1);
+                                            $input.parent().removeClass("no-match-target");
+                                            $input.parent().removeClass("exception-target").addClass("match-target");
+                                        } else {
+                                            // // console.log(2.2);
+                                            $input.parent().removeClass("match-target");
+                                            $input.parent().removeClass("exception-target").addClass("no-match-target");
+                                        }
+
+                                    } else { //no calculations
+
+                                    }
+                                }
+                            }
+                        });
+                    } else {
+                        //if value not change
+                        $input.parent().children('.line-edit-span').show(); //show the span
+                        $input.addClass('hide'); //hide the textbox
+                        $input.removeClass('input-editting'); //remove edit class
+
+                    }
+
+                }
+                isEditting = false; //remove edit mode
+            };
+
+            function validateDecimal(e) {
+
+                if (e.value.length > 0) {
+                    var RE = /^[+-]?\d+(\.\d+)?$/;
+                    if (RE.test(e.value)) {
+                        return true;
+                    } else {
+                        return false;
+                    }
+                } else {
+                    return true;
+                }
+            }
+
+            jQuery(".line-edit-value")
+                .keypress(function(event) {
+
+                    var charCode = event.which || event.keyCode;
+                    if (charCode == 13) {
+
+                        event.preventDefault();
+                        formatNewTargetBackground();
+                        isEditting = false;
+                        $table.trigger("tr.td.next", this);
+
+                    }
+
+                })
+                .blur(function() {
+
+                    formatNewTargetBackground();
+                    isEditting = false;
+
+
+                });
+
+
+            //data for drpLine
+            var allLineAttributes = [
+                @for (int i = 0; i < listLineName.Count; i++)
+                {
+
+                    <text>
+{
+    Id: "@listLineName[i]",
+    Name: "@listLineName[i]"
+}
+            </text>
+                    if (i != listLineName.Count - 1)
+                    {
+                        <text>,</text>
+                    }
+                }
+            ];
+            // dropdownlist drpLine
+            $("#drpLine").kendoDropDownList({
+                dataTextField: "Name",
+                dataValueField: "Id",
+                dataSource: allLineAttributes,
+                index: 0,
+                change: onChange,
+                optionLabel: "--- Any Line ---",
+            });
+
+            function onChange() {
+                var th = $("#tabresult").find(".table").find(".linename");
+                var td = $("#tabresult").find(".table").find(".line-check"); // find all td with class .line-edittable
+                var selectedvalue = $("#drpLine").val(); // get select value dopdownlist line
+                if (selectedvalue == "") { // if select first value
+                    $(td).removeClass("hide");
+                    $(th).removeClass("hide");
+                } else { // if select a line
+                    $(td).addClass("hide"); // hide all td with class .line-edittable
+                    $(th).addClass("hide");
+                    for (var j = 0; j < th.length; j++) {
+                        if ($(th[j]).html() == selectedvalue) {
+                            $(th[j]).removeClass("hide"); // show td with line choosen
+                        }
+                    }
+                    for (var i = 0; i < td.length; i++) {
+                        if ($(td[i]).data('linename') == selectedvalue) {
+                            $(td[i]).removeClass("hide"); // show td with line choosen
+                        }
+                    }
+                }
+            };
+
+            //end dropdownlist drpLine
+            // date picker
+            $(".datepicker-fullscreen").kendoDatePicker({
+                //origin: "top right",
+                //position: "bottom right",
+                change: function() {
+                    window.location.href = "/Packing/Index?date=" +
+                        kendo.toString(this.value(), 'd');
+                }
+
+            });
+
+            // scroll table
+
+            function moveScroll() {
+                var scroll = $(window).scrollTop();
+                var anchor_top = $("#packing-result").offset().top;
+                var anchor_bottom = $("#bottom_anchor").offset().top;
+                if (scroll > anchor_top && scroll < anchor_bottom) {
+                    clone_table = $("#clone");
+                    if (clone_table.length == 0) {
+                        clone_table = $("#packing-result").clone();
+                        clone_table.attr('id', 'clone');
+                        clone_table.css({
+                            position: 'fixed',
+                            'pointer-events': 'none',
+                            top: 0
+                        });
+                        clone_table.width($("#packing-result").width());
+                        $(".orange").append(clone_table);
+                        $("#clone tbody").css({ visibility: 'collapse' });
+                        $("#clone thead").css({ visibility: 'visible', 'pointer-events': 'auto' });
+                    }
+                } else {
+                    $("#clone").remove();
+                }
+            }
+
+            $(window).scroll(moveScroll);
+
+            //end scroll table
+
+            //issues
+            var alluserAttributes = [
+                @{
+                    var userService = DependencyResolver.Current.GetService<IUserService>();
+                    var listUsername = userService.GetAllUsersAsync().ToList();
+                    var userAdmin = userService.GetUserByUsernameAsync("Admin").Result;
+                    if (userAdmin != null)
+                    {
+                        listUsername.Remove(userAdmin);
+                    }
+                }
+
+                @for (int i = 0; i < listUsername.Count; i++)
+                {
+                    var type = listUsername[i];
+                    <text>
+            {
+                Id: "@type.Id.ToString()",
+                Name: "@(Html.Raw(HttpUtility.JavaScriptStringEncode(type.Username)))"
+            }
+            </text>
+                    if (i != listUsername.Count - 1)
+                    {
+                        <text>,</text>
+                    }
+                }
+            ];
+
+
+            var allStatusAttributes = [
+                @{
+                    var listType = new List<IssueStatus>()
+                    {
+                        IssueStatus.Open,
+                        IssueStatus.Delayed,
+                        IssueStatus.Closed
+                    };
+                }
+
+                @for (int i = 0; i < listType.Count; i++)
+                {
+                    var type = listType[i];
+                    <text>
+    {
+        Id: @((int) type),
+        Name: "@(Html.Raw(HttpUtility.JavaScriptStringEncode(type.ToString())))"
+    }
+            </text>
+                    if (i != listType.Count - 1)
+                    {
+                        <text>,</text>
+                    }
+                }
+            ];
+
+            function userDropDownEditor(container, options) {
+                $('<input required data-text-field="Name" data-value-field="Id" data-bind="value:UserAssignedId"/>')
+                    .appendTo(container)
+                    .kendoDropDownList({
+                        dataTextField: "Name",
+                        dataValueField: "Id",
+                        dataSource: alluserAttributes
+                    });
+            }
+
+            function additionalData() {
+                return {
+                    Datetime: currentDate,
+                    Type: "@((int) IssueType.Packing)"
+                };
+            }
+
+
+            function display_kendoui_grid_error(e) {
+                if (e.errors) {
+                    if ((typeof e.errors) == 'string') {
+                        //single error
+                        //display the message
+                        alert(e.errors);
+                    } else {
+                        //array of errors
+                        var message = "The following errors have occurred:";
+                        //create a message containing all errors.
+                        $.each(e.errors, function(key, value) {
+                            if (value.errors) {
+                                message += "\n";
+                                message += value.errors.join("\n");
+                            }
+                        });
+                        //display the message
+                        alert(message);
+                    }
+                } else {
+                    alert('Error happened');
+                }
+            }
+
+            var TypeIssue = '@((int) IssueType.Packing)', a;
+
+            function serialize(data) {
+                data["date"] = currentDate;
+                data["TypeId"] = TypeIssue;
+                for (var property in data) {
+                    if ($.isArray(data[property])) {
+                        serializeArray(property, data[property], data);
+                    }
+                    if (data[property] == null) {
+                        data[property] = " ";
+                    }
+                }
+            }
+
+            function serializeArray(prefix, array, result) {
+                for (var i = 0; i < array.length; i++) {
+                    if ($.isPlainObject(array[i])) {
+                        for (var property in array[i]) {
+                            result[prefix + "[" + i + "]." + property] = array[i][property];
+                        }
+                    } else {
+                        result[prefix + "[" + i + "]"] = array[i];
+                    }
+
+
+                }
+            }
+
+            function statusDropDownEditor(container, options) {
+                $('<input required data-text-field="Name" data-value-field="Id" data-bind="value:StatusId"/>')
+                    .appendTo(container)
+                    .kendoDropDownList({
+                        autoBind: false,
+                        dataSource: allStatusAttributes,
+
+                    });
+            }
+
+            var datasource = new kendo.data.DataSource({
+                type: "json",
+                transport: {
+                    read: {
+                        url: "@Html.Raw(Url.Action("List", "Issue"))",
+                        type: "POST",
+                        dataType: "json",
+                        data: additionalData
+                    },
+                    destroy: {
+                        url: "@Html.Raw(Url.Action("Delete", "Issue"))",
+                        type: "POST",
+                        dataType: "json"
+                    },
+                    create: {
+                        url: "@Html.Raw(Url.Action("ManageCreate", "Issue"))",
+                        type: "POST",
+                        dataType: "json",
+                        data: serialize
+                    },
+                    update: {
+                        url: "@Html.Raw(Url.Action("Update", "Issue"))",
+                        type: "POST",
+                        dataType: "json",
+                        data: serialize
+                    }
+                },
+                schema: {
+                    data: "Data",
+                    total: "Total",
+                    errors: "Errors",
+                    model: {
+                        id: "Id",
+                        fields: {
+                            Index: {
+                                editable: false,
+                            },
+                            CreatedDate: {
+                                editable: false,
+                            },
+                            UpdatedDate: {
+                                editable: false,
+                            },
+                            Content: {
+                                editable: false,
+                                validation:
+                                {
+                                    required: true,
+                                    min: 1
+                                }
+                            },
+                            NextStep: {
+                                editable: false,
+
+                                validation:
+                                {
+                                    required: true,
+                                }
+                            },
+
+                            UserAssigned: {
+                                editable: false,
+                                type: "string",
+                                validation:
+                                {
+                                    required: true,
+                                }
+                            },
+
+                            UserAssignedId: { editable: false, type: "string" },
+
+                            Status: {
+                                editable: true,
+                                type: "string",
+                                validation:
+                                {
+                                    required: true,
+                                }
+                            },
+                            StatusId: { editable: true, type: "number" },
+
+                            Type: {
+                                editable: false,
+                                type: "string",
+                                validation:
+                                {
+                                    required: true,
+                                }
+                            },
+                            TypeId: {
+                                type: "number",
+
+                            },
+
+                            date: {
+                                type: "string",
+                                editable: false,
+                                validation:
+                                {
+                                    required: true,
+                                }
+                            },
+
+                            ActionPlan: {
+                                editable: false,
+                                type: "string",
+                                validation:
+                                {
+                                    required: false,
+                                }
+                            },
+                            IssuesPriority: {
+                                editable: false,
+                                type: "string",
+                                validation:
+                                {
+                                    required: false,
+                                }
+                            },
+                            WhenDue: {
+                                editable: false,
+                                type: "string",
+                                validation:
+                                {
+                                    required: true,
+                                }
+                            },
+                            When: {
+                                editable: false,
+                                type: "string",
+                                validation:
+                                {
+                                    required: true,
+                                }
+                            },
+                            Note: {
+                                editable: false,
+                                type: "string",
+                                validation:
+                                {
+                                    required: false,
+                                }
+                            },
+                            SystemFixDMSLinkage: {
+                                editable: false,
+                                type: "string",
+                                validation:
+                                {
+                                    required: false,
+                                }
+                            }
+                        }
+                    }
+                },
+                requestEnd: function(e) {
+                    if (e.type == "create" || e.type == "update") {
+                        this.read();
+                    }
+                },
+                error: function(e) {
+                    display_kendoui_grid_error(e);
+                    // Cancel the changes
+                    this.cancelChanges();
+                },
+
+                pageSize: 10,
+                serverPaging: true,
+                serverFiltering: true,
+                serverSorting: true
+            });
+
+            function dateTimeEditorWhenDue(container, options) {
+                $('<input data-text-field="' + options.field + '" data-value-field="' + options.field + '" data-bind="value:' + options.field + '" data-format="' + options.format + '"/>')
+                    .appendTo(container)
+                    .kendoDatePicker({});
+            }
+
+            function dateTimeEditor(container, options) {
+                $('<input data-text-field="' + options.field + '" data-value-field="' + options.field + '" data-bind="value:' + options.field + '" data-format="' + options.format + '"/>')
+                    .appendTo(container)
+                    .kendoDatePicker({});
+            }
+
+            function textEditorInitialize(container, options) {
+                $('<textarea name="' + options.field + '"  cols="50" rows="2" style="width: ' + container.width() + 'px;height:auto" />')
+                    .appendTo(container);
+            };
+
+            function textEditorNoteInitialize(container, options) {
+                $('<textarea name="' + options.field + '"  cols="40" rows="2" style="width: ' + container.width() + 'px;height:auto" />')
+                    .appendTo(container);
+            };
+
+            $("#issuegrid").kendoGrid({
+                dataSource: datasource,
+                pageable: {
+                    refresh: true,
+                },
+
+                edit: function(e) {
+                    if (e.model.Id == "") {
+
+                        //little hack here
+                        //pre-select the first value of kendoui dropdownlist datasource
+                        //for some reasons (maybe, bug) it always sends 0
+                        ////if no value has been selected (changed) in the dropdownlist
+                        if (alluserAttributes.length > 0) {
+                            //e.model.MeasureTypeId = allMeasureTypeAttributes[0].Name;
+
+                            e.model.UserAssignedId = alluserAttributes[0].Id;
+
+                        }
+
+                        if (allStatusAttributes.length > 0) {
+                            e.model.StatusId = allStatusAttributes[0].Id;
+                        }
+
+
+                    }
+                },
+                editable: {
+                    confirmation: true,
+                    mode: "inline"
+                },
+                scrollable: true,
+                height: 'auto !important',
+
+                columns: [
+                    @if (Model.permissionIssue)
+                    {
+                        <text>
+                      {
+                          command: [
+                          {
+                              name: "edit",
+                              text: "",
+                              template: "<a class='k-button k-grid-edit' href='' style='min-width:16px;'><span class='k-icon k-edit'></span></a>"
+                          }
+                          ],
+                          width:50,attributes:{style:"text-align: center"}
+                      }
+                      </text>
+                    }
+                    ,
+                    {
+                        field: "Content",
+                        title: "Issues",
+                        width: 250,
+                        template: "#=(Content == null) ? ' ' : Content #",
+                        editor: textEditorInitialize
+                    },
+                    {
+                        field: "ActionPlan",
+                        title: "Follow up action",
+                        width: 250,
+                        template: "#=(ActionPlan == null) ? ' ' : ActionPlan #",
+                        editor: textEditorNoteInitialize
+                    },
+                    {
+                        field: "UserAssignedId",
+                        title: "Owner",
+                        width: 120,
+                        editor: userDropDownEditor,
+                        template: "#:UserAssigned#"
+
+                    }, {
+                        field: "WhenDue",
+                        title: "When",
+                        width:120,attributes:{style:"text-align: center"},
+                        editor: dateTimeEditorWhenDue,
+                        format: '{0:MM/dd/yyyy}',
+                    },
+                    {
+                        field: "StatusId",
+                        title: "Status",
+                        width: 150,
+                        editor: statusDropDownEditor,
+                        template: "#:Status#"
+                    },
+                    {
+                        field: "Note",
+                        title: "Note",
+                        width: 250,
+                        template: "#=(Note == null) ? ' ' : Note #",
+                        editor: textEditorNoteInitialize
+                    },
+                    {
+                        field: "SystemFixDMSLinkage",
+                        title: "System Fix <br/>DMS Linkage",
+                        width: 250,
+                        template: "#=(SystemFixDMSLinkage == null) ? ' ' : SystemFixDMSLinkage #"
+                    },
+                    {
+                        field: "When",
+                        title: "When",
+                        width:120,attributes:{style:"text-align: center"},
+                        format: '{0:MM/dd/yyyy}',
+                        editor: dateTimeEditor,
+                    },
+                    {
+                        field: "CreatedDate",
+                        title: "Create Date",
+            width:120,attributes:{style:"text-align: center"},
+                        template: '#:CreatedDate#'
+                    },
+                    @if (Model.permissionIssue)
+                    {
+                        <text>
+                      {
+                          command: [                         
+                           {
+                               name: "destroy",
+                               text: ""
+                           }
+                          ],
+                          width:50,attributes: {style:"text-align:center"}
+                      }
+                      </text>
+                    }
+                ]
+            }).on("click", ".k-grid-edit", function() {
+                $(".k-grid-update").html("<span class='k-icon k-update'></span>").css("min-width", "16px").removeClass("k-button-icontext");
+                $(".k-grid-cancel").html("<span class='k-icon k-cancel'></span>").css("min-width", "16px").removeClass("k-button-icontext");
+            }).on("click", ".k-grid-add", function() {
+                $(".k-grid-update").html("<span class='k-icon k-update'></span>").css("min-width", "16px").removeClass("k-button-icontext");
+                $(".k-grid-cancel").html("<span class='k-icon k-cancel'></span>").css("min-width", "16px").removeClass("k-button-icontext");
+            });
+            //attendance
+            var multiselect = $('#attendanceSelect').kendoMultiSelect({
+                dataSource: alluserAttributes,
+                dataTextField: 'Name',
+                dataValueField: 'Id',
+                filter: 'contains',
+                placeholder: "Add Attendance",
+                delay: 0,
+                minLength: 0,
+                highlightFirst: true,
+                ignoreCase: true
+            }).data("kendoMultiSelect");
+
+
+//start tracking
+
+
+            //data for drpLine tracking
+            var allLineAttributesTracing = [
+                @for (int i = 0; i < listResults.Count; i++)
+                {
+
+                    <text>
+{
+    Id: "@listResults[i].LineCode",
+    Name: "@listResults[i].LineName"
+}
+</text>
+                    if (i != listResults.Count - 1)
+                    {
+                        <text>,</text>
+                    }
+                }
+            ];
+            // dropdownlist drpLine
+            $("#drpLineTracking").kendoDropDownList({
+                dataTextField: "Name",
+                dataValueField: "Id",
+                dataSource: allLineAttributesTracing,
+                index: 0,
+                change: onChange,
+                optionLabel: "--- Any Line ---",
+            });
+
+            $("#drpLineTracking").kendoDropDownList({
+                dataTextField: "Name",
+                dataValueField: "Id",
+                dataSource: allLineAttributesTracing,
+                index: 0,
+                change: onChangeLineTracking
+
+            });
+
+            function serializeTracking(data) {
+                data["CreatedDate"] = currentDate;
+                data["LineCode"] = $("#drpLineTracking").val();
+                for (var property in data) {
+                    if (data[property] == null) {
+                        data[property] = " ";
+                    }
+                }
+
+            }
+
+            function onChangeLineTracking() {
+                var grid = $("#trackinggrid").data('kendoGrid');
+                grid.dataSource.page(1);
+            };
+
+            function additionalDataTracking() {
+                return {
+                    Datetime: currentDate,
+                    LineCode: $("#drpLineTracking").val()
+                };
+            }
+
+            var datasourceTracking = new kendo.data.DataSource({
+                type: "json",
+                transport: {
+                    read: {
+                        url: "@Html.Raw(Url.Action("List", "Tracking"))",
+                        type: "POST",
+                        dataType: "json",
+                        data: additionalDataTracking,
+                        complete: function(jqXHR, textStatus) {
+                            // console.log($(jqXHR)[0].responseJSON);
+                            if ($(jqXHR)[0].responseJSON != null) {
+                                // console.log($(jqXHR)[0].responseJSON.Data[0].TotalQuantity);
+                                if (typeof($(jqXHR)[0].responseJSON.Data[0]) != "undefined") {
+                                    var totalQuantity = $(jqXHR)[0].responseJSON.Data[0].TotalQuantity;
+                                    $(".total-tracking-quantity").html("Total: " + totalQuantity);
+                                }
+                            }
+                        }
+                    },
+                    destroy: {
+                        url: "@Html.Raw(Url.Action("Delete", "Tracking"))",
+                        type: "POST",
+                        dataType: "json",
+                        complete: function(jqXHR, textStatus) {
+                            $(".k-pager-refresh").click();
+                        }
+
+                    },
+                    create: {
+                        url: "@Html.Raw(Url.Action("Create", "Tracking"))",
+                        type: "POST",
+                        dataType: "json",
+                        data: serializeTracking,
+                        complete: function(jqXHR, textStatus) {
+                            // console.log($(jqXHR)[0].responseJSON);
+                            if ($(jqXHR)[0].responseJSON != null) {
+                                // console.log($(jqXHR)[0].responseJSON.Data[0].TotalQuantity);
+                                if (typeof($(jqXHR)[0].responseJSON.Data[0]) != "undefined") {
+                                    var totalQuantity = $(jqXHR)[0].responseJSON.Data[0].TotalQuantity;
+                                    $(".total-tracking-quantity").html("Total: " + totalQuantity);
+                                }
+                            }
+                        }
+                    },
+                    update: {
+                        url: "@Html.Raw(Url.Action("Update", "Tracking"))",
+                        type: "POST",
+                        dataType: "json",
+                        data: serializeTracking,
+                        complete: function(jqXHR, textStatus) {
+                            // console.log($(jqXHR)[0].responseJSON);
+                            if ($(jqXHR)[0].responseJSON != null) {
+                                // console.log($(jqXHR)[0].responseJSON.Data[0].TotalQuantity);
+                                if (typeof($(jqXHR)[0].responseJSON.Data[0]) != "undefined") {
+                                    var totalQuantity = $(jqXHR)[0].responseJSON.Data[0].TotalQuantity;
+                                    $(".total-tracking-quantity").html("Total: " + totalQuantity);
+                                }
+                            }
+                        }
+                    },
+                },
+                aggregate: [
+                    { field: "Quantity", aggregate: "sum" }
+                ],
+                schema: {
+                    data: "Data",
+                    total: "Total",
+                    errors: "Errors",
+
+                    model: {
+                        id: "Id",
+                        fields: {
+                            CreatedDate: {
+                                editable: false,
+                                type: "string",
+                            },
+                            FGCode: {
+                                editable: true,
+                                type: "string",
+                                validation:
+                                {
+                                    required: false,
+                                }
+                            },
+                            Variant: {
+                                editable: true,
+                                type: "string",
+                                validation:
+                                {
+                                    required: false,
+                                }
+                            },
+
+                            Size: {
+                                editable: true,
+                                type: "string",
+                                validation:
+                                {
+                                    required: false,
+                                }
+                            },
+                            Lot: {
+                                editable: true,
+                                type: "string",
+                                validation:
+                                {
+                                    required: false,
+                                }
+                            },
+                            Cause: {
+                                editable: true,
+                                type: "string",
+                                validation:
+                                {
+                                    required: false,
+                                }
+                            },
+                            Where: {
+                                editable: true,
+                                type: "string",
+                                validation:
+                                {
+                                    required: false,
+                                }
+                            },
+                            Quantity: {
+                                editable: true,
+                                type: "number",
+                                validation:
+                                {
+                                    required: false,
+                                }
+                            }
+
+                        }
+                    }
+                },
+                requestEnd: function(e) {
+                    if (e.type == "create" || e.type == "update") {
+                        this.read();
+                    }
+
+                },
+                error: function(e) {
+                    display_kendoui_grid_error(e);
+                    // Cancel the changes
+                    this.cancelChanges();
+                },
+
+                pageSize: 10,
+                serverPaging: true,
+                serverFiltering: true,
+                serverSorting: true
+            });
+
+            $("#trackinggrid").kendoGrid({
+                dataSource: datasourceTracking,
+                pageable: {
+                    refresh: true,
+                },
+                height: 'auto',
+                edit: function(e) {
+                    //console.log("MeasureType" + e.MeasureType);
+                    //window.setTimeout(function() {
+
+                    //    var total = calc();
+
+                    //    $("#quantityTotal").html(total);
+                    //},100);
+                    //little hack here
+                    //pre-select the first value of kendoui dropdownlist datasource
+                    //for some reasons (maybe, bug) it always sends 0
+                    //if no value has been selected (changed) in the dropdownlist
+
+                },
+                editable: {
+                    confirmation: true,
+                    mode: "inline"
+                },
+                scrollable: false,
+                @if (Model.permissionTracking)
+                {
+                    <text>
+        toolbar: ["create"],
+        </text>
+                }
+                columns: [
+                    {
+                        field: "CreatedDate",
+                        title: "Create Date",
+                        width: 120,
+
+                        attributes: {
+                            style: "text-align:center"
+                        },
+                        template: '#:CreatedDate#'
+                    },
+                    {
+                        field: "FGCode",
+                        title: "FGCode",
+                        width: 250,
+                        template: "#=(FGCode == null) ? ' ' : FGCode #"
+                    },
+                    {
+                        field: "Variant",
+                        title: "Variant",
+                        width: 250,
+                        template: "#=(Variant == null) ? ' ' : Variant #"
+                    },
+                    {
+                        field: "Size",
+                        title: "Size",
+                        width: 250,
+                        template: "#=(Size == null) ? ' ' : Size #"
+                    },
+                    {
+                        field: "Lot",
+                        title: "Lot",
+                        width: 250,
+                        template: "#=(Lot == null) ? ' ' : Lot #"
+                    },
+                    {
+                        field: "Cause",
+                        title: "Cause",
+                        width: 250,
+                        template: "#=(Cause == null) ? ' ' : Cause #"
+                    },
+                    {
+                        field: "Where",
+                        title: "Where",
+                        width: 250,
+                        template: "#=(Where == null) ? ' ' : Where #"
+                    },
+                    {
+                        field: "Quantity",
+                        title: "Quantity",
+                        width: 250,
+                        footerTemplate: "<div class=\"total-tracking-quantity\">Total: #= sum #</div>"
+                    }@if (Model.permissionTracking)
+                     {
+                         <text>
+,
+    {
+        command: [
+        {
+            name: "edit",
+            text: "",
+            template: "<a class='k-button k-grid-edit' href='' style='min-width:16px;'><span class='k-icon k-edit'></span></a>"
+        },
+            {
+                name: "destroy",
+                text: ""
+            }
+        ],
+        width:
+        200
+    }
+    </text>
+                     }
+                ]
+            }).on("click", ".k-grid-edit", function() {
+                var $updateButton = jQuery("<span class='k-icon k-update test'></span>").bind("click", cancelEdit);
+                $(".k-grid-update").empty();
+                $(".k-grid-update").append($updateButton).css("min-width", "16px").removeClass("k-button-icontext");
+                $(".k-grid-cancel").html("<span class='k-icon k-cancel'></span>").css("min-width", "16px").removeClass("k-button-icontext");
+            }).on("click", ".k-grid-add", function() {
+                $(".k-grid-update").html("<span class='k-icon k-update'></span>").css("min-width", "16px").removeClass("k-button-icontext");
+                $(".k-grid-cancel").html("<span class='k-icon k-cancel'></span>").css("min-width", "16px").removeClass("k-button-icontext");
+            });
+
+            function cancelEdit() {
+                $("#trackinggrid").data("kendoGrid").dataSource.read();
+            }
+
+            $("#import-excel").click(function() {
+                $("#tracking-model").modal('show');
+
+
+            });
+            $("#btn-frmimport").click(function(ev) {
+                ev.preventDefault();
+                var check = true;
+
+                try {
+                    if ($('#postedFileId').val() != "") {
+                        //$("#frmimport").click(function() {
+
+                        var form = $("#frmimport");
+
+
+                        $("#frmimport").click(function() {
+                            if (check) {
+                                $.ajax({
+                                    url: '/Tracking/ImportDataFromExcell',
+                                    type: 'POST',
+                                    data: new FormData(this),
+                                    processData: false,
+                                    contentType: false,
+                                    success: function(data) {
+                                        if (data.status == "success") {
+                                            check = false;
+                                            $("#tracking-model").modal('hide');
+                                            $("#postedFileId").val('');
+                                            $('#trackinggrid').data('kendoGrid').dataSource.read();
+                                            alert("import successfully");
+                                        }
+                                        if (data.status == "error") {
+                                            check = false;
+                                            $("#tracking-model").modal('hide');
+                                        }
+                                    }
+                                });
+                            }
+                        });
+
+
+                        //});
+                    }
+                    $("#tracking-model").modal('hide');
+                    $("#tracking-model").removeData();
+                    $('#trackinggrid').data('kendoGrid').refresh();
+                } catch (e) {
+
+                }
+            });
+
+
+            //end tracking
+
+
+            //open popup
+            //open popup
+            // line remark 
+            $(".th-popup").click(function() {
+                var lineCode = $(this).data('linecode');
+                $("#line-popup-code").val(lineCode);
+                $("#line-popup").modal('show');
+                $(this).addClass("th-editing");
+
+
+                $.ajax({
+                    url: '/LineRemark/GetRemarkByDateAndLineCode',
+                    type: 'GET',
+                    data: {
+                        lineCode: lineCode,
+                        typeCode: 2,
+                        date: currentDate
+
+                    },
+
+                    success: function(data) {
+
+                        // console.log(data);
+                        $(".input-line-remark").val(data);
+
+
+                    }
+                });
+
+            });
+            $(".btn-line-save").click(function() {
+                // console.log($("#line-popup-code"));
+                var remark = $(".input-line-remark").val();
+
+                var lineCode = $("#line-popup-code").val();
+
+                $.ajax({
+                    url: '/LineRemark/Update',
+                    type: 'POST',
+                    data: {
+                        lineCode: lineCode,
+                        remark: remark,
+                        typeCode: 2,
+                        CreateDate: currentDate
+                    },
+
+                    success: function(data) {
+
+
+                        $(".th-editing").attr('title', remark);
+                        $("#line-popup").modal('hide');
+                        $(".th-editing").removeClass("th-editing");
+
+
+                    }
+                });
+
+            });
+
+            // function update supply chain bottle
+            function updateSupplyChainBottle() {
+                var ReasonCodePOMissedduetoMaking = checkNullorEmty($(".ReasonCodePOMissedduetoMaking").val());
+                var ReasonCodePOMissedduetoPacking = checkNullorEmty($(".ReasonCodePOMissedduetoPacking").val());
+                var ReasonCodePOMissedduetoPlanning = checkNullorEmty($(".ReasonCodePOMissedduetoPlanning").val());
+                var ReasonCodePOMissedduetoMakingRemark = $(".ReasonCodePOMissedduetoMakingRemark").val();
+                var ReasonCodePOMissedduetoPackingRemark = $(".ReasonCodePOMissedduetoPackingRemark").val();
+                var ReasonCodePOMissedduetoPlanningRemark = $(".ReasonCodePOMissedduetoPlanningRemark").val();
+
+                var total = parseInt(parseInt(ReasonCodePOMissedduetoMaking) + parseInt(ReasonCodePOMissedduetoPacking) + parseInt(ReasonCodePOMissedduetoPlanning));
+                $.ajax({
+                    url: '/SupplyChain/UpdateMPSABottle',
+                    type: 'POST',
+                    data: JSON.stringify({
+                        Bottle: ReasonCodePOMissedduetoMaking,
+                        Remark: ReasonCodePOMissedduetoMakingRemark,
+                        MeasureCode: 3,
+                        date: currentDate
+
+                    }),
+                    contentType: 'application/json',
+                    dataType: 'json',
+                    success: function(data) {
+                        if (data.status == "success") {
+                            isEditting = false; //remove edit mode
+
+                        }
+                    }
+                });
+                $.ajax({
+                    url: '/SupplyChain/UpdateMPSABottle',
+                    type: 'POST',
+                    data: JSON.stringify({
+                        Bottle: ReasonCodePOMissedduetoPacking,
+                        Remark: ReasonCodePOMissedduetoPackingRemark,
+                        MeasureCode: 4,
+                        date: currentDate
+                    }),
+                    contentType: 'application/json',
+                    dataType: 'json',
+                    success: function(data) {
+                        if (data.status == "success") {
+                            isEditting = false; //remove edit mode
+
+                        }
+                    }
+                });
+                $.ajax({
+                    url: '/SupplyChain/UpdateMPSABottle',
+                    type: 'POST',
+                    data: JSON.stringify({
+                        Bottle: ReasonCodePOMissedduetoPlanning,
+                        Remark: ReasonCodePOMissedduetoPlanningRemark,
+                        MeasureCode: 5,
+                        date: currentDate
+                    }),
+                    contentType: 'application/json',
+                    dataType: 'json',
+                    success: function(data) {
+                        if (data.status == "success") {
+                            isEditting = false; //remove edit mode
+
+                        }
+                    }
+                });
+
+            }
+
+            // function update supply chain pouch
+            function updateSupplyChainPou() {
+                var ReasonCodePOMissedduetoMaking = checkNullorEmty($(".ReasonCodePOMissedduetoMaking").val());
+                var ReasonCodePOMissedduetoPacking = checkNullorEmty($(".ReasonCodePOMissedduetoPacking").val());
+                var ReasonCodePOMissedduetoPlanning = checkNullorEmty($(".ReasonCodePOMissedduetoPlanning").val());
+                var ReasonCodePOMissedduetoMakingRemark = $(".ReasonCodePOMissedduetoMakingRemark").val();
+                var ReasonCodePOMissedduetoPackingRemark = $(".ReasonCodePOMissedduetoPackingRemark").val();
+                var ReasonCodePOMissedduetoPlanningRemark = $(".ReasonCodePOMissedduetoPlanningRemark").val();
+                var total = parseInt(parseInt(ReasonCodePOMissedduetoMaking) + parseInt(ReasonCodePOMissedduetoPacking) + parseInt(ReasonCodePOMissedduetoPlanning));
+                $.ajax({
+                    url: '/SupplyChain/UpdateMPSAPouch',
+                    type: 'POST',
+                    data: JSON.stringify({
+                        Pouch: ReasonCodePOMissedduetoMaking,
+                        Remark: ReasonCodePOMissedduetoMakingRemark,
+                        MeasureCode: 3,
+                        date: currentDate
+                    }),
+                    contentType: 'application/json',
+                    dataType: 'json',
+                    success: function(data) {
+                        if (data.status == "success") {
+                            isEditting = false; //remove edit mode
+
+                        }
+                    }
+                });
+                $.ajax({
+                    url: '/SupplyChain/UpdateMPSAPouch',
+                    type: 'POST',
+                    data: JSON.stringify({
+                        Pouch: ReasonCodePOMissedduetoPacking,
+                        Remark: ReasonCodePOMissedduetoPackingRemark,
+                        MeasureCode: 4,
+                        date: currentDate
+                    }),
+                    contentType: 'application/json',
+                    dataType: 'json',
+                    success: function(data) {
+                        if (data.status == "success") {
+                            isEditting = false; //remove edit mode
+
+                        }
+                    }
+                });
+                $.ajax({
+                    url: '/SupplyChain/UpdateMPSAPouch',
+                    type: 'POST',
+                    data: JSON.stringify({
+                        Pouch: ReasonCodePOMissedduetoPlanning,
+                        Remark: ReasonCodePOMissedduetoPlanningRemark,
+                        MeasureCode: 5,
+                        date: currentDate
+                    }),
+                    contentType: 'application/json',
+                    dataType: 'json',
+                    success: function(data) {
+                        if (data.status == "success") {
+                            isEditting = false; //remove edit mode
+
+                        }
+                    }
+                });
+
+            }
+
+            // function update supply chain sac 1
+            function updateSupplyChainSac1() {
+                var ReasonCodePOMissedduetoMaking = checkNullorEmty($(".ReasonCodePOMissedduetoMaking").val());
+                var ReasonCodePOMissedduetoPacking = checkNullorEmty($(".ReasonCodePOMissedduetoPacking").val());
+                var ReasonCodePOMissedduetoPlanning = checkNullorEmty($(".ReasonCodePOMissedduetoPlanning").val());
+                var ReasonCodePOMissedduetoMakingRemark = $(".ReasonCodePOMissedduetoMakingRemark").val();
+                var ReasonCodePOMissedduetoPackingRemark = $(".ReasonCodePOMissedduetoPackingRemark").val();
+                var ReasonCodePOMissedduetoPlanningRemark = $(".ReasonCodePOMissedduetoPlanningRemark").val();
+                $.ajax({
+                    url: '/SupplyChain/UpdateMPSASachet1',
+                    type: 'POST',
+                    data: JSON.stringify({
+                        Sachet1: ReasonCodePOMissedduetoMaking,
+                        Remark: ReasonCodePOMissedduetoMakingRemark,
+                        MeasureCode: 3,
+                        date: currentDate
+                    }),
+                    contentType: 'application/json',
+                    dataType: 'json',
+                    success: function(data) {
+                        if (data.status == "success") {
+                            isEditting = false; //remove edit mode
+
+                        }
+                    }
+                });
+                $.ajax({
+                    url: '/SupplyChain/UpdateMPSASachet1',
+                    type: 'POST',
+                    data: JSON.stringify({
+                        Sachet1: ReasonCodePOMissedduetoPacking,
+                        Remark: ReasonCodePOMissedduetoPackingRemark,
+                        MeasureCode: 4,
+                        date: currentDate
+                    }),
+                    contentType: 'application/json',
+                    dataType: 'json',
+                    success: function(data) {
+                        if (data.status == "success") {
+                            isEditting = false; //remove edit mode
+
+                        }
+                    }
+                });
+                $.ajax({
+                    url: '/SupplyChain/UpdateMPSASachet1',
+                    type: 'POST',
+                    data: JSON.stringify({
+                        Sachet1: ReasonCodePOMissedduetoPlanning,
+                        Remark: ReasonCodePOMissedduetoPlanningRemark,
+                        MeasureCode: 5,
+                        date: currentDate
+                    }),
+                    contentType: 'application/json',
+                    dataType: 'json',
+                    success: function(data) {
+                        if (data.status == "success") {
+                            isEditting = false; //remove edit mode
+
+                        }
+                    }
+                });
+            }
+
+            // function update supply chain sac 2
+            function updateSupplyChainSac2() {
+                var ReasonCodePOMissedduetoMaking = checkNullorEmty($(".ReasonCodePOMissedduetoMaking").val());
+                var ReasonCodePOMissedduetoPacking = checkNullorEmty($(".ReasonCodePOMissedduetoPacking").val());
+                var ReasonCodePOMissedduetoPlanning = checkNullorEmty($(".ReasonCodePOMissedduetoPlanning").val());
+                var ReasonCodePOMissedduetoMakingRemark = $(".ReasonCodePOMissedduetoMakingRemark").val();
+                var ReasonCodePOMissedduetoPackingRemark = $(".ReasonCodePOMissedduetoPackingRemark").val();
+                var ReasonCodePOMissedduetoPlanningRemark = $(".ReasonCodePOMissedduetoPlanningRemark").val();
+                $.ajax({
+                    url: '/SupplyChain/UpdateMPSASachet2',
+                    type: 'POST',
+                    data: JSON.stringify({
+                        Sachet2: ReasonCodePOMissedduetoMaking,
+                        Remark: ReasonCodePOMissedduetoMakingRemark,
+                        MeasureCode: 3,
+                        date: currentDate
+                    }),
+                    contentType: 'application/json',
+                    dataType: 'json',
+                    success: function(data) {
+                        if (data.status == "success") {
+                            isEditting = false; //remove edit mode
+
+                        }
+                    }
+                });
+                $.ajax({
+                    url: '/SupplyChain/UpdateMPSASachet2',
+                    type: 'POST',
+                    data: JSON.stringify({
+                        Sachet2: ReasonCodePOMissedduetoPacking,
+                        Remark: ReasonCodePOMissedduetoPackingRemark,
+                        MeasureCode: 4,
+                        date: currentDate
+                    }),
+                    contentType: 'application/json',
+                    dataType: 'json',
+                    success: function(data) {
+                        if (data.status == "success") {
+                            isEditting = false; //remove edit mode
+
+                        }
+                    }
+                });
+                $.ajax({
+                    url: '/SupplyChain/UpdateMPSASachet2',
+                    type: 'POST',
+                    data: JSON.stringify({
+                        Sachet2: ReasonCodePOMissedduetoPlanning,
+                        Remark: ReasonCodePOMissedduetoPlanningRemark,
+                        MeasureCode: 5,
+                        date: currentDate
+                    }),
+                    contentType: 'application/json',
+                    dataType: 'json',
+                    success: function(data) {
+                        if (data.status == "success") {
+                            isEditting = false; //remove edit mode
+
+                        }
+                    }
+                });
+
+            }
+
+
+            // function update supply chain sac 3
+            function updateSupplyChainFRPK() {
+                var ReasonCodePOMissedduetoMaking = checkNullorEmty($(".ReasonCodePOMissedduetoMaking").val());
+                var ReasonCodePOMissedduetoPacking = checkNullorEmty($(".ReasonCodePOMissedduetoPacking").val());
+                var ReasonCodePOMissedduetoPlanning = checkNullorEmty($(".ReasonCodePOMissedduetoPlanning").val());
+                var ReasonCodePOMissedduetoMakingRemark = $(".ReasonCodePOMissedduetoMakingRemark").val();
+                var ReasonCodePOMissedduetoPackingRemark = $(".ReasonCodePOMissedduetoPackingRemark").val();
+                var ReasonCodePOMissedduetoPlanningRemark = $(".ReasonCodePOMissedduetoPlanningRemark").val();
+                $.ajax({
+                    url: '/SupplyChain/UpdateMPSAFR',
+                    type: 'POST',
+                    data: JSON.stringify({
+                        FR: ReasonCodePOMissedduetoMaking,
+                        Remark: ReasonCodePOMissedduetoMakingRemark,
+                        MeasureCode: 3,
+                        date: currentDate
+                    }),
+                    contentType: 'application/json',
+                    dataType: 'json',
+                    success: function(data) {
+                        if (data.status == "success") {
+                            isEditting = false; //remove edit mode
+
+                        }
+                    }
+                });
+                $.ajax({
+                    url: '/SupplyChain/UpdateMPSAFR',
+                    type: 'POST',
+                    data: JSON.stringify({
+                        FR: ReasonCodePOMissedduetoPacking,
+                        Remark: ReasonCodePOMissedduetoPackingRemark,
+                        MeasureCode: 4,
+                        date: currentDate
+                    }),
+                    contentType: 'application/json',
+                    dataType: 'json',
+                    success: function(data) {
+                        if (data.status == "success") {
+                            isEditting = false; //remove edit mode
+
+                        }
+                    }
+                });
+                $.ajax({
+                    url: '/SupplyChain/UpdateMPSAFR',
+                    type: 'POST',
+                    data: JSON.stringify({
+                        FR: ReasonCodePOMissedduetoPlanning,
+                        Remark: ReasonCodePOMissedduetoPlanningRemark,
+                        MeasureCode: 5,
+                        date: currentDate
+                    }),
+                    contentType: 'application/json',
+                    dataType: 'json',
+                    success: function(data) {
+                        if (data.status == "success") {
+                            isEditting = false; //remove edit mode
+
+                        }
+                    }
+                });
+            }
+
+            //function update supply chain dds
+            function updateSupplyChainDDS() {
+
+                var PRLastDay = checkNullorEmty($(".pr-PRLastDay").val());
+                var PRMTD = checkNullorEmty($(".pr-PRMTD").val());
+                var PRLastDayRemark = $(".pr-PRLastDay-Remark").val();
+                var PRMTDRemark = $(".pr-PRMTD-Remark").val();
+                var $input = jQuery(".input-editting");
+                var lineCode = $input.parent().children(".line-edit-value").data('linecode');
+
+                $.ajax({
+                    url: '/SupplyChain/UpdateDDSFromPacking',
+                    type: 'POST',
+                    data: JSON.stringify({
+                        Value: PRLastDay,
+                        Remark: PRLastDayRemark,
+                        MeasureCode: 2,
+                        LineCode: lineCode,
+                        date: currentDate
+                    }),
+                    contentType: 'application/json',
+                    dataType: 'json',
+                    success: function(data) {
+                        if (data.status == "success") {
+                            isEditting = false; //remove edit mode
+
+                        }
+                    }
+                });
+                $.ajax({
+                    url: '/SupplyChain/UpdateDDSFromPacking',
+                    type: 'POST',
+                    data: JSON.stringify({
+                        Remark: PRMTDRemark,
+
+                        Value: PRMTD,
+                        MeasureCode: 3,
+                        LineCode: lineCode,
+                        date: currentDate
+                    }),
+                    contentType: 'application/json',
+                    dataType: 'json',
+                    success: function(data) {
+                        if (data.status == "success") {
+                            isEditting = false; //remove edit mode
+
+                        }
+                    }
+                });
+            }
+
+            //# of PO Missed chang value
+            $(".pOMissed").children(".line-edit-value").change(function() {
+                var pOMissedValue = $(this).val();
+                var index = $(this).parent(".pOMissed").index();
+
+                var totalPOValue = $(this).parents("tr").prev().children("td").eq(index + 1).children(".line-edit-value").val();
+
+                var mpsaVlaue = (parseFloat(totalPOValue) - parseFloat(pOMissedValue)) / parseFloat(totalPOValue) * 100;
+                mpsaVlaue = checkNullorEmty((Math.round(mpsaVlaue * 100) / 100).toFixed(2));
+                var mpsa = $(this).parents("tr").next().children("td").eq(index + 1).children(".line-edit-value");
+
+                setTimeout(function() {
+
+                    var $input = $(mpsa);
+                    $input.val(mpsaVlaue);
+                    var newVal = mpsaVlaue;
+
+                    var target = $input.data('target').toString(); //get tartet
+                    var dmsCode = $input.data('dmscode'); //get dmsCode
+                    var measureCode = $input.data('measurecode'); //get measure code
+                    var lineCode = $input.data('linecode'); //get line code
+                    $.ajax({
+                        url: '/Making/UpdateMeetingResult',
+                        type: 'POST',
+                        dataType: 'json',
+                        data: {
+                            dmscode: dmsCode,
+                            lineCode: lineCode,
+                            measureCode: measureCode,
+                            result: newVal,
+                            date: currentDate
+                        },
+                        success: function(data) {
+                            if (data.status == "success") {
+
+                                $input.parent().children('.line-edit-span').show(); //show span
+                                $input.parent().children('.line-edit-span').html(newVal); // update new value to span
+                                $input.addClass('hide'); //hide the textbox
+                                $input.removeClass('input-editting'); //remove edit class to the textbox
+                                //add color
+                                // TARGET DON'T CONTAIN CALCULATIONS: target.indexOf(">")<0 && target.indexOf("<") < 0
+                                if (target.indexOf(">") >= 0) {
+
+                                    target = parseFloat(target.replace(">=", ""));
+                                    newVal = parseFloat(newVal);
+                                    if (!isNaN(target)) {
+                                        if (target <= newVal) {
+                                            $input.parent().removeClass("no-match-target");
+                                            $input.parent().removeClass("exception-target").addClass("match-target");
+                                        } else {
+                                            $input.parent().removeClass("no-match-target");
+                                            $input.parent().removeClass("exception-target").addClass("no-match-target");
+                                        }
+                                    }
+                                } else if (target.indexOf("<") >= 0) {
+                                    //   // console.log("index-<"+target.indexOf("<"));
+                                    target = parseFloat(target.replace("<=", ""));
+                                    newVal = parseFloat(newVal);
+
+                                    if (target >= newVal) {
+                                        //  // console.log(2.1);
+                                        $input.parent().removeClass("no-match-target");
+                                        $input.parent().removeClass("exception-target").addClass("match-target");
+                                    } else {
+                                        // // console.log(2.2);
+                                        $input.parent().removeClass("match-target");
+                                        $input.parent().removeClass("exception-target").addClass("no-match-target");
+                                    }
+
+                                } else { //no calculations
+
+                                }
+
+                            }
+                        }
+                    });
+
+                }, 200);
+
+            });
+
+            function updateSupplyChainFPQ() {
+
+                var value = checkNullorEmty($(".quality-value").val());
+                var remark = $(".quality-remark").val();
+                var $input = jQuery(".input-editting");
+                var tdParent = $input.parent();
+                // console.log(tdParent);
+
+
+                var lineCode = $input.parent().children(".line-edit-value").data('linecode');
+
+                $.ajax({
+                    url: '/SupplyChain/UpdateFPQFromPacking',
+                    type: 'POST',
+                    data: JSON.stringify({
+                        value: value,
+                        remark: remark,
+
+                        MeasureCode: 2,
+                        LineCode: lineCode,
+                        date: currentDate
+                    }),
+                    contentType: 'application/json',
+                    dataType: 'json',
+                    success: function(data) {
+                        if (data.status == "success") {
+                            isEditting = false; //remove edit mode
+
+                        }
+                    }
+                });
+            }
+
+            // clear all tag input of popup
+            function ClearModel() {
+                $(".ReasonCodePOMissedduetoMaking").val('');
+                $(".ReasonCodePOMissedduetoPacking").val('');
+                $(".ReasonCodePOMissedduetoPlanning").val('');
+                $(".ReasonCodePOMissedduetoMakingRemark").val('');
+                $(".ReasonCodePOMissedduetoPackingRemark").val('');
+                $(".ReasonCodePOMissedduetoPlanningRemark").val('');
+                $(".pr-PRLastDay").val('');
+                $(".pr-PRMTD").val('');
+                $(".quality-value").val('');
+                $(".quality-remark").val('');
+                $(".pr-PRLastDay-Remark").val('');
+                $(".pr-PRMTD-Remark").val('');
+            }
+
+            //open popup
+            $(".td-popup").click(function() {
+                var popuptype = $(this).children("#popup-MeasureType-model").html();
+                $(".input-editting").removeClass("input-editting");
+                if (popuptype == 16) {
+                    $("#myModel").modal('show');
+                    $(this).children("input").addClass('input-editting');
+                    var lineName = $(this).data('linename');
+                    var lineCode = $(this).children("input").data('linecode');
+                    var lineCodeName = $(this).data('linecode');
+                    $(".modal-title").html("Update MPSA - " + lineName);
+                    $.ajax({
+                        url: '/SupplyChain/GetDataSupplyChainMPSADataPacking',
+                        type: 'GET',
+                        data: {
+                            lineCode: lineCode,
+                            date: currentDate
+                        },
+
+                        success: function(data) {
+                            // console.log(data);
+                            $(".ReasonCodePOMissedduetoMaking").val(data.Data[0].result);
+                            $(".ReasonCodePOMissedduetoPacking").val(data.Data[1].result);
+                            $(".ReasonCodePOMissedduetoPlanning").val(data.Data[2].result);
+                            $(".ReasonCodePOMissedduetoMakingRemark").val(data.Data[0].remarks);
+                            $(".ReasonCodePOMissedduetoPackingRemark").val(data.Data[1].remarks);
+                            $(".ReasonCodePOMissedduetoPlanningRemark").val(data.Data[2].remarks);
+                        }
+                    });
+
+                    $("#popup-MeasureType").val(lineCodeName);
+                }
+
+                if (popuptype == 35) {
+
+                    $("#pr-popup").modal('show');
+                    $(this).children("input").addClass('input-editting');
+                    var lineName = $(this).data('linename');
+                    var lineCode = $(this).children("input").data('linecode');
+                    var lineCodeName = $(this).data('linecode');
+                    $(".modal-title").html("Update DDS - " + lineName);
+                    $.ajax({
+                        url: '/SupplyChain/GetDataDDsForPacking',
+                        type: 'GET',
+                        data: {
+                            lineCode: lineCode,
+                            date: currentDate
+                        },
+
+                        success: function(data) {
+                            // console.log(data);
+
+                            $(".pr-PRLastDay").val(data.Data[0].PRLastDay);
+                            $(".pr-PRLastDay-Remark").val(data.Data[0].PRLastDayRemark);
+                            $(".pr-PRMTD").val(data.Data[0].PRMTD);
+                            $(".pr-PRMTD-Remark").val(data.Data[0].PRMTDRemark);
+
+
+                        }
+                    });
+
+                    $("#pr-popup-MeasureType").val(lineCodeName);
+                }
+                if (popuptype == 21) {
+
+                    $("#quality-popup").modal('show');
+                    $(this).children("input").addClass('input-editting');
+                    var lineName = $(this).data('linename');
+                    var lineCode = $(this).children("input").data('linecode');
+                    var lineCodeName = $(this).data('linecode');
+                    $(".modal-title").html("Update FPQ - " + lineName);
+                    $.ajax({
+                        url: '/SupplyChain/GetDataQualityAlertForPacking',
+                        type: 'GET',
+                        data: {
+                            lineCode: lineCode,
+                            date: currentDate
+                        },
+
+                        success: function(data) {
+
+
+                            $(".quality-value").val(data.Data[0].result);
+                            $(".quality-remark").val(data.Data[0].remark);
+                        }
+                    });
+
+
+                    $("#pr-popup-MeasureType").val(lineCodeName);
+                }
+            });
+
+            // save date update for supply chain
+            $(".btn-save").on('click', function() {
+
+                // console.log($("#popup-MeasureType").val());
+                if ($("#popup-MeasureType").val() == "Bottle") {
+                    updateSupplyChainBottle();
+                }
+                if ($("#popup-MeasureType").val() == "Pou") {
+                    updateSupplyChainPou();
+                }
+                if ($("#popup-MeasureType").val() == "Sac1") {
+                    updateSupplyChainSac1();
+                }
+                if ($("#popup-MeasureType").val() == "Sac2") {
+                    updateSupplyChainSac2();
+                }
+                if ($("#popup-MeasureType").val() == "FR(PK)") {
+                    updateSupplyChainFRPK();
+                }
+
+
+                var ReasonCodePOMissedduetoMaking = checkNullorEmty($(".ReasonCodePOMissedduetoMaking").val());
+                var ReasonCodePOMissedduetoPacking = checkNullorEmty($(".ReasonCodePOMissedduetoPacking").val());
+                var ReasonCodePOMissedduetoPlanning = checkNullorEmty($(".ReasonCodePOMissedduetoPlanning").val());
+                var total = parseInt(parseInt(ReasonCodePOMissedduetoMaking) + parseInt(ReasonCodePOMissedduetoPacking) + parseInt(ReasonCodePOMissedduetoPlanning));
+                var $input = jQuery(".input-editting");
+
+                oldval = $input.val();
+                $input.val(total);
+                $input.change();
+                isEditting = true;
+                formatNewTargetBackground();
+
+
+                isEditting = false;
+                ClearModel();
+                $('#myModel').modal('hide');
+                $(".btn-close").click();
+            });
+
+            $(".pr-btn-save").on('click', function() {
+
+                updateSupplyChainDDS();
+                var $input = jQuery(".input-editting");
+                PRLastDay = checkNullorEmty($(".pr-PRLastDay").val());
+                oldval = $input.val();
+                $input.val(PRLastDay);
+                isEditting = true;
+                formatNewTargetBackground();
+                isEditting = false;
+                ClearModel();
+
+                $('#pr-popup').modal('hide');
+                $(".pr-btn-close").click();
+            });
+
+
+            $(".quality-btn-save").on('click', function() {
+
+                updateSupplyChainFPQ();
+                var $input = jQuery(".input-editting");
+                var value = checkNullorEmty($(".quality-value").val());
+                var remark = $(".quality-remark").val();
+                oldval = $input.val();
+                $input.val(value);
+                isEditting = true;
+                formatNewTargetBackground();
+                isEditting = false;
+                ClearModel();
+
+                $('#quality-popup').modal('hide');
+                $(".quality-btn-close").click();
+            });
+
+            $(".btn-close").on('click', function() {
+                ClearModel();
+
+                $(".input-editting").removeClass("input-editting");
+                $("#myModel").modal('hide');
+            });
+
+            $(".pr-btn-close").on('click', function() {
+                ClearModel();
+
+                $(".input-editting").removeClass("input-editting");
+                $("#pr-popup").modal('hide');
+            });
+
+            $(".quality-btn-close").on('click', function() {
+                ClearModel();
+
+                $(".input-editting").removeClass("input-editting");
+                $("#quality-popup").modal('hide');
+            });
+            //end :update PO Missed and Total PO for SC MPSA from Liquid Packing
+
+            //update % scapt online/MSU
+
+            // 	Total PO change value
+            $(".totalPO").children(".line-edit-value").change(function() {
+                var totalPOValue = checkNullorEmty($(this).val());
+                var index = $(this).parent(".totalPO").index();
+
+                var pOMissedValue = checkNullorEmty($(this).parents("tr").next().children("td").eq(index - 1).children(".line-edit-value").val());
+                var mpsaVlaue = (parseFloat(totalPOValue) - parseFloat(pOMissedValue)) / parseFloat(totalPOValue) * 100;
+                mpsaVlaue = checkNullorEmty((Math.round(mpsaVlaue * 100) / 100).toFixed(2));
+                var mpsa = $(this).parents("tr").next().next().children("td").eq(index).children(".line-edit-value");
+                setTimeout(function() {
+
+                    var $input = $(mpsa);
+                    var newVal = mpsaVlaue;
+                    $input.val(mpsaVlaue);
+                    var target = $input.data('target').toString(); //get tartet
+                    var dmsCode = $input.data('dmscode'); //get dmsCode
+                    var measureCode = $input.data('measurecode'); //get measure code
+                    var lineCode = $input.data('linecode'); //get line code
+                    $.ajax({
+                        url: '/Making/UpdateMeetingResult',
+                        type: 'POST',
+                        dataType: 'json',
+                        data: {
+                            dmscode: dmsCode,
+                            lineCode: lineCode,
+                            measureCode: measureCode,
+                            result: newVal,
+                            date: currentDate
+                        },
+                        success: function(data) {
+                            if (data.status == "success") {
+
+                                $input.parent().children('.line-edit-span').show(); //show span
+                                $input.parent().children('.line-edit-span').html(newVal); // update new value to span
+                                $input.addClass('hide'); //hide the textbox
+                                $input.removeClass('input-editting'); //remove edit class to the textbox
+                                //add color
+                                // TARGET DON'T CONTAIN CALCULATIONS: target.indexOf(">")<0 && target.indexOf("<") < 0
+                                if (target.indexOf(">") >= 0) {
+
+                                    target = parseFloat(target.replace(">=", ""));
+                                    newVal = parseFloat(newVal);
+                                    if (!isNaN(target)) {
+                                        if (target <= newVal) {
+                                            $input.parent().removeClass("no-match-target");
+                                            $input.parent().removeClass("exception-target").addClass("match-target");
+                                        } else {
+                                            $input.parent().removeClass("no-match-target");
+                                            $input.parent().removeClass("exception-target").addClass("no-match-target");
+                                        }
+                                    }
+                                } else if (target.indexOf("<") >= 0) {
+                                    //   // console.log("index-<"+target.indexOf("<"));
+                                    target = parseFloat(target.replace("<=", ""));
+                                    newVal = parseFloat(newVal);
+
+                                    if (target >= newVal) {
+                                        //  // console.log(2.1);
+                                        $input.parent().removeClass("no-match-target");
+                                        $input.parent().removeClass("exception-target").addClass("match-target");
+                                    } else {
+                                        // // console.log(2.2);
+                                        $input.parent().removeClass("match-target");
+                                        $input.parent().removeClass("exception-target").addClass("no-match-target");
+                                    }
+
+                                } else { //no calculations
+
+                                }
+
+                            }
+                        }
+                    });
+
+                }, 200);
+
+            });
+
+            // 	actualScrapOnLine change value
+            $(".actualScrapOnLine").children(".line-edit-value").change(function() {
+                var actualScrapOnLineValue = checkNullorEmty($(this).val());
+                var index = $(this).parent(".actualScrapOnLine").index();
+
+                var amountOfBulkProduceDayValue = checkNullorEmty($(this).parents("tr").next().children("td").eq(index).children(".line-edit-value").val());
+
+                var mpsaVlaue = parseFloat(actualScrapOnLineValue) / parseFloat(amountOfBulkProduceDayValue) * 100;
+
+                mpsaVlaue = checkNullorEmty((Math.round(mpsaVlaue * 100) / 100).toFixed(1));
+
+                var mpsa = $(this).parents("tr").next().next().children("td").eq(index).children(".line-edit-value");
+
+                setTimeout(function() {
+
+                    var $input = $(mpsa);
+                    var newVal = mpsaVlaue;
+                    $input.val(mpsaVlaue);
+                    var target = $input.data('target').toString(); //get tartet
+                    var dmsCode = $input.data('dmscode'); //get dmsCode
+                    var measureCode = $input.data('measurecode'); //get measure code
+                    var lineCode = $input.data('linecode'); //get line code
+                    $.ajax({
+                        url: '/Making/UpdateMeetingResult',
+                        type: 'POST',
+                        dataType: 'json',
+                        data: {
+                            dmscode: dmsCode,
+                            lineCode: lineCode,
+                            measureCode: measureCode,
+                            result: newVal,
+                            date: currentDate
+                        },
+                        success: function(data) {
+                            if (data.status == "success") {
+
+                                $input.parent().children('.line-edit-span').show(); //show span
+                                $input.parent().children('.line-edit-span').html(newVal); // update new value to span
+                                $input.addClass('hide'); //hide the textbox
+                                $input.removeClass('input-editting'); //remove edit class to the textbox
+                                //add color
+                                // TARGET DON'T CONTAIN CALCULATIONS: target.indexOf(">")<0 && target.indexOf("<") < 0
+                                if (target.indexOf(">") >= 0) {
+
+                                    target = parseFloat(target.replace(">=", ""));
+                                    newVal = parseFloat(newVal);
+                                    if (!isNaN(target)) {
+                                        if (target <= newVal) {
+                                            $input.parent().removeClass("no-match-target");
+                                            $input.parent().removeClass("exception-target").addClass("match-target");
+                                        } else {
+                                            $input.parent().removeClass("no-match-target");
+                                            $input.parent().removeClass("exception-target").addClass("no-match-target");
+                                        }
+                                    }
+                                } else if (target.indexOf("<") >= 0) {
+                                    //   // console.log("index-<"+target.indexOf("<"));
+                                    target = parseFloat(target.replace("<=", ""));
+                                    newVal = parseFloat(newVal);
+
+                                    if (target >= newVal) {
+                                        //  // console.log(2.1);
+                                        $input.parent().removeClass("no-match-target");
+                                        $input.parent().removeClass("exception-target").addClass("match-target");
+                                    } else {
+                                        // // console.log(2.2);
+                                        $input.parent().removeClass("match-target");
+                                        $input.parent().removeClass("exception-target").addClass("no-match-target");
+                                    }
+
+                                } else { //no calculations
+
+                                }
+
+                            }
+                        }
+                    });
+
+                }, 200);
+
+            });
+
+            $(".amountOfBulkProduceDay").children(".line-edit-value").change(function() {
+
+                var amountOfBulkProduceDayValue = checkNullorEmty($(this).val());
+                var index = $(this).parent(".amountOfBulkProduceDay").index();
+
+                var actualScrapOnLineValue = checkNullorEmty($(this).parents("tr").prev().children("td").eq(index).children(".line-edit-value").val());
+
+                var mpsaVlaue = parseFloat(actualScrapOnLineValue) / parseFloat(amountOfBulkProduceDayValue) * 100;
+
+                mpsaVlaue = checkNullorEmty((Math.round(mpsaVlaue * 100) / 100).toFixed(1));
+                // console.log(this);
+                var mpsa = $(this).parents("tr").next().children("td").eq(index).children(".line-edit-value");
+                // console.log(mpsa);
+                setTimeout(function() {
+
+                    var $input = $(mpsa);
+                    var newVal = mpsaVlaue;
+                    $input.val(mpsaVlaue);
+                    var target = $input.data('target').toString(); //get tartet
+                    var dmsCode = $input.data('dmscode'); //get dmsCode
+                    var measureCode = $input.data('measurecode'); //get measure code
+                    var lineCode = $input.data('linecode'); //get line code
+                    $.ajax({
+                        url: '/Making/UpdateMeetingResult',
+                        type: 'POST',
+                        dataType: 'json',
+                        data: {
+                            dmscode: dmsCode,
+                            lineCode: lineCode,
+                            measureCode: measureCode,
+                            result: newVal,
+                            date: currentDate
+                        },
+                        success: function(data) {
+                            if (data.status == "success") {
+
+                                $input.parent().children('.line-edit-span').show(); //show span
+                                $input.parent().children('.line-edit-span').html(newVal); // update new value to span
+                                $input.addClass('hide'); //hide the textbox
+                                $input.removeClass('input-editting'); //remove edit class to the textbox
+                                //add color
+                                // TARGET DON'T CONTAIN CALCULATIONS: target.indexOf(">")<0 && target.indexOf("<") < 0
+                                if (target.indexOf(">") >= 0) {
+
+                                    target = parseFloat(target.replace(">=", ""));
+                                    newVal = parseFloat(newVal);
+                                    if (!isNaN(target)) {
+                                        if (target <= newVal) {
+                                            $input.parent().removeClass("no-match-target");
+                                            $input.parent().removeClass("exception-target").addClass("match-target");
+                                        } else {
+                                            $input.parent().removeClass("no-match-target");
+                                            $input.parent().removeClass("exception-target").addClass("no-match-target");
+                                        }
+                                    }
+                                } else if (target.indexOf("<") >= 0) {
+                                    //   // console.log("index-<"+target.indexOf("<"));
+                                    target = parseFloat(target.replace("<=", ""));
+                                    newVal = parseFloat(newVal);
+
+                                    if (target >= newVal) {
+                                        //  // console.log(2.1);
+                                        $input.parent().removeClass("no-match-target");
+                                        $input.parent().removeClass("exception-target").addClass("match-target");
+                                    } else {
+                                        // // console.log(2.2);
+                                        $input.parent().removeClass("match-target");
+                                        $input.parent().removeClass("exception-target").addClass("no-match-target");
+                                    }
+
+                                } else { //no calculations
+
+                                }
+
+                            }
+                        }
+                    });
+
+                }, 200);
+
+            });
+
+
+            // attendance
+            var listUserId = [
+                @{
+
+                    var UserId = Model.AttendanceModel != null ? Model.AttendanceModel.ListUserIdInAttendance : new List<int>();
+                }
+
+                @for (int i = 0; i < UserId.Count; i++)
+                {
+                    var MeasureType = UserId[i];
+                    <text>
+
+     "@Html.Raw(HttpUtility.JavaScriptStringEncode(MeasureType.ToString()))"
+
+</text>
+                    if (i != UserId.Count - 1)
+                    {
+                        <text>,</text>
+                    }
+                }
+            ];
+
+
+            $("#createAttendance").click(function() {
+                var checkbox = $(":checkbox:checked").map(function() {
+                    return this.value;
+                }).get();
+
+                var note = $("#notemeeting").val();
+                var idAttendance = $("#hiddenIdOfAttandence").html();
+                var listUserIdInAttendance = checkbox;
+
+                if (listUserIdInAttendance.length > 0) {
+                    $.ajax({
+                        type: 'Post',
+                        url: "@Url.Action("CreateAttendance", "Attendance")",
+                        data: JSON.stringify({
+                            id: idAttendance,
+                            listUserIdInAttendance: listUserIdInAttendance,
+                            note: note,
+                            typeId: 2,
+                            userCreated: '@*Khang comment @User.Identity.GetUsername()*@',
+                        }),
+                        contentType: 'application/json',
+                        dataType: 'json',
+                        beforeSend: function() {
+                            $("#createAttendance").attr("disabled", "disabled");
+                            $("#createAttendance").attr("value", "save");
+                        },
+                        success: function(data) {
+                            if (data.status == "success") {
+                                $('#ResultInfo').append("<li class='messageinfo has-success'><h2 class='control-label pull-left'>Create successful!</h2></li>");
+
+                                setTimeout(function() {
+                                    $('.messageinfo').remove();
+                                    $('#createAttendance').hide();
+                                    window.location.href = "/Packing/";
+                                }, 2000);
+
+                            } else {
+                                $('#ResultInfo').append("<li class='messageinfo has-success'><h2 class='control-label pull-left'>Error</h2></li>");
+                                $("#updateAttendance").attr("value", "Update ");
+                                setTimeout(function() {
+                                    $('.messageinfo').remove();
+                                    $('#createAttendance').removeAttr("disabled");
+                                    $("#createAttendance").attr("value", "creat");
+                                    window.location.href = "/Packing/";
+                                }, 2000);
+                            }
+
+                        }
+                    });
+                } else {
+                    alert("Please choose user attend");
+                }
+            });
+
+
+            //send mail
+            $("#send-mail").on('click', function() {
+                var id = $("#hiddenIdOfAttandence").html();
+
+                $.ajax({
+                    url: '/Attendance/SendMailPacking',
+                    type: 'POST',
+                    data: JSON.stringify({
+                        attendaceId: id,
+                        type: 2
+                    }),
+                    contentType: 'application/json',
+                    dataType: 'json',
+                    beforeSend: function() {
+                        $("#send-mail").attr("disabled", "disabled");
+                        $("#send-mail").attr('value', 'Sending Mail');
+                    },
+                    success: function(data) {
+                        if (data.status == "success") {
+                            $('#send-mail').removeAttr("disabled");
+                            $("#send-mail").attr('value', 'Send Mail');
+                            alert('send email successfully');
+                        }
+                        if (data.status == "error") {
+                            $('#send-mail').removeAttr("disabled");
+                            $("#send-mail").attr('value', 'Send Mail');
+                            alert("can't send email");
+                        }
+                    }
+                });
+            });
+
+
+            $("#nav-meeting").addClass("active");
+            $(".meeting-packing").addClass("active");
+            //set readonly datepicker
+
+            $('#datepicker').prop('readonly', true);
+        });
+    </script>
+
+}
+

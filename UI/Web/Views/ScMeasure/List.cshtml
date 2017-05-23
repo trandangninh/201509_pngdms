@@ -1,0 +1,332 @@
+﻿@{
+
+    //page title
+    ViewBag.Title = "Scorecard Measure";
+    Layout = "~/Views/Shared/_KendoUILayout.cshtml";
+}
+<script src="@Url.Content("~/Scripts/kendo/2014.1.318/kendo.web.min.js")"></script>
+
+<div class="scMeasure-filter">
+    <input type="text" id="searchBySCMeasureName-txt" placeholder="Scorecard Measure Name" class="form-control" />
+    <input type="text" id="searchBySCMeasureCode-txt" placeholder="Scorecard Measure Code" class="form-control" />
+    <button id="searchSCMeasure-btn" class="form-control" title="Search">Search</button>
+</div>
+
+<div id="scMeasure-grid"></div>
+
+<script id="scMeasure-delete-button-template" type="text/x-kendo-template">
+    <button class="k-button delete-button-template" onclick="deleteScMeasuresClick()" title="Delete Selected">Delete Selected</button>
+    <a class="k-button delete-button-template" href="/Supplier/ScMeasureTarget">Update target for ScMeasure</a>
+</script>
+
+<script type="text/x-kendo-template" id="windowTemplateDeleteConfirm">
+    <p class="delete-message">Do you want to delete the scorecard measure(s)?</p>
+    <input class="k-button delete-confirm" type="button" value="Yes" />
+    <input class="k-button delete-cancel" type="button" value="No" />
+</script>
+
+<script>
+    $(document).ready(function () {
+
+        //get search data when gird read or reload
+        function getSearchStrData() {
+            return {
+                SCMeasureName: $("#searchBySCMeasureName-txt").val(),
+                SCMeasureCode: $("#searchBySCMeasureCode-txt").val()
+            };
+        }
+
+        var datasource = new kendo.data.DataSource({
+            type: "json",
+            transport: {
+                read: {
+                    url: "@Html.Raw(Url.Action("List", "ScMeasure"))",
+                    type: "POST",
+                    dataType: "json",
+                    data: getSearchStrData
+                },
+                update: {
+                    url: "@Html.Raw(Url.Action("Update", "ScMeasure"))",
+                    type: "POST",
+                    dataType: "json",
+                    complete: function (e) {
+                        if (e.responseJSON != undefined && e.responseJSON.status == "success")
+                            $("#scMeasure-grid").data("kendoGrid").dataSource.read();
+                    }
+                },
+                create: {
+                    url: "@Html.Raw(Url.Action("Create", "ScMeasure"))",
+                    type: "POST",
+                    dataType: "json",
+                    complete: function (e) {
+                        if (e.responseJSON != undefined && e.responseJSON.status == "success")
+                            $("#scMeasure-grid").data("kendoGrid").dataSource.read();
+                    }
+                }
+            },
+            schema: {
+                data: "Data",
+                total: "Total",
+                errors: "Errors",
+                model: {
+                    id: "Id",
+                    fields: {
+                        Id: { editable: false, defaultValue: 0 },
+                        Name: { editable: true, validation: { required: true } },
+                        Note: { editable: true },
+                        DisplayOrder: { editable: true, type: "number" },
+                        Code: { editable: true, validation: { required: true } },
+                        IsDisplay: { editable: true, type: "boolean", defaultValue: true },
+                        IsImported: { editable: true, type: "boolean", defaultValue: false }
+                    }
+                }
+            },
+            error: function (e) {
+                display_kendoui_grid_error(e);
+            },
+            pageSize: 10,
+            serverPaging: true,
+            serverFiltering: true,
+            serverSorting: true
+        });
+        //function textInputCodeInitialize(container, options) {
+        //    $('<input type="text" name="' + options.field + '" style="width: 320px;" class="k-input k-textbox" required/>')
+        //        .appendTo(container);
+        //}
+        function textInputNameInitialize(container, options) {
+            $('<input type="text" name="' + options.field + '" style="width: 320px;" class="k-input k-textbox" required/>')
+                .appendTo(container);
+        }
+
+        function textEditorNoteInitialize(container, options) {
+            $('<textarea name="' + options.field + '"  cols="50" rows="3" style="width: 320px;" class="k-input k-textbox"/>')
+                .appendTo(container);
+        };
+
+        //function textInputTargetInitialize(container, options) {
+        //    $('<input type="text" name="' + options.field + '" style="width: 320px;" class="k-input k-textbox"/>')
+        //        .appendTo(container);
+        //}
+
+        $("#scMeasure-grid").kendoGrid({
+            dataSource: datasource,
+            pageable: {
+                refresh: true,
+                pageSizes: ["5", "10", "15", "20"]
+            },
+            editable: {
+                mode: "popup",
+                //default title of popup editor
+                window: {
+                    title: "Create ScMeasure",
+                }
+            },
+            edit: function (e) {
+
+                //edit size of popup window
+                $(".k-edit-form-container").parent().width(500).data("kendoWindow").center();
+                $(".k-edit-buttons.k-state-default").width(484);
+
+                //change title popup editor
+                if (e.model.Id != '')
+                    e.container.kendoWindow("title", "Modify ScMeasure");
+
+                //remove lable and input of check_row when edit or create
+                $('label[for=check_row]').parent().remove();
+                $('div[data-container-for=check_row]').remove();
+
+                $('div[data-container-for=DisplayOrder] .k-widget.k-numerictextbox').width(320);
+            },
+            dataBound: onDataBound,
+            toolbar: ["create", { template: $("#scMeasure-delete-button-template").html() }],
+            scrollable: false,
+            columns: [
+                {
+                    field: "check_row",
+                    title: " ",
+                    width: 30,
+                    attributes: { class: "text_align_center" },
+                    template: "<input type='checkbox' value=#= Id# class='sel' />"
+                },
+                {
+                    field: "Code",
+                    title: "Code",
+                    width: 100,
+                    headerAttributes: { class: "text_align_center" },
+                    attributes: { class: "text_align_center" },
+                    editor: textInputNameInitialize
+                }, {
+                    field: "Name",
+                    title: "Name",
+                    width: 200,
+                    headerAttributes: { class: "text_align_center" },
+                    editor: textInputNameInitialize
+                },
+                //{
+                //    field: "Target",
+                //    title: "Target",
+                //    width: 200,
+                //    headerAttributes: { class: "text_align_center" },
+                //    //attributes: { class: "text_align_center" },
+                //    editor: textInputTargetInitialize
+                //},
+                {
+                    field: "IsDisplay",
+                    title: "Display",
+                    width: 100,
+                    headerAttributes: { class: "text_align_center" },
+                    attributes: { class: "text_align_center" },
+                    template: '<img src="@Url.Content("~/Content/img/")active-#=IsDisplay#.gif" />'
+                }, {
+                    field: "IsImported",
+                    title: "Is Imported",
+                    width: 100,
+                    headerAttributes: { class: "text_align_center" },
+                    attributes: { class: "text_align_center" },
+                    template: '<img src="@Url.Content("~/Content/img/")active-#=IsImported#.gif" />'
+                },
+                {
+                    field: "DisplayOrder",
+                    title: "DisplayOrder",
+                    width: 100,
+                    headerAttributes: { class: "text_align_center" },
+                    attributes: { class: "text_align_center" },
+                    format: "n0",
+                    template: "#=DisplayOrder#",
+                },
+                {
+                    field: "Note",
+                    title: "Note",
+                    width: 250,
+                    headerAttributes: { class: "text_align_center" },
+                    //attributes: { class: "text_align_center" },
+                    editor: textEditorNoteInitialize
+                },
+                //{
+                //    command: [
+                //        {
+                //            name: "edit",
+                //            text: { update: "Save Changes", cancel: "Cancel" }
+                //        },
+                //    ],
+                //    title: "&nbsp;",
+                //    width: "100px"
+                //}
+            ],
+        });
+
+        function display_kendoui_grid_error(e) {
+            if (e.errors) {
+                if ((typeof e.errors) == 'string') {
+                    //single error
+                    //display the message
+                    alert(e.errors);
+                } else {
+                    //array of errors
+                    //source: http://docs.kendoui.com/getting-started/using-kendo-with/aspnet-mvc/helpers/grid/faq#how-do-i-display-model-state-errors?
+                    var message = "The following errors have occurred:";
+                    //create a message containing all errors.
+                    $.each(e.errors, function (key, value) {
+                        if (value.errors) {
+                            message += "\n";
+                            message += value.errors.join("\n");
+                        }
+                    });
+                    //display the message
+                    alert(message);
+                }
+            } else {
+                alert(e.xhr.responseText);
+            }
+        }
+
+        function onDataBound(arg) {
+            //show tooltip when hover tr grid
+            $("#scMeasure-grid tbody > tr").attr('title', 'Double click on a row to edit.');
+        }
+
+        //show edit popup when double click on row on grid
+        $("#scMeasure-grid").delegate("tbody>tr", "dblclick", function () {
+            if (!$(this).hasClass('k-grid-edit-row')) {
+                $("#scMeasure-grid").data("kendoGrid").editRow($(this));
+            }
+        });
+
+        deleteScMeasuresClick = function (e) {
+            if ($("#scMeasure-grid").find("input:checked").length <= 0)
+                return;
+            deleteScMeasures();
+        };
+
+        function deleteScMeasures() {
+            //define delete popup comfirm
+            var kendoWindow = $("<div id='window'/>").kendoWindow({
+                title: "Delete scorecard measure(s)",
+                visible: false,
+                width: "400px",
+                resizable: false,
+                modal: true,
+                viewable: false,
+                content: {
+                    template: $("#windowTemplateDeleteConfirm").html()
+                }
+            });
+
+            kendoWindow.data("kendoWindow")
+                .content($("#windowTemplateDeleteConfirm").html())
+                .center().open();
+
+            //get array of id to delete
+            function deletionData() {
+                var ids = [];
+                $("#scMeasure-grid").find("input:checked").each(function (i, value) {
+                    ids.push($(value).val());
+                });
+                return ids;
+            }
+
+            kendoWindow.find(".delete-confirm,.delete-cancel")
+                .click(function () {
+                    if ($(this).hasClass("delete-confirm")) {
+                        $.ajax({
+                            url: "@Html.Raw(Url.Action("DeleteScMeasures", "ScMeasure"))",
+                            type: "POST",
+                        dataType: "json",
+                        data: {
+                            listId: deletionData()
+                        },
+                        success: function (result) {
+                            console.log(result);
+                            if (result.status != undefined && result.status == "success")
+                                $('#scMeasure-grid').data('kendoGrid').dataSource.read();
+                            else
+                                alert(result.Content);
+                        }
+                    });
+                    }
+
+                kendoWindow.data("kendoWindow").close();
+            })
+            .end();
+        }
+
+        //searchBySCMeasureName textbox press enter event
+        $("#searchBySCMeasureName-txt").keyup(function (event) {
+            if (event.keyCode == 13) {
+                $("#searchSCMeasure-btn").click();
+            }
+        });
+
+        //searchBySCMeasureCode textbox press enter event
+        $("#searchBySCMeasureCode-txt").keyup(function (event) {
+            if (event.keyCode == 13) {
+                $("#searchSCMeasure-btn").click();
+            }
+        });
+
+        //searchSCMeasure button click event
+        $("#searchSCMeasure-btn").click(function (e) {
+            $("#scMeasure-grid").data("kendoGrid").dataSource.read();
+        });
+    });
+</script>

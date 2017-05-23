@@ -1,0 +1,411 @@
+﻿@model Web.Models.Supplychain.MpsaModel
+
+<div class="box border orange">
+    <table id="supplychaingridmpsa" class="table">
+        <thead>
+            <tr>
+                <th>DMS</th>
+                <th>Measure-Making</th>
+                <th>Owner</th>
+                @for (var i = 0; i < Model.LineNames.Count; i++)
+                {
+                    <text><th>Model.LineNames[i]</th></text>
+                }
+                <th class="remark-supplychain">Remarks</th>
+            </tr>
+        </thead>
+
+        <!-- Making -->
+        <tbody>
+            <tr data-type="1" data-measurecode="@(1)" class="scdds-target">
+                <td rowspan="@(Model.Measures.Count + Model.FrMeasures.Count + 1)" class="scdds-DMS">MPSA</td>
+                <td class="measurecode">Target</td>
+                <td class="owner line-edit-mpsa"></td>
+                <td class="mpsafr line-edit-mpsa line-cols" colspan="@Model.LineNames.Count">
+                    <span>@Model.Target</span>
+                    <input type="text" class="input-edit-value-result" value="@Model.Target" />
+                </td>
+
+                <td class="remark remark-float  line-edit-mpsa ">
+                    <span>@Html.Raw(Model.Remark) </span>
+                    <textarea type="text" class="input-edit-value-result" value="@Model.Remark">@Model.Remark</textarea>
+                </td>
+            </tr>
+            @for (int i = 1; i < 5; i++)
+            {
+                <tr data-type="1" data-measurecode="@(i+1)" class="tr-edit">
+                    <td class="measurecode">@Model.SupplyChainMPSA[i].MeasureName </td>
+                    <td class="owner line-edit-mpsa">
+                        <span>
+                            @foreach (var user in Model.SupplyChainMPSA[i].ListUsernameInSupplyChainMPSA)
+                            {
+                                <text> @user; </text>
+                            }
+                        </span>
+                        <select class="drpownermpsa hide" multiple="multiple" data-placeholder="Select owner..." style="width:200px !important">
+                            @{
+                            var ownerservice = DependencyResolver.Current.GetService<IUserService>();
+                            var owner = ownerservice.GetAllUsersAsync().ToList();
+                            var userAdmin = ownerservice.GetUserByUsernameAsync("Admin").Result;
+                            if (userAdmin != null)
+                            {
+                                owner.Remove(userAdmin);
+                            }
+                            }
+                            @foreach (var user in owner)
+                            {
+                                if (Model.SupplyChainMPSA[i].ListUsernameInSupplyChainMPSA.Any(name => name == user.Username))
+                                {
+                                    <option selected>@user.Username</option>
+                                }
+                                else
+                                {
+                                    <option>@user.Username</option>
+                                }
+
+
+                            }
+
+                        </select>
+
+                    </td>
+                    <td class="fr line-cols" title="@Model.SupplyChainMPSA[i].FRRemarks">
+                        @Model.SupplyChainMPSA[i].FR
+                        <input class="input-edit-value-result" type="text" value="@Model.SupplyChainMPSA[i].FR" />
+
+                    </td>
+                    <td class="bottle line-cols" title="@Model.SupplyChainMPSA[i].BottleRemarks">
+                        <span>@Model.SupplyChainMPSA[i].Bottle </span>
+                        <input class="input-edit-value-result" type="text" value="@Model.SupplyChainMPSA[i].Bottle" />
+
+                    </td>
+                    <td class="sachet1  line-cols" title="@Model.SupplyChainMPSA[i].Sachet1Remarks">
+                        <span>@Model.SupplyChainMPSA[i].Sachet1 </span>
+                        <input class="input-edit-value-result" type="text" value="@Model.SupplyChainMPSA[i].Sachet1" />
+                    </td>
+                    <td class="sachet2  line-cols" title="@Model.SupplyChainMPSA[i].Sachet2Remarks">
+                        <span>@Model.SupplyChainMPSA[i].Sachet2 </span>
+                        <input class="input-edit-value-result" type="text" value="@Model.SupplyChainMPSA[i].Sachet2" />
+                    </td>
+                    <td class="pouch  line-cols" title="@Model.SupplyChainMPSA[i].PouchRemark">
+                        <span>@Model.SupplyChainMPSA[i].Pouch </span>
+                        <input class="input-edit-value-result" type="text" value="@Model.SupplyChainMPSA[i].Pouch" />
+                    </td>
+
+                    <td class="remark remark-float line-check-edit  line-edit-mpsa  line-remark">
+                        <span>@Html.Raw(Model.SupplyChainMPSA[i].RemarkDisplay.Replace("\n", "<br />")) </span>
+                        <textarea type="text" class="not-enter input-edit-value-result input-edit-value-result" value="@Model.SupplyChainMPSA[i].Remark">@Html.Raw(Model.SupplyChainMPSA[i].Remark)</textarea>
+                    </td>
+                </tr>
+            }
+
+            <!--End Making-->
+            <!-- Output message -->
+
+            <tr class="thead">
+                <td>Output Measure</td>
+                <td>Owner</td>
+                <td>MPSA-FR</td>
+                <td colspan="@(Model.LineNames.Count - 1)">MPSA-FE</td>
+                <td>Remarks</td>
+            </tr>
+            @for (int i = 5; i < 7; i++)
+            {
+                <tr class="tr-edit" data-measurecode="@(i+1)">
+                    <td class="measurecode"><span>@Model.SupplyChainMPSA[i].MeasureName</span> </td>
+                    <td class="owner line-edit-mpsa">
+                        <span>
+                            @foreach (var user in Model.SupplyChainMPSA[i].ListUsernameInSupplyChainMPSA)
+                            {
+                                <text> @user; </text>
+                            }
+                        </span>
+                        <select class="drpownermpsa hide" multiple="multiple" data-placeholder="Select owner..." style="width:200px !important">
+                            @{
+                            var ownerserviceMPSA = DependencyResolver.Current.GetService<IUserService>();
+                            var owner = ownerserviceMPSA.GetAllUsersAsync().ToList();
+                            var userAdmin = ownerserviceMPSA.GetUserByUsernameAsync("Admin").Result;
+                            if (userAdmin != null)
+                            {
+                                owner.Remove(userAdmin);
+                            }
+                            }
+                            @foreach (var user in owner)
+                            {
+                                if (Model.SupplyChainMPSA[i].ListUsernameInSupplyChainMPSA.Any(name => name == user.Username))
+                                {
+                                    <option selected>@user.Username</option>
+                                }
+                                else
+                                {
+                                    <option>@user.Username</option>
+                                }
+
+
+                            }
+
+                        </select>
+
+                    </td>
+                    <td class="mpsafr line-check-edit line-edit-mpsa line-cols">
+                        <span>@Model.SupplyChainMPSA[i].MPSAFR </span>
+                        <input type="text" class="input-edit-value-result" value="@Model.SupplyChainMPSA[i].MPSAFR" />
+                    </td>
+                    <td class="mpsafe line-check-edit line-edit-mpsa line-cols" colspan="4">
+                        <span>@Model.SupplyChainMPSA[i].MPSAFE </span>
+                        <input type="text" class="input-edit-value-result" value="@Model.SupplyChainMPSA[i].MPSAFE" />
+                    </td>
+                    <td class="remark remark-float line-check-edit line-edit-mpsa line-remark">
+                        <span>@Html.Raw(Model.SupplyChainMPSA[i].RemarkDisplay.Replace("\n", "<br />")) </span>
+                        <textarea type="text" class="not-enter input-edit-value-result" value=" @Model.SupplyChainMPSA[i].Remark ">@Model.SupplyChainMPSA[i].Remark</textarea>
+                    </td>
+
+
+                </tr>
+            }
+        </tbody>
+        <!--End output message-->
+    </table>
+
+</div>
+
+
+<script src="@Url.Content("~/Scripts/kendo/2014.1.318/kendo.web.min.js")"></script>
+<script>
+    var isEdittingMPSA = false;
+    var currentDate;
+    var oldval = 0;
+    var $tablempsa = jQuery("#supplychaingridmpsa");
+    $(document).ready(function () {
+
+        function validateDecimal(e) {
+
+            if (e.value.length > 0) {
+                var RE = /^[+-]?\d+(\.\d+)?$/;
+                if (RE.test(e.value)) {
+                    return true;
+                } else {
+                    return false;
+                }
+            } else {
+                return true;
+            }
+        }
+
+        function activeEdit(e) {
+            e.children(".input-edit-value-result").removeClass("hide");
+            e.children("span").addClass("hide");
+            e.children(".k-multiselect").removeClass("hide");
+            $(".k-input").removeClass("hide");
+            $(e).children(".input-edit-value-result").select();
+            e.children("div").children("div").children(".input-edit-value-result").focus();
+            e.children(".input-edit-value-result").focus();
+            e.children(".drpownermpsa").removeClass("hide");
+
+            oldval = e.children('.input-edit-value-result').val();
+            setTimeout(function () {
+                isEdittingMPSA = true;
+            }, 100);
+
+        }
+        $tablempsa.on("tr.td.next", function (e, $input) {
+            $input = $($input);
+            var $nextInRowTd = $input.parent(".line-check-edit").next();
+            if ($nextInRowTd.length > 0) {
+                activeEdit($nextInRowTd);
+            } else {
+
+                var $trParent = $input.parents("tr");
+                var $nextTr = $trParent.next();
+                var currentTdIndex = $trParent.next().children(".line-check-edit").index();
+                if ($nextTr.length > 0 && $nextTr.hasClass("tr-edit")) {
+                    var $nextTd = $nextTr.children("td").eq(currentTdIndex);
+                    if ($nextTd.length > 0) {
+                        activeEdit($nextTd);
+                    }
+                } else {
+                    $nextTr = $input.parents("tr").next().next();
+                    var $nextTd = $nextTr.children(".line-check-edit").first();
+                    if ($nextTd.length > 0) {
+                        activeEdit($nextTd);
+                    }
+                }
+            }
+
+        });
+
+
+        // gird supply chain\
+        var optional = $(".drpownermpsa").kendoMultiSelect().data("kendoMultiSelect");
+        $("#tabresult td .input-edit-value-result").addClass("hide");
+        //$("#tabresult td select").addClass("hide");
+        var isEdittingMPSA = false;
+        $(".line-edit-mpsa").on('click', function () { // target
+
+            if (isEdittingMPSA == false) {
+                activeEdit(jQuery(this));
+            }
+        });
+
+
+        function editvalueMPSA(e) {
+            var $input = jQuery(e);
+            var $tr = jQuery($input.parent().parent());
+
+
+            //if input exist and on edit mode
+            if ($input.length > 0 //if textbox is on active
+                    && isEdittingMPSA //if on edit mode
+            ) {
+
+                var newVal = $input.val();
+                if (newVal != oldval) { //validate new value
+                    var owner = $tr.children(".owner").children(".drpownermpsa").children(".drpownermpsa").val();
+                    var measureCode = $tr.data('measurecode');
+                    var sachet1 = $tr.children(".sachet1").children(".input-edit-value-result").val();
+                    var sachet2 = $tr.children(".sachet2").children(".input-edit-value-result").val();
+                    var fr = $tr.children(".fr").children(".input-edit-value-result").val();
+                    var bottle = $tr.children(".bottle").children(".input-edit-value-result").val();
+                    var pouch = $tr.children(".pouch").children(".input-edit-value-result").val();
+                    var remark = $tr.children(".remark").children(".input-edit-value-result").val();
+                    var mpsafr = $tr.children(".mpsafr").children(".input-edit-value-result").val();
+                    var mpsafe = $tr.children(".mpsafe").children(".input-edit-value-result").val();
+                    $.ajax({
+                        url: '/SupplyChain/UpdateMPSA',
+                        type: 'POST',
+                        data: JSON.stringify({
+                            MeasureCode: measureCode,
+                            ListUsernameInSupplyChainMPSA: owner,
+                            FR: fr,
+                            Sachet1: sachet1,
+                            Sachet2: sachet2,
+                            Bottle: bottle,
+                            Pouch: pouch,
+                            Remark: remark,
+                            MPSAFR: mpsafr,
+                            MPSAFE: mpsafe,
+                            Date: currentDate
+                        }),
+                        contentType: 'application/json',
+                        dataType: 'json',
+                        success: function (data) {
+                            if (data.status == "success") {
+
+                                $input.parent().children('span').removeClass("hide"); //show span
+                                $input.parent().children('span').html(newVal.replace(/\n/g, "<br />"));
+                                $input.addClass("hide");
+
+                            }
+                        }
+                    });
+                } else {
+                    //if value not change
+
+
+                    $input.parent().children('span').removeClass("hide"); //show span
+                    $input.addClass("hide");
+
+                }
+
+            } else {
+
+            }
+            isEdittingMPSA = false; //remove edit mode
+        }
+
+
+        jQuery(".line-edit-mpsa").children(".input-edit-value-result")
+          .keypress(function (event) {
+
+              var charCode = event.which || event.keyCode;
+              if (charCode == 13) {
+
+                  if (!$(this).hasClass("not-enter")) {
+                      event.preventDefault();
+                      editvalueMPSA(this);
+                      isEdittingMPSA = false; //remove edit mode
+                      $tablempsa.trigger("tr.td.next", this);
+                  }
+
+              }
+
+          })
+          .blur(function () {
+
+              editvalueMPSA(this);
+              isEdittingMPSA = false; //remove edit mode
+
+          });
+
+
+
+
+        //end gird supply chain
+        jQuery(".line-edit-mpsa .k-input").on('blur', function () {
+
+            var $input = jQuery(this);
+            var $tr = jQuery($input.parent().parent().parent().parent());
+
+            //if input exist and on edit mode
+            if ($input.length > 0 //if textbox is on active
+                    && isEdittingMPSA //if on edit mode
+            ) {
+
+
+                var owner = $input.parent().parent().children(".drpownermpsa").val();
+
+                var measureCode = $tr.data('measurecode');
+                var sachet1 = $tr.children(".sachet1").children(".input-edit-value-result").val();
+                var sachet2 = $tr.children(".sachet2").children(".input-edit-value-result").val();
+                var fr = $tr.children(".fr").children(".input-edit-value-result").val();
+                var bottle = $tr.children(".bottle").children(".input-edit-value-result").val();
+                var pouch = $tr.children(".pouch").children(".input-edit-value-result").val();
+                var remark = $tr.children(".remark").children(".input-edit-value-result").val();
+                var mpsafr = $tr.children(".mpsafr").children(".input-edit-value-result").val();
+                var mpsafe = $tr.children(".mpsafe").children(".input-edit-value-result").val();
+                $.ajax({
+                    url: '/SupplyChain/UpdateMPSA',
+                    type: 'POST',
+                    data: JSON.stringify({
+                        MeasureCode: measureCode,
+                        ListUsernameInSupplyChainMPSA: owner,
+
+                        Sachet1: sachet1,
+                        Sachet2: sachet2,
+                        FR: fr,
+                        Bottle: bottle,
+                        Pouch: pouch,
+                        Remark: remark,
+                        MPSAFR: mpsafr,
+                        MPSAFE: mpsafe,
+                        Date: currentDate
+                    }),
+                    contentType: 'application/json',
+                    dataType: 'json',
+                    success: function (data) {
+                        if (data.status == "success") {
+                            isEdittingMPSA = false; //remove edit mode
+                            $input.parent().parent().parent().children('span').removeClass("hide"); //show span
+                            var string = "";
+                            if (owner != null) {
+                                for (var i = 0; i < owner.length ; i++) {
+                                    string += owner[i] + "; ";
+                                }
+                            }
+                            $input.parent().parent().parent().children('span').html(string);
+                            $input.parent().parent().addClass("hide");
+                            $input.addClass("hide");
+                        }
+                    }
+                });
+
+
+            }
+
+        });
+
+
+    });
+
+</script>
+

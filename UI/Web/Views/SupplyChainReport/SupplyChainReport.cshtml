@@ -1,0 +1,269 @@
+﻿@using Entities.Domain
+@using Nois.Web.Framework.Kendoui;
+@using Service.Users
+@model List<Web.Models.SupplyChain.SupplyChainModel>
+@{
+    ViewBag.Title = "Supply Chain ";
+    Layout = "~/Views/Shared/_KendoUILayout.cshtml";
+}
+
+<div class="form-group">
+
+    <div class="pull-left " style="padding-right:0; margin-bottom:5px">
+        <a id="export-excel" href="/SupplyChainReport/ExportToExcel" class="btn btn-info btn-info-custom">Export To Excel</a>
+    </div>
+    @if (User.Identity.Name != "")
+    {
+        <div class="pull-left col-xs-2" style="padding-right: 0; margin-bottom: 5px">
+            <button class="btn btn-info btn-info-custom" id="send-mail" title="Send Mail">
+
+                Send Mail
+            </button>
+            <input type="hidden" id="date" name="date" value="" />
+        </div>
+    <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Cancel</span></button>
+                    <h4 class="modal-title" id="myModalLabel"> Send Mail</h4>
+                </div>
+                <div class="modal-body">
+                    <table style="width:100%">
+
+                        <tr>
+                            <td>Input Email</td>
+                            <td>
+                                <select class="listEmail" multiple="multiple" name="listEmail" data-placeholder="Select owner..." style="width:250px !important">
+                                    @{
+        var ownerservice = DependencyResolver.Current.GetService<IUserService>();
+        var owner = ownerservice.GetAllUsersAsync();
+                                    }
+                                    @foreach (var user in owner)
+                                    {
+                                        <option>@ownerservice.GetUserByUsernameAsync(user.Username).Result.Email</option>
+                                    }
+
+                                </select>
+                            </td>
+                        </tr>
+
+                    </table>
+
+                </div>
+                <div class="modal-footer">
+                    <button id="btn-close" type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                    <button id="btn-send" type="button" class="btn btn-primary">Send</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    }
+
+    <div class="pull-right " style="padding-right:0; margin-bottom:5px">
+
+        <div style="float:left; padding:10px 30px">To</div>  <input type="text" id="toDatepicker"  class="datepicker-fullscreen" style="width: 150px;" />
+
+    </div>
+
+    <div class="pull-right col-xs-3" style="padding-right:0; margin-bottom:5px">
+        <div style="float:left; padding:10px 30px">From</div>  <input type="text"  id="fromDatepicker" class="datepicker-fullscreen" style="width: 150px;" />
+
+    </div>
+
+</div>
+
+<div class="row">
+    <div class="col-md-12">
+        <!-- BOX -->
+        <div class="box border blue">
+          
+            <div class="">
+                   
+                        <!-- Result -->
+                        <div class="tab-pane fade in active" id="tabresult">
+                            @Html.Partial("_SupplyChainReport", Model)
+                        </div>
+
+                        <!-- /Result -->
+                        <div id="bottom_anchor"></div>
+                   
+                </div>
+        </div>
+
+    </div>
+</div>
+
+@section bottomjs
+{
+    <script src="@Url.Content("~/Scripts/kendo/2014.1.318/kendo.web.min.js")"></script>
+<script src="@Url.Content("~/Scripts/moment.min.js")"></script>
+    <script>
+        var IsEditting = false;
+        var currentDate;
+        var oldval = 0;
+        $(document).ready(function () {
+
+            function getURLParameter(name) { // get parameter url
+                return decodeURIComponent(
+                    (location.search.match(RegExp("[?|&]" + name + '=(.+?)(&|$)')) || [, null])[1]
+                );
+            }
+
+            var fromDate = getURLParameter('fromDate'); // from date
+            if (fromDate != "null") { // get from date to url
+
+                $("#fromDatepicker").val(fromDate);
+                $("#fromDatepicker").val(fromDate);
+                $("#fromDate").val(fromDate);
+            } else {
+                $("#fromDatepicker").val($.datepicker.formatDate('mm/dd/yy', new Date())); // set current date for from day
+                fromDate = $.datepicker.formatDate('mm/dd/yy', new Date());
+                $("#fromDate").val($.datepicker.formatDate('mm/dd/yy', new Date()));
+            }
+
+            var toDate = getURLParameter('toDate'); // to date
+            if (toDate != "null") { // get to date to url
+                $("#toDatepicker").val(toDate);
+                $("#toDate").val(toDate);
+            } else {
+                $("#toDatepicker").val($.datepicker.formatDate('mm/dd/yy', new Date())); // set current date for from day
+                toDate = $.datepicker.formatDate('mm/dd/yy', new Date());
+                $("#toDate").val($.datepicker.formatDate('mm/dd/yy', new Date()));
+            }
+
+            $("#export-excel").attr("href", "/SupplyChainReport/ExportToExcel?fromDate=" + fromDate + "&toDate=" + toDate); // set href for #export-excel to export excell
+
+            // date click
+            var currentDate = new Date();
+            $("#fromDatepicker").kendoDatePicker({
+                origin: "top right",
+                position: "bottom right",
+
+                max: new Date(),
+                change: function () {
+                    $('.overlay-loading').show();
+                    setTimeout(function () {
+                        // Do something after 5 seconds
+
+                        var fromDate = $('#fromDatepicker').data('kendoDatePicker').value();
+                        var toDate = $('#toDatepicker').data('kendoDatePicker').value();
+                        var maxDate = moment(fromDate);
+                        maxDate.format('L');
+                        maxDate.add('days', 30);
+
+                        var checkDay = maxDate;
+                        var checkMaxDate = Math.floor((currentDate - Date.parse(fromDate)) / 86400000); // check total day
+
+                        if (checkMaxDate < 30) {
+                            checkDay = moment(new Date());
+                        }
+                        if (fromDate > toDate) {
+                            window.location.href = "/SupplyChainReport?fromDate=" + kendo.toString(fromDate, 'd') + "&toDate=" + checkDay.format('L');
+                            $("#export-excel").attr("href", "/SupplyChainReport/ExportToExcel?fromDate=" + kendo.toString(fromDate, 'd') + "&toDate=" + checkDay.format('L'));
+                        } else {
+                            if (checkDay < toDate) {
+                                window.location.href = "/SupplyChainReport?fromDate=" + kendo.toString(fromDate, 'd') + "&toDate=" + checkDay.format('L');
+                                $("#export-excel").attr("href", "/SupplyChainReport/ExportToExcel?fromDate=" + kendo.toString(fromDate, 'd') + "&toDate=" + checkDay.format('L'));
+                            } else {
+                                window.location.href = "/SupplyChainReport?fromDate=" + kendo.toString(fromDate, 'd') + "&toDate=" + kendo.toString(toDate, 'd');
+                                $("#export-excel").attr("href", "/SupplyChainReport/ExportToExcel?fromDate=" + kendo.toString(fromDate, 'd') + "&toDate=" + kendo.toString(toDate, 'd'));
+                            }
+
+                        }
+                    }, 500);
+
+                }
+            });
+
+
+            var maxDate = $('#fromDatepicker').data('kendoDatePicker').value();
+            var checkDay1 = moment(maxDate);
+            checkDay1.format('L');
+
+            var checkMaxDate1 = Math.floor((currentDate - Date.parse(fromDate)) / 86400000); // check total day
+
+            if (checkMaxDate1 < 30) {
+                checkDay1 = currentDate;
+            } else {
+                checkDay1.add('days', 30);
+            }
+
+            var minDate = $('#fromDatepicker').data('kendoDatePicker').value();
+            $("#toDatepicker").kendoDatePicker({
+                origin: "top right",
+                position: "bottom right",
+                min: minDate,
+                max: new Date(checkDay1),
+                change: function () {
+                    $('.overlay-loading').show();
+                    var fromDate = $('#fromDatepicker').data('kendoDatePicker').value();
+                    var toDate = $('#toDatepicker').data('kendoDatePicker').value();
+                    window.location.href = "/SupplyChainReport?fromDate=" + kendo.toString(fromDate, 'd') + "&toDate=" + kendo.toString(toDate, 'd');
+                    $("#export-excel").attr("href", "/SupplyChainReport/ExportToExcel?fromDate=" + kendo.toString(fromDate, 'd') + "&toDate=" + kendo.toString(toDate, 'd'));
+
+                }
+            });
+
+            // send mail
+
+            $(".listEmail").kendoMultiSelect().data("kendoMultiSelect");
+
+            $(".sendmail-popup").hide();
+            $("#send-mail").click(function () {
+                $("#myModal").modal('show');
+
+            }); // open popup
+
+
+            $("#btn-send").on('click', function () {
+                var listEmail = "";
+
+                $(".listEmail option:selected").each(function () {
+                    listEmail += $(this).text();
+                    listEmail += ";";
+                });
+                $.ajax({
+                    url: '/SupplyChainReport/SendMailWithAttachment',
+                    type: 'POST',
+                    data: JSON.stringify({
+                        emails: listEmail,
+                        fromDate: $('#fromDatepicker').data('kendoDatePicker').value(),
+                        toDate: $('#toDatepicker').data('kendoDatePicker').value(),
+
+                    }),
+                    contentType: 'application/json',
+                    dataType: 'json',
+                    processData: false,
+                    beforeSend: function () {
+                        $("#btn-send").attr("disabled", "disabled");
+                        $("#btn-send").attr('value', 'Sending Mail');
+                    },
+                    success: function (data) {
+                        if (data.status == "success") {
+                            $('#btn-send').removeAttr("disabled");
+                            $("#btn-send").attr('value', 'Send Mail');
+                            $("#myModal").modal('hide');
+                            alert('send email successfully');
+                        }
+                    }
+                });
+            });
+
+
+
+            //end send mail
+            $("#nav-meeting").addClass("active");
+
+            $(".report-supplychain").addClass("active");
+            //set readonly datepicker
+
+            $('#fromDatepicker').prop('readonly', true);
+            $('#toDatepicker').prop('readonly', true);
+        });
+
+    </script>
+}
+
+

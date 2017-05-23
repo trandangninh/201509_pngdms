@@ -1,0 +1,191 @@
+﻿@{
+
+    //page title
+    ViewBag.Title = "MQS Measure > Target Setting";
+    Layout = "~/Views/Shared/_KendoUILayout.cshtml";
+}
+<script src="@Url.Content("~/Scripts/kendo/2014.1.318/kendo.web.min.js")"></script>
+
+<div class="scoreCard-fillter-group row">
+
+    <span class="col-sm-1 col-sm-offset-1">Supplier:</span>
+    <div class="pull-left">
+        <input id="supplierCbxFiler" />
+    </div>
+
+    <button class="form-control pull-left" onclick="Search()" title="Search">Search</button>
+
+</div>
+
+<div id="scMeasureTarget-grid"></div>
+
+<script id="back-template" type="text/x-kendo-template">
+    <a href='/ScMeasure' class='k-button k-button-icontext btn-info-custom' title=' Back to ScMeasure'>
+        <span class="k-icon k-i-arrow-w"></span>Back to ScMeasure
+    </a>
+</script>
+<script>
+
+    //get data Supplier filter for combobox popup editor
+    var dataSourceSupplierFilter = new kendo.data.DataSource({
+        transport: {
+            read: {
+                dataType: "json",
+                type: "POST",
+                url: "@Html.Raw(Url.Action("GetAllSupplier", "QualityAlert"))"
+            }
+        },
+        //schema: {
+        //    parse: function (data) {
+        //        data.forEach(function (entry) {
+        //            dataSourceSupplier._data.push(entry);
+        //        });
+        //        //data.unshift({ Id: "0", Name: "--  Choose supplier  --" });
+        //        return data;
+        //    }
+        //}
+    });
+
+    $("#supplierCbxFiler").kendoComboBox({
+        dataTextField: "Name",
+        dataValueField: "Id",
+        dataSource: dataSourceSupplierFilter,
+        width: 20,
+        height: 100,
+        index: 0,
+        dataBound: function (e) {
+        },
+        dataBinding: function (e) {
+        },
+        change: function (e) {
+        }
+    });
+    var supplierCbxFilter = $("#supplierCbxFiler").data("kendoComboBox");
+
+    var datasource = new kendo.data.DataSource({
+        type: "json",
+        transport: {
+            read: {
+                url: "@Html.Raw(Url.Action("ScMeasureTarget", "Supplier"))",
+                type: "POST",
+                dataType: "json"
+            },
+            update: {
+                url: "@Html.Raw(Url.Action("UpdateScMeasureTarget", "Supplier"))",
+                //url: "/Supplier/UpdateScMeasureTarget?supplierId=" + supplierCbxFilter.value(),
+
+                type: "POST",
+                dataType: "json",
+                data: function () {
+                    return { supplierId: supplierCbxFilter.value() }
+                },
+                complete: function (e) {
+                    if (e.responseJSON != undefined && e.responseJSON.status == "success")
+                        refreshGrid();
+                }
+            },
+        },
+        schema: {
+            data: "Data",
+            total: "Total",
+            errors: "Errors",
+            model: {
+                id: "Id",
+                fields: {
+                    Id: { editable: false },
+                    ScMeasureName: { editable: false, },
+                    ScMeasureId: { editable: false },
+                    Target: { editable: true }
+                }
+            }
+        },
+        error: function (e) {
+            display_kendoui_grid_error(e);
+        },
+        pageSize: 10,
+        serverPaging: true,
+        serverFiltering: true,
+        serverSorting: true
+    });
+
+    var grid = $("#scMeasureTarget-grid").kendoGrid({
+        dataSource: datasource,
+        pageable: {
+            refresh: true,
+            pageSizes: ["5", "10", "15", "20"]
+        },
+        editable: {
+            mode: "inline",
+            //default title of popup editor
+            window: {
+                title: "",
+            }
+        },
+        edit: function (e) {
+        },
+        toolbar: [{ template: $("#back-template").html() }],
+        scrollable: false,
+        columns: [
+            {
+                field: "ScMeasureName",
+                title: "Scorecard Measure",
+                width: 200,
+                headerAttributes: { class: "text_align_center" },
+                //attributes: { class: "text_align_center" },
+            },
+            {
+                field: "Target",
+                title: "Target",
+                width: 200,
+                headerAttributes: { class: "text_align_center" }
+            },
+            {
+                command: [
+                    {
+                        name: "edit",
+                        text: { update: "Save Changes", cancel: "Cancel" }
+                    },
+                    //{
+                    //    text: 'Delete',
+                    //    click: deleteItem
+                    //}
+                ],
+                title: "&nbsp;",
+                attributes: { class: "text_align_center" },
+                width: "250px"
+            }
+        ],
+    });
+
+    function display_kendoui_grid_error(e) {
+        if (e.errors) {
+            if ((typeof e.errors) == 'string') {
+                //single error
+                //display the message
+                alert(e.errors);
+            } else {
+                //array of errors
+                //source: http://docs.kendoui.com/getting-started/using-kendo-with/aspnet-mvc/helpers/grid/faq#how-do-i-display-model-state-errors?
+                var message = "The following errors have occurred:";
+                //create a message containing all errors.
+                $.each(e.errors, function (key, value) {
+                    if (value.errors) {
+                        message += "\n";
+                        message += value.errors.join("\n");
+                    }
+                });
+                //display the message
+                alert(message);
+            }
+        } else {
+            alert(e.xhr.responseText);
+        }
+    }
+
+    function refreshGrid() {
+        grid.data("kendoGrid").dataSource.read({ supplierId: supplierCbxFilter.value() });
+    }
+    function Search() {
+        refreshGrid();
+    }
+</script>

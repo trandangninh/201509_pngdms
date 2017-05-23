@@ -1,0 +1,1897 @@
+﻿@using RepositoryPattern.Infrastructure
+@using Service.Security;
+@model Web.Models.QualityAlert.QualityAlertFillterModel
+@{
+
+    //page title
+    ViewBag.Title = "Quality Alerts";
+    Layout = "~/Views/Shared/_KendoUILayout.cshtml";
+    var permissionService = EngineContext.Current.Resolve<IPermissionService>();
+}
+<script src="@Url.Content("~/Scripts/kendo/2014.1.318/kendo.web.min.js")"></script>
+<script src="~/Scripts/jquery.filedownload.js"></script>
+
+<div class="qualityalert-fillter-group">
+    <button type="button" class="btn btn-primary collapsed" data-toggle="collapse" data-target="#filter-region" title="filter">
+        <span class="glyphicon glyphicon-search" aria-hidden="true"></span>
+        Filter
+        <span class="pull-right"><i class="glyphicon glyphicon-chevron-up"></i></span>
+    </button>
+    <div id="filter-region" class="row collapse">
+        <div class="col-sm-12">
+            <div class="pull-left col-sm-3">
+                <div>Department: </div>
+                <input id="department-fitter-cbx" />
+            </div>
+            <div class="pull-left col-sm-3">
+                <div>Line: </div>
+                <input id="line-fitter-cbx" />
+            </div>
+            <div class="pull-left col-sm-3">
+                <div>From: </div>
+                <input id="quality-alert-datetimepicker-from" />
+            </div>
+            <div class="pull-left col-sm-3">
+                <div>To:</div>
+                <input id="quality-alert-datetimepicker-to" />
+            </div>
+        </div>
+        <div class="col-sm-12">
+            <div class="pull-left col-sm-3">
+                <div>Category: </div>
+                <input id="category-fitter-cbx" />
+            </div>
+            <div class="pull-left col-sm-3">
+                <div>Complaint Type: </div>
+                <input id="complainttype-fitter-cbx" />
+            </div>
+            <div class="pull-left col-sm-3">
+                <div>Classification Defect: </div>
+                <input id="classificationdefect-fitter-cbx" />
+            </div>
+            <div class="pull-left col-sm-3">
+                <div>Defect Repeat: </div>
+                <input id="defectrepeat-fitter-cbx" />
+            </div>
+        </div>
+        <div class="col-sm-12">
+            <div class="pull-left col-sm-3">
+                <div>Supplier Reply Date: </div>
+                <input id="supplierreplydate-fitter-date"/>
+            </div>
+
+            <div class="pull-left col-sm-3">
+                <div>Supplier: </div>
+                <input id="supplier-fitter-cbx"/>
+            </div>
+
+            <div class="pull-left col-sm-3">
+                <div>Status: </div>
+                <input id="status-fitter-cbx"/>
+            </div>
+
+            <div class="pull-left col-sm-1" style="margin-top: 18px;">
+                <button class="btn btn-info btn-info-custom" onclick="Search()" title="Search">
+                    <i class="glyphicon glyphicon-search"></i>
+                    Search
+                </button>
+            </div>
+            <div class="pull-left col-sm-1" style="margin-top: 18px;">
+                <button class="btn btn-info btn-info-custom" onclick="SearchAll()" title="Show all Alert">
+                    <i class="glyphicon glyphicon-list-alt"></i>
+                    Show all Alert
+                </button>
+            </div>
+        </div>
+        <div class="col-sm-12">
+            <div class="pull-left col-sm-3">
+                <div>Found by Function: </div>
+                <input id="foundByFunction-fitter-cbx" />
+            </div>
+            <div class="pull-left col-sm-3">
+            </div>
+            <div class="pull-left col-sm-3">
+            </div>
+            <div class="pull-left col-sm-3">
+            </div>
+        </div>
+    </div>
+</div>
+<!-- grid element -->
+<div id="qualityAlert-grid"></div>
+<div id="scrollbar">
+    <div></div>
+</div>
+<script id="tooltip-template" type="text/x-kendo-template">
+    <span class="k-invalid-msg">#=message#</span>
+</script>
+<script id="quality-alert-toolbar-template" type="text/x-kendo-template">
+    @*not allow delete when not have permission*@
+    @if (permissionService.Authorize(PermissionProvider.QAGuest) || permissionService.Authorize(PermissionProvider.QAMPD))
+    {
+        <text>
+             @* Remove delete QA function *@    
+            @*<button id="delete-qualityalert" class="btn btn-info btn-info-custom" title="Delete Selected">
+                <i class="glyphicon glyphicon-trash"></i>
+                Delete Selected
+            </button>*@
+        </text>
+    }
+
+
+    <a class="btn btn-info btn-info-custom" id="export-all-excel" title="Export All to Excel">
+        <i class="glyphicon glyphicon-export"></i>
+        Export All to Excel
+    </a>
+    <a class="btn btn-info btn-info-custom" id="export-selected-excel" title="Export Selected to Excel">
+        <i class="glyphicon glyphicon-export"></i>
+        Export Selected to Excel
+    </a>
+    <a class="btn btn-info btn-info-custom" id="export-ComplainLetter" title="Export Complaint Letter">
+        <i class="glyphicon glyphicon-export"></i>
+        Export Complaint Letter
+    </a>
+</script>
+
+@*template delete confirm*@
+<script type="text/x-kendo-template" id="windowTemplateDeleteConfirm">
+    <p id="textOfDeleteConfirm">Are you sure you want to delete selected Quality alerts. They will be deleted permently?</p>
+    <input class="k-button delete-confirm" type="button" value="Yes" />
+    <input class="k-button delete-cancel" type="button" value="No" />
+</script>
+
+@*template open outlook confirm*@
+<script type="text/x-kendo-template" id="windowTemplateOpenOutlookConfirm">
+    <p class="title-message">Are you sure you want to open outlook?</p>
+    <input class="k-button open-confirm yes-confirm" type="button" value="Yes" />
+    <input class="k-button open-cancel no-cancel" type="button" value="No" />
+</script>
+
+@*template of popup editor*@
+<script class="k-popup" id="popup_editor_qualityalert" type="text/x-kendo-template">
+    @if (permissionService.Authorize(PermissionProvider.QAMPD))
+    {
+        Html.RenderPartial("QACreateTemplateForQAPMD");
+    }
+    else if (permissionService.Authorize(PermissionProvider.QAGuest))
+    {
+        Html.RenderPartial("QACreateTemplateForQAGuest");
+    }
+
+</script>
+
+<script>
+
+    var global_ClassificationId;
+    //get data QualityAlert Status for combobox popup editor
+    var dataSourceQualityAlertStatus = new kendo.data.DataSource({
+        transport: {
+            read: {
+                dataType: "json",
+                type: "POST",
+                url: "@Html.Raw(Url.Action("GetAllQualityAlertStatus", "QualityAlert"))"
+            }
+        }
+    });
+
+    //get data Material for combobox popup editor
+    @*var dataSourceMaterial = new kendo.data.DataSource({
+        transport: {
+            read: {
+                dataType: "json",
+                type: "POST",
+                url: "@Html.Raw(Url.Action("GetAllMaterial", "QualityAlert"))"
+            }
+        }
+    });*@
+
+    //get data Supplier for combobox popup editor
+    var dataSourceSupplier = new kendo.data.DataSource({
+        transport: {
+            read: {
+                dataType: "json",
+                type: "POST",
+                url: "@Html.Raw(Url.Action("GetAllSupplier", "QualityAlert"))"
+            }
+        }
+    });
+
+    //get data Classification Defect for combobox popup editor
+    var dataSourceClassificationDefect = new kendo.data.DataSource({
+        transport: {
+            read: {
+                dataType: "json",
+                type: "POST",
+                url: "@Html.Raw(Url.Action("GetAllClassificationDefect", "QualityAlert"))"
+            }
+        }
+    });
+
+    //get data Complaint type for filler editor
+    var dataSourceComplaintType = new kendo.data.DataSource({
+        transport: {
+            read: {
+                dataType: "json",
+                type: "POST",
+                url: "@Html.Raw(Url.Action("GetAllComplaintType", "QualityAlert"))"
+            }
+        }
+    });
+
+    //get data Defect repeat for filler editor
+    var dataSourceDefectRepeat = new kendo.data.DataSource({
+        transport: {
+            read: {
+                dataType: "json",
+                type: "POST",
+                url: "@Html.Raw(Url.Action("GetAllDefectRepeat", "QualityAlert"))"
+            }
+        }
+    });
+
+    //get data Category for combobox popup editor
+    var dataSourceCategory = new kendo.data.DataSource({
+        transport: {
+            read: {
+                dataType: "json",
+                type: "POST",
+                url: "@Html.Raw(Url.Action("GetAllCategory", "QualityAlert"))"
+            }
+        }
+    });
+
+
+    //get data Supplier filter for combobox popup editor
+    var dataSourceSupplierFilter = new kendo.data.DataSource({
+        transport: {
+            read: {
+                dataType: "json",
+                type: "POST",
+                url: "@Html.Raw(Url.Action("GetAllSupplierWithEmail", "QualityAlert"))"
+            }
+        },
+        schema: {
+            parse: function (data) {
+                data.unshift({ Id: "0", Name: "--  Any  --", Email: "" });
+                return data;
+            }
+        }
+    });
+
+
+    var dataSourceCategoryFilter = new kendo.data.DataSource({
+        transport: {
+            read: {
+                dataType: "json",
+                type: "POST",
+                url: "@Html.Raw(Url.Action("GetAllCategory", "QualityAlert"))"
+            }
+        },
+        schema: {
+            parse: function (data) {
+                data.unshift({ Id: "0", Name: "--  Any  --" });
+                return data;
+            }
+        }
+    });
+
+    var dataSourceComplaintTypeFilter = new kendo.data.DataSource({
+        transport: {
+            read: {
+                dataType: "json",
+                type: "POST",
+                url: "@Html.Raw(Url.Action("GetAllComplaintType", "QualityAlert"))"
+            }
+        },
+        schema: {
+            parse: function (data) {
+                data.unshift({ Id: "0", Name: "--  Any  --" });
+                return data;
+            }
+        }
+    });
+
+    var dataSourceClassificationDefectFilter = new kendo.data.DataSource({
+        transport: {
+            read: {
+                dataType: "json",
+                type: "POST",
+                url: "@Html.Raw(Url.Action("GetAllClassificationDefect", "QualityAlert"))"
+            }
+        },
+        schema: {
+            parse: function (data) {
+                data.unshift({ Id: "0", Name: "--  Any  --" });
+                return data;
+            }
+        }
+    });
+
+    var dataSourceDefectRepeatFilter = new kendo.data.DataSource({
+        transport: {
+            read: {
+                dataType: "json",
+                type: "POST",
+                url: "@Html.Raw(Url.Action("GetAllDefectRepeat", "QualityAlert"))"
+            }
+        },
+        schema: {
+            parse: function(data) {
+                data.unshift({ Id: "0", Name: "--  Any  --" });
+                return data;
+            }
+        }
+    });
+
+    var dataClassification = [];
+
+    function getListClassification() {
+        $.ajax({
+            url: "@Html.Raw(Url.Action("GetAllClassification", "Classification"))",
+            type: "POST",
+            dataType: "json",
+            data: { FoundByFunctionId: null },
+            success: function(result) {
+                dataClassification = result;
+            }
+        });
+    }
+    getListClassification();
+
+    //get data Classification for combobox popup editor
+    var dataSourceClassification = new kendo.data.DataSource({
+        transport: {
+            read: {
+                dataType: "json",
+                type: "POST",
+                url: "@Html.Raw(Url.Action("GetAllClassification", "Classification"))"
+                ,data: { FoundByFunctionId: null }
+            }
+        }
+        ,
+        schema: {
+            parse: function (data) {
+                data.unshift({Id: "0", Name: "--  None  --"});
+                return data;
+            }
+        }
+    });
+
+    //get data Line for combobox popup editor
+    var dataSourceLine = new kendo.data.DataSource({
+        transport: {
+            read: {
+                dataType: "json",
+                type: "POST",
+                url: "@Html.Raw(Url.Action("GetAllLine", "Line"))"
+            }
+        }
+    });
+
+    //get data FoundByFunction for combobox popup editor
+    var dataSourceFoundByFunction = new kendo.data.DataSource({
+        transport: {
+            read: {
+                dataType: "json",
+                type: "POST",
+                url: "@Html.Raw(Url.Action("GetAllFoundByFunction", "FoundByFunction"))"
+            }
+        },
+        schema: {
+            parse: function(data) {
+                data.unshift({ Id: "0", Name: "--  None  --" });
+                return data;
+            }
+        }
+    });
+
+    //get data Owner for combobox popup editor
+    var dataSourceOwner = new kendo.data.DataSource({
+        transport: {
+            read: {
+                dataType: "json",
+                type: "POST",
+                url: "@Html.Raw(Url.Action("GetAllUser", "QualityAlert"))"
+            }
+        }
+        ,
+        schema: {
+            parse: function (data) {
+                //data.unshift({Id: "0", Name: "--  Choose Owner  --"});
+                return data;
+            }
+        }
+    });
+
+
+    //get data Department for combobox popup editor
+    var dataSourceDepartmentFillter = new kendo.data.DataSource({
+        transport: {
+            read: {
+                dataType: "json",
+                type: "POST",
+                url: "@Html.Raw(Url.Action("GetAllDepartment", "Department"))"
+            }
+        }
+        ,
+        schema: {
+            parse: function (data) {
+                //data.unshift({ Id: "0", Name: "--  All Department  --" });    //has existing
+                return data;
+            }
+        }
+    });
+
+    $("#department-fitter-cbx").kendoComboBox({
+        dataTextField: "Name",
+        dataValueField: "Id",
+        dataSource: dataSourceDepartmentFillter,
+        width: 20,
+        height: 100,
+        index: 0,
+        dataBound: function (e) {
+        },
+        change: function (e) {
+            var temp = [];
+            dataLineFilter.forEach(function (element, index, array) {
+                if (e.sender._selectedValue == 0)
+                    temp.push(element);
+                else if (!element.DepartmentId || element.DepartmentId == e.sender._selectedValue) {
+                    temp.push(element);
+                }
+            });
+            dataSourceLineFillter.data(temp);
+            lineCbxFilter.select(0);
+        }
+    });
+    var departmentCbxFilter = $("#department-fitter-cbx").data("kendoComboBox");
+
+    var dataLineFilter = [];
+    //get data Line for combobox popup editor
+    var dataSourceLineFillter = new kendo.data.DataSource({
+        transport: {
+            read: {
+                dataType: "json",
+                type: "POST",
+                url: "@Html.Raw(Url.Action("GetAllLine", "Line"))"
+            }
+        }
+        ,
+        schema: {
+            parse: function (data) {
+                data.unshift({ Id: "0", LineName: "--  All Line  --" });
+                dataLineFilter = data.slice(0);
+                return data;
+            }
+        }
+    });
+
+
+
+    $("#line-fitter-cbx").kendoComboBox({
+        dataTextField: "LineName",
+        dataValueField: "Id",
+        dataSource: dataSourceLineFillter,
+        width: 20,
+        height: 100,
+        index: 0,
+        dataBound: function (e) {
+        },
+        change: function (e) {
+        }
+    });
+    var lineCbxFilter = $("#line-fitter-cbx").data("kendoComboBox");
+
+
+    //get data source Status filter
+    var dataSourceStatusFilter = new kendo.data.DataSource({
+        transport: {
+            read: {
+                dataType: "json",
+                type: "POST",
+                url: "@Html.Raw(Url.Action("GetAllQualityAlertStatus", "QualityAlert"))"
+            }
+        },
+        schema: {
+            parse: function (data) {
+                data.unshift({ Id: "0", Name: "--  All Status  --" });
+                return data;
+            }
+        }
+    });
+
+    $("#status-fitter-cbx").kendoComboBox({
+        dataTextField: "Name",
+        dataValueField: "Id",
+        dataSource: dataSourceStatusFilter,
+        width: 20,
+        height: 100,
+        index: 0,
+    });
+    var statusCbxFilter = $("#status-fitter-cbx").data("kendoComboBox");
+
+
+    $("#supplier-fitter-cbx").kendoComboBox({
+        dataTextField: "Name",
+        dataValueField: "Id",
+        dataSource: dataSourceSupplierFilter,
+        width: 20,
+        height: 100,
+        index: 0,
+        dataBound: function (e) {
+        },
+        change: function (e) {
+        }
+    });
+    var supplierCbxFilter = $("#supplier-fitter-cbx").data("kendoComboBox");
+
+    $("#category-fitter-cbx").kendoComboBox({
+        dataTextField: "Name",
+        dataValueField: "Id",
+        dataSource: dataSourceCategoryFilter,
+        width: 20,
+        height: 100,
+        index: 0,
+        dataBound: function (e) {
+        },
+        change: function (e) {
+        }
+    });
+    var categoryCbxFilter = $("#category-fitter-cbx").data("kendoComboBox");
+
+    var dataSourceFoundByFunctionFilter = new kendo.data.DataSource({
+        transport: {
+            read: {
+                dataType: "json",
+                type: "POST",
+                url: "@Html.Raw(Url.Action("GetAllFoundByFunction", "FoundByFunction"))"
+            }
+        },
+        schema: {
+            parse: function (data) {
+                data.unshift({ Id: "0", Name: "--  Any  --" });
+                return data;
+            }
+        }
+    });
+
+    $("#foundByFunction-fitter-cbx").kendoComboBox({
+        dataTextField: "Name",
+        dataValueField: "Id",
+        dataSource: dataSourceFoundByFunctionFilter,
+        width: 20,
+        height: 100,
+        index: 0,
+        dataBound: function (e) {
+        },
+        change: function (e) {
+        }
+    });
+    var foundByFunctionCbxFilter = $("#foundByFunction-fitter-cbx").data("kendoComboBox");
+
+    $("#complainttype-fitter-cbx").kendoComboBox({
+        dataTextField: "Name",
+        dataValueField: "Id",
+        dataSource: dataSourceComplaintTypeFilter,
+        width: 20,
+        height: 100,
+        index: 0,
+        dataBound: function (e) {
+        },
+        change: function (e) {
+        }
+    });
+    var complaintTypeCbxFilter = $("#complainttype-fitter-cbx").data("kendoComboBox");
+
+    $("#classificationdefect-fitter-cbx").kendoComboBox({
+        dataTextField: "Name",
+        dataValueField: "Id",
+        dataSource: dataSourceClassificationDefectFilter,
+        width: 20,
+        height: 100,
+        index: 0,
+        dataBound: function (e) {
+        },
+        change: function (e) {
+        }
+    });
+    var classificationDefectCbxFilter = $("#classificationdefect-fitter-cbx").data("kendoComboBox");
+
+    $("#defectrepeat-fitter-cbx").kendoComboBox({
+        dataTextField: "Name",
+        dataValueField: "Id",
+        dataSource: dataSourceDefectRepeatFilter,
+        width: 20,
+        height: 100,
+        index: 0,
+        dataBound: function (e) {
+        },
+        change: function (e) {
+        }
+    });
+    var defectRepeatCbxFilter = $("#defectrepeat-fitter-cbx").data("kendoComboBox");
+
+    var supplierReplyDateDatePickerFilter = $("#supplierreplydate-fitter-date").kendoDatePicker({
+        width: 120,
+        value: "Choose date",
+        footer: "Today - #=kendo.toString('', 'd') #",
+        format: "MM/dd/yyyy",
+        parseFormats: ["MM/dd/yyyy"],
+        change: function () {
+        }
+    });
+
+    var supplierReplyDateDatePickerFilter = $("#supplierreplydate-fitter-date").kendoDatePicker({
+        width: 120,
+        value: "",
+        footer: "Today - #=kendo.toString('', 'd') #",
+        format: "MM/dd/yyyy",
+        parseFormats: ["MM/dd/yyyy"],
+        change: function () {
+        }
+    });
+
+    var dateTimeFromFilter = $("#quality-alert-datetimepicker-from").kendoDateTimePicker({
+        width: 120,
+        value: "@Model.StartDate",
+        footer: "Today - #=kendo.toString('@Model.StartDate', 'd') #",
+        timeFormat: "HH:mm",
+        format: "MM/dd/yyyy HH:mm",
+        parseFormats: ["MM/dd/yyyy HH:mm"],
+        change: function () {
+            //$("#qualityAlert-grid").data("kendoGrid").dataSource.read();
+        }
+    });
+
+    var dateTimeToFilter = $("#quality-alert-datetimepicker-to").kendoDateTimePicker({
+        width: 120,
+        value: "@Model.EndDate",
+        footer: "Today - #=kendo.toString('@Model.EndDate', 'd') #",
+        timeFormat: "HH:mm",
+        format: "MM/dd/yyyy HH:mm",
+        parseFormats: ["MM/dd/yyyy HH:mm"],
+        change: function () {
+            //$("#qualityAlert-grid").data("kendoGrid").dataSource.read();
+        }
+    });
+
+    var grid = $("#qualityAlert-grid").kendoGrid({
+        dataSource: {
+            type: "json",
+            transport: {
+                read: {
+                    url: "@Html.Raw(Url.Action("List", "QualityAlert"))",
+                    type: "POST",
+                    dataType: "json",
+                    data: additionData
+                },
+                update: {
+                    url: "@Html.Raw(Url.Action("Update", "QualityAlert"))",
+                    type: "POST",
+                    dataType: "json",
+                    contentType: "application/json",
+                    complete: function (e) {
+                        if (e.responseJSON != undefined && e.responseJSON.status == "success")
+                            $("#qualityAlert-grid").data("kendoGrid").dataSource.read();
+                    }
+                },
+                destroy: {
+                    url: "@Html.Raw(Url.Action("Delete", "QualityAlert"))",
+                    type: "POST",
+                    dataType: "json"
+                },
+                create: {
+                    url: "@Html.Raw(Url.Action("Create", "QualityAlert"))",
+                    type: "POST",
+                    dataType: "json",
+                    contentType: "application/json",
+                    complete: function (e) {
+                        if (e.responseJSON != undefined && e.responseJSON.status == "success")
+                            $("#qualityAlert-grid").data("kendoGrid").dataSource.read();
+                    }
+                },
+                parameterMap: function (options, type) {
+                    if (type == "create" || type == "update") {
+                        if ((!options.Line) || (!options.Line.Id))
+                            options.Line = { LineName: '', Id: 0 };
+
+                        if ((!options.FoundByFunction) || (!options.FoundByFunction.Id))
+                            options.FoundByFunction = { Name: '', Id: 0 };
+                        else if (options.FoundByFunction.Id == '0')
+                            options.Classification = { Name: '', Id: 0 };
+
+                        if ((options.FoundByFunction) || (options.FoundByFunction.Id)) {
+                            if (options.Classification.Id == 0 || (global_ClassificationId != options.Classification.Id)) {
+                                var listClassification = dataClassification.find(function(obj) {
+                                    return obj.Id == global_ClassificationId;
+                                });
+                                if (listClassification)
+                                    options.Classification = listClassification;
+                            }      
+                        }
+
+                        if ((!options.Supplier) || (!options.Supplier.Id))
+                            options.Supplier = { Name: '', Id: 0 };
+
+                        if ((!options.Category) || (!options.Category.Id))
+                            options.Category = { Name: '', Id: 0 };
+
+                        if ((!options.Owner) || (!options.Owner.Id))
+                            options.Owner = { Name: '', Id: 0 };
+
+                        if ((!options.Classification) || (!options.Classification.Id))
+                            options.Classification = { Name: '', Id: 0 };
+
+                        if ((!options.ClassificationDefect) || (!options.ClassificationDefect.Id))
+                            options.ClassificationDefect = { Name: '', Id: 0 };
+
+                        return JSON.stringify({ qualityAlertModel: options });
+                    }
+
+                    return options;
+                }
+            },
+            schema: {
+                data: "Data",
+                total: "Total",
+                errors: "Errors",
+                model: {
+                    id: "Id",
+                    fields: {
+                        Id: { editable: false, defaultValue: 0 },
+                        AlertDateTime: { editable: true, type: 'date', format: 'MM/dd/yyyy hh:mm' },
+                        UserNameCreated: { editable: true },
+                        Line: { editable: true, defaultValue: { LineName: '', Id: '' } },
+                        FoundByFunction: { editable: true, defaultValue: { Name: '', Id: '' } },
+                        Machine: { editable: true },
+                        Detail: { editable: true },
+                        Action: { editable: true },
+                        GCAS: { editable: true },
+                        SAPLot: { editable: true },
+                        NumBlock: { editable: true, type: "number", defaultValue: null },
+                        Owner: { editable: true, defaultValue: { Name: '', Id: '' } },
+                        FollowUpAction: { editable: true },
+                        When: { editable: true, type: 'date', defaultValue: "01/01/0001" },
+                        Status: { editable: true, defaultValue: { Name: '', Id: 1 } },
+                        Classification: { editable: true, defaultValue: { Name: '', Id: '' } },
+                        CreatedDate: { editable: false, type: 'date' },
+                        SupplierLot: { editable: true },
+                        Supplier: { editable: true, defaultValue: { Id: '', Name: '' } },
+                        Material: { editable: true },
+                        Unit: { editable: true },
+                        Category: { editable: true, defaultValue: { Id: '', Name: '' } },
+                        ComplaintType: { editable: true, defaultValue: { Id: 0, Name: '' } },
+                        ClassificationDefect: { editable: true, defaultValue: { Id: '', Name: '' } },
+                        QuantityReturn: { editable: true, defaultValue: null },
+                        DefectRepeat: { editable: true, defaultValue: { Id: 0, Name: '' } },
+                        SupplierReplyDate: { editable: true, type: 'date', defaultValue: "01/01/0001" },
+                        //CostImpacted: { editable: true },
+                        PRLossPercent: { editable: true },
+                        NumStop: { editable: true, type: "number", defaultValue: 0 },
+                        DownTime: { editable: true },
+                        DefectedQty: { editable: true },
+                        InformedToSupplierDate: { editable: true, type: 'date', defaultValue: "01/01/0001" },
+                        PGerEffortLoss: { editable: true },
+                        ContractorEffortLoss: { editable: true },                        
+                        @if (permissionService.Authorize(PermissionProvider.QAGuest) && !permissionService.Authorize(PermissionProvider.QAMPD))
+                        {
+                            <text>
+                            QARelatedToMaterials: { editable: true, type: "boolean", defaultValue: null, validation: { requried: true } },
+                            QARelatedToFG: { editable: true, type: "boolean", defaultValue: null, validation: { requried: true } }
+                            </text>
+                        }                        
+                    }
+                }
+            },
+            error: function (e) {
+                display_kendoui_grid_error(e);
+                //this.cancelChanges();
+            },
+            pageSize: 15,
+            serverPaging: true,
+            serverFiltering: true,
+            serverSorting: true
+        },
+        columns: [
+            {
+                field: "check_row",
+                title: " ",
+                width: 25,
+                template: "<input type='checkbox' value=#= Id# class='sel checkbox' />",
+                attributes: { class: "text_align_center" },
+                headerTemplate: "<input type='checkbox' class='sel checkbox_checkall' />"
+            },
+            {
+                field: "Id",
+                title: "Alert ID",
+                width: 80
+            },
+            {
+                field: "AlertDateTime",
+                title: "Alert Date",
+                width: 120,
+                template: "#=(kendo.toString(kendo.parseDate(AlertDateTime), 'MM/dd/yyyy') == '01/01/0001') ? ' ' : kendo.toString(kendo.parseDate(AlertDateTime), 'MM/dd/yyyy') #"
+            },
+            {
+                field: "UserNameCreated",
+                title: "Found by",
+                width: 90
+            },
+             {
+                 field: "FoundByFunctionName",
+                 title: "Found by Function",
+                 width: 150,
+                 template: "#=FoundByFunction ? FoundByFunction.Name : null #"
+             },
+            {
+                field: "Line",
+                title: "Line",
+                width: 80,
+                template: "#=Line ? Line.LineName : null#"
+            },
+            {
+                field: "Machine",
+                title: "Machine",
+                width: 80
+            },
+            {
+                field: "Detail",
+                title: "Description",
+                width: 365
+            },
+            {
+                field: "Action",
+                title: "Immediate Action",
+                width: 365
+            },
+            {
+                field: "GCAS",
+                title: "GCAS",
+                width: 85,
+                template: "#=(GCAS == null || GCAS == '') ? 'NA' : GCAS #"
+            },
+            {
+                field: "SAPLot",
+                title: "SAP Lot",
+                width: 105,
+                template: "#=(SAPLot == null || SAPLot == '') ? 'NA' : SAPLot #"
+            },
+            {
+                field: "SupplierLot",
+                title: "Supplier Lot",
+                width: 105,
+                template: "#=(SupplierLot == null) ? 'NA' : SupplierLot #"
+            },
+            {
+                field: "Supplier",
+                title: "Supplier Name",
+                width: 125,
+                template: "#=(Supplier == null || Supplier.Name == null || Supplier.Name == '') ? 'NA' : Supplier.Name #"
+                //template: "#=Supplier.Name#"
+            },
+            {
+                field: "Material",
+                title: "Material Name",
+                width: 150,
+                template: "#=(Material == null) ? 'NA' : Material #"
+                //template: "#=Material.Name#"
+            },
+            {
+                field: "NumBlock",
+                title: "Blocked Qty",
+                attributes: { class: "text_align_center" },
+                width: 88,
+                template: "#=(NumBlock == null) ? 'NA' : NumBlock #"
+            },
+            {
+                field: "DefectedQty",
+                title: "Defected Qty",
+                attributes: { class: "text_align_center" },
+                width: 100,
+                template: "#=(DefectedQty == null) ? 'NA' : DefectedQty #"
+            },
+            {
+                field: "Unit",
+                title: "Unit",
+                width: 88
+            },
+            {
+                field: "Owner",
+                title: "Owner",
+                width: 80,
+                template: "#=Owner ? Owner.Name: null #"
+            },
+            {
+                field: "FollowUpAction",
+                title: "Follow Up Action",
+                width: 365
+            },
+            {
+                field: "When",
+                title: "When",
+                width: 80,
+                template: "#=(kendo.toString(kendo.parseDate(When), 'MM/dd/yyyy') == '01/01/0001') ? ' ' : kendo.toString(kendo.parseDate(When), 'MM/dd/yyyy') #"
+            },
+            {
+                field: "Status",
+                title: "Status",
+                width: 65,
+                template: "#=(Status ==null || Status.Name == null) ? 'NA' : Status.Name #"
+                //template: "#=Status.Name#"
+            },
+            {
+                field: "Severity",
+                title: "Severity",
+                attributes: { class: "text_align_center" },
+                width: 100
+            },
+            {
+                field: "ClassificationRPN",
+                title: "Classification RPN",
+                attributes: { class: "text_align_center" },
+                width: 150
+            },
+            {
+                field: "Classification",
+                title: "Classification(RPN)",
+                width: 150,
+                template: "#=(Classification == null || Classification.Id == 0) ? '' : Classification.Id + ' -- ' + Classification.Name #"
+            },
+            {
+                field: "Category",
+                title: "Category",
+                width: 150,
+                template: "#=Category? Category.Name : null #"
+            },
+            {
+                field: "ComplaintType",
+                title: "ComplaintType",
+                width: 150,
+                template: "#=(ComplaintType.Id == 1) ? 'Complaint' : (ComplaintType.Id == 2) ? 'Feedback' : ''#"
+            },
+            {
+                field: "ClassificationDefect",
+                title: "Classification Defect",
+                width: 150,
+                template: "#=ClassificationDefect?ClassificationDefect.Name:null #"
+            },
+            {
+                field: "QuantityReturn",
+                title: "Quantity return",
+                attributes: { class: "text_align_center" },
+                width: 150
+            },
+            {
+                field: "DefectRepeat",
+                title: "Defect Repeat",
+                width: 150,
+                template: "#=(DefectRepeat.Id == 1) ? 'Yes' : (DefectRepeat.Id == 2) ? 'No' : ''#"
+            },
+            {
+                field: "SupplierReplyDate",
+                title: "Supplier Reply Date",
+                width: 150,
+                template: "#=(kendo.toString(kendo.parseDate(SupplierReplyDate), 'MM/dd/yyyy') == '01/01/0001') ? ' ' : kendo.toString(kendo.parseDate(SupplierReplyDate), 'MM/dd/yyyy') #"
+            },
+            {
+                field: "InformedToSupplierDate",
+                title: "Date Informed to Supplier",
+                width: 200,
+                template: "#=(kendo.toString(kendo.parseDate(InformedToSupplierDate), 'MM/dd/yyyy') == '01/01/0001') ? ' ' : kendo.toString(kendo.parseDate(InformedToSupplierDate), 'MM/dd/yyyy') #"
+            },
+            //{
+            //    field: "CostImpacted",
+            //    title: "Cost Impacted",
+            //    attributes: { class: "text_align_center" },
+            //    width: 150
+            //},
+            {
+                field: "PRLossPercent",
+                title: "%PR Loss",
+                attributes: { class: "text_align_center" },
+                width: 150,
+                template: "#=(PRLossPercent == null || PRLossPercent=='') ? 'NA' : PRLossPercent #"
+            },
+            {
+                field: "NumStop",
+                title: "#Stop",
+                attributes: { class: "text_align_center" },
+                width: 150,
+                template: "#=(NumStop == null || NumStop == 0) ? 'NA' : NumStop #"
+            },
+            {
+                field: "DownTime",
+                title: "DownTime",
+                width: 95,
+                template: "#=(DownTime == null) ? 'NA' : DownTime #"
+                //template: "#=(kendo.toString(kendo.parseDate(DownTime), 'MM/dd/yyyy') == '01/01/0001') ? ' ' : kendo.toString(kendo.parseDate(DownTime), 'MM/dd/yyyy') #"
+            },
+            {
+                field: "PGerEffortLoss",
+                title: "Effort Loss (PGer)",
+                width: 150,
+                template: "#=(PGerEffortLoss == null) ? 'NA' : PGerEffortLoss #"
+            },
+            {
+                field: "ContractorEffortLoss",
+                title: "Effort Loss (Contractor)",
+                width: 180,
+                template: "#=(ContractorEffortLoss == null) ? 'NA' : ContractorEffortLoss #"
+            },
+            {
+                field: "CreatedDate",
+                title: "Created Date",
+                width: 95,
+                template: "#=(kendo.toString(kendo.parseDate(CreatedDate), 'MM/dd/yyyy') == '01/01/0001') ? ' ' : kendo.toString(kendo.parseDate(CreatedDate), 'MM/dd/yyyy') #"
+            },
+            
+        ],
+        pageable: {
+            refresh: true,
+            pageSizes: ["2", "4", "6", "8", "10", "15", "20"]
+        },
+        editable: {
+            mode: "popup",
+            //default title of popup editor
+            window: {
+                title: "Modify Quality Alert",
+            },
+            //template of custom popup editor
+            template: kendo.template($("#popup_editor_qualityalert").html()),
+        },
+        edit: editorFunction,
+        toolbar: [
+        @if (permissionService.Authorize(PermissionProvider.QAMPD) || permissionService.Authorize(PermissionProvider.QAGuest))
+                {
+                    <text>
+                        "create",
+                    </text>
+                }
+        { template: $("#quality-alert-toolbar-template").html() }],
+        scrollable: true,
+        filterable: false,
+        saveChanges: function (e) {
+            handleSaveChanges(e, this);
+        },
+        dataBound: function () {
+            $(".checkbox_checkall")[0].checked = false;
+            applyConditionWhenLoaded();
+            initiateAbstractScrollbar();
+            handleEventWhenCheckOnCheckbox();
+            handleEventWhenCheckOnCheckboxCheckAll();
+        }
+    }).data("kendoGrid");
+
+
+
+    function additionData() {
+        return {
+            DepartmnetId: departmentCbxFilter.value(),
+            LineId: lineCbxFilter.value(),
+            StartDate: dateTimeFromFilter.val(),
+            EndDate: dateTimeToFilter.val(),
+            SupplierIds: supplierCbxFilter.value(),
+            CategoryId: categoryCbxFilter.value(),
+            ComplaintTypeId: complaintTypeCbxFilter.value(),
+            ClassificationDefectId: classificationDefectCbxFilter.value(),
+            DefectRepeatId: defectRepeatCbxFilter.value(),
+            SupplierReplyDate: supplierReplyDateDatePickerFilter.val(),
+            StatusId: statusCbxFilter.value(),
+            FoundByFunctionId: foundByFunctionCbxFilter.value()
+        }
+    }
+
+    //export all to excel
+    $('#export-all-excel').click(function () {
+        window.location.href = "/qualityalert/ExportToExcel?fromDate=" +
+            dateTimeFromFilter.val() +
+            "&toDate=" +
+            dateTimeToFilter.val() +
+            "&departmentId=" +
+            departmentCbxFilter.value() +
+            "&lineId=" +
+            lineCbxFilter.value() +
+            "&supplierIds=" +
+            supplierCbxFilter.value() +
+            "&categoryId=" +
+            categoryCbxFilter.value() +
+            "&complaintTypeId=" +
+            complaintTypeCbxFilter.value() +
+            "&classificationDefectId=" +
+            classificationDefectCbxFilter.value() +
+            "&DefectRepeatId=" +
+            defectRepeatCbxFilter.value() +
+            "&statusId=" +
+            statusCbxFilter.value() +
+            "&supplierReplyDate=" +
+            supplierReplyDateDatePickerFilter.val()+
+            "&FoundByFunctionId=" +
+            foundByFunctionCbxFilter.val();
+    });
+
+    //export selected to excel
+    $('#export-selected-excel').click(function () {
+
+        if ($("#qualityAlert-grid tbody").find("input:checked").length <= 0)
+            return;
+
+        var listId = "";
+        $("#qualityAlert-grid tbody").find("input:checked").each(function (i, value) {
+            listId += $(value).val() + ",";
+        });
+
+        window.location.href = "/qualityalert/ExportToExcel?fromDate=" +
+            dateTimeFromFilter.val() +
+            "&toDate=" +
+            dateTimeToFilter.val() +
+            "&departmentId=" +
+            departmentCbxFilter.value() +
+            "&lineId=" +
+            lineCbxFilter.value() +
+            "&listId=" +
+            listId +
+            "&supplierIds=" +
+            supplierCbxFilter.value() +
+            "&categoryId=" +
+            categoryCbxFilter.value() +
+            "&complaintTypeId=" +
+            complaintTypeCbxFilter.value() +
+            "&classificationDefectId=" +
+            classificationDefectCbxFilter.value() +
+            "&DefectRepeatId=" +
+            defectRepeatCbxFilter.value() +
+            "&statusId=" +
+            statusCbxFilter.value() +
+            "&supplierReplyDate=" +
+            supplierReplyDateDatePickerFilter.val()+
+            "&FoundByFunctionId=" +
+            foundByFunctionCbxFilter.val();
+    });
+
+    //export complaint letter
+    $('#export-ComplainLetter').click(function () {
+
+        if ($("#qualityAlert-grid tbody").find("input:checked").length <= 0)
+            return;
+
+        var listId = "";
+        var supplierId
+        var qId = 0;
+        $("#qualityAlert-grid tbody").find("input:checked").each(function (i, value) {
+            listId += $(value).val() + ",";
+            qId = $(value).val();
+            return;
+        });
+
+        var selectedQA = grid.dataSource.data().find(function (item) { return item.Id == qId; });
+        if (selectedQA.Supplier.Id == 0) {
+            alert("This QA has no Supplier");
+            return;
+        }
+
+        var supplierEmail = selectedQA.SupplierEmail;
+
+        //window.location.href = "/qualityalert/ExportComplaintLetterToExcel?fromDate=" + dateTimeFromFilter.val() + "&toDate=" + dateTimeToFilter.val() + "&lineId=" + lineCbxFilter.value() + "&listId=" + listId
+        //                        + "&supplierIds=" + supplierCbxFilter.value() + "&categoryId=" + categoryCbxFilter.value() + "&complaintTypeId=" + complaintTypeCbxFilter.value()
+        //                        + "&classificationDefectId=" + classificationDefectCbxFilter.value() + "&DefectRepeatId=" + defectRepeatCbxFilter.value()
+        //                        + "&supplierReplyDate=" + supplierReplyDateDatePickerFilter.val();
+
+        var href = "/qualityalert/ExportComplaintLetterToExcel?fromDate=" +
+            dateTimeFromFilter.val() +
+            "&toDate=" +
+            dateTimeToFilter.val() +
+            "&departmentId=" +
+            departmentCbxFilter.value() +
+            "&lineId=" +
+            lineCbxFilter.value() +
+            "&listId=" +
+            listId +
+            "&supplierIds=" +
+            supplierCbxFilter.value() +
+            "&categoryId=" +
+            categoryCbxFilter.value() +
+            "&complaintTypeId=" +
+            complaintTypeCbxFilter.value() +
+            "&classificationDefectId=" +
+            classificationDefectCbxFilter.value() +
+            "&DefectRepeatId=" +
+            defectRepeatCbxFilter.value() +
+            "&statusId=" +
+            statusCbxFilter.value() +
+            "&supplierReplyDate=" + supplierReplyDateDatePickerFilter.val() +
+            "&FoundByFunctionId=" + foundByFunctionCbxFilter.val();
+        
+        $.fileDownload(href, {
+            successCallback: function (url) {
+                //define open outlook popup comfirm
+                var kendoWindow = $("<div id='window'/>").kendoWindow({
+                    title: "Open Outlook Confirm",
+                    visible: false,
+                    width: "400px",
+                    resizable: false,
+                    modal: true,
+                    viewable: false,
+                    content: {
+                        template: $("#windowTemplateOpenOutlookConfirm").html()
+                    }
+                });
+
+                kendoWindow.data("kendoWindow")
+                    .content($("#windowTemplateOpenOutlookConfirm").html())
+                    .center().open();
+
+                kendoWindow.find(".open-confirm,.open-cancel")
+                    .click(function () {
+                        if ($(this).hasClass("open-confirm")) {       
+                            window.location.href = "mailto:" + supplierEmail;
+
+                        }
+                        kendoWindow.data("kendoWindow").close();
+                    }).end();
+            },
+            failCallback: function (responseHtml, url) {
+
+            }
+        });
+        return false;
+    });
+
+    //Remove delete QA function
+    //click delete button
+    @*$("#delete-qualityalert").on("click", function (e) {
+        if ($("#qualityAlert-grid tbody").find("input:checked").length <= 0)
+            return;
+
+        //define delete popup comfirm
+        var kendoWindow = $("<div id='window'/>").kendoWindow({
+            //height: "250px",
+            title: "Delete Confirm",
+            visible: false,
+            width: "400px",
+            resizable: false,
+            modal: true,
+            viewable: false,
+            content: {
+                template: $("#windowTemplateDeleteConfirm").html()
+            }
+        });
+
+        kendoWindow.data("kendoWindow")
+            .content($("#windowTemplateDeleteConfirm").html())
+            .center().open();
+
+        //get array of id to delete
+        function deletionData() {
+            var ids = [];
+            $("#qualityAlert-grid tbody").find("input:checked").each(function (i, value) {
+                ids.push($(value).val());
+            });
+            return ids;
+        }
+
+        kendoWindow.find(".delete-confirm,.delete-cancel")
+            .click(function () {
+                if ($(this).hasClass("delete-confirm")) {
+                    $.ajax({
+                        url: "@Html.Raw(Url.Action("DeleteQualityAlerts", "QualityAlert"))",
+                        type: "POST",
+                        dataType: "json",
+                        data: {
+                            listId: deletionData()
+                        },
+                        success: function (result) {
+                            if (result.status != undefined && result.status == "success")
+                                $('#qualityAlert-grid').data('kendoGrid').dataSource.read();
+                            else
+                                alert(result.Content);
+                        }
+                    });
+                }
+                kendoWindow.data("kendoWindow").close();
+            }).end();
+    });*@
+
+    function editorFunction(e) {
+        $(".k-edit-form-container").parent().width(1100).data("kendoWindow").center();
+        $(".k-edit-form-container").width(1100);
+        //custom validate message
+        e.sender.editable.validatable._errorTemplate = kendo.template($('#tooltip-template').html());
+        //console.log(e.model.Id);        
+
+        setTimeout(function () {
+            if (e.model.Line.Id == "0") {
+                $('input[name="Line_input"]').val("");
+            }
+            if (e.model.FoundByFunction.Id == "0") {
+                $('input[name="FoundByFunction_input"]').val("");
+            }
+            if (e.model.Classification.Id == "0") {
+                $('input[name="Classification_input"]').val("");
+            }
+            if (e.model.Supplier.Id == "0") {
+                $('input[name="Supplier_input"]').val("");
+            }
+            if (e.model.Category.Id == "0") {
+                $('input[name="Category_input"]').val("");
+            }
+            if (e.model.ClassificationDefect.Id == "0") {
+                $('input[name="ClassificationDefect_input"]').val("");
+            }
+            if (e.model.Owner.Id == "0") {
+                $('input[name="Owner_input"]').val("");
+            }
+            if (e.model.DefectedQty == "0") {
+                $('input[name="DefectedQty"]').val("");
+            }
+            if (e.model.NumBlock == "0") {
+                $('input[name="NumBlock"]').parent().children()[0].value = "";
+                $('input[name="NumBlock"]').val("");
+            }
+            if (e.model.NumStop == "0") {
+                $('input[name="NumStop"]').parent().children()[0].value = "";
+                $('input[name="NumStop"]').val("");
+            }
+            if (e.model.QuantityReturn == "0") {
+                $('input[name="QuantityReturn"]').parent().children()[0].value = "";
+                $('input[name="QuantityReturn"]').val("");
+            }
+        }, 300);
+
+        if (e.model.Id != '') {
+            dataSourceClassification.read();
+            global_ClassificationId = e.model.Classification.Id;
+
+            //When edit user allow edit status of QA, so we have to check the permission
+            @if (!permissionService.Authorize(PermissionProvider.QAEditStatus))
+            {
+                <text>
+                    $('#popup-editor-status-attribute-qualityalert').data("kendoComboBox").enable(false);
+                </text>
+            }
+
+            //
+            if (e.model.FoundByFunction.Id != 0)
+                $('#popup-editor-alertclassification-attribute-qualityalert').data("kendoComboBox").enable(true);
+            else
+                $('#popup-editor-alertclassification-attribute-qualityalert').data("kendoComboBox").enable(false);
+
+            //check show hide QA when related to materials
+            if (e.model.QARelatedToMaterials) {
+                $('.hideWhenRelatedToMaterials').show();
+                $('input[type=text][name=SupplierLot]').attr('required', true);
+                $('#divQARelatedToFG').hide();
+                $('#divQARelatedToFGNo').show();
+            }
+            else {
+                $('.hideWhenRelatedToMaterials').hide();
+                $('input[type=text][name=SupplierLot]').attr('required', false);
+                $('#divQARelatedToFG').show();
+                if (e.model.QARelatedToFG) {
+                    $('#divQARelatedToFGNo').show();
+                }
+                else {
+                    $('#divQARelatedToFGNo').hide();
+                }
+            }
+            //check show hide QA related material....            
+
+            var comboBox = $("#popup-editor-line-attribute-qualityalert").data("kendoComboBox");
+
+            //if (e.model.Classification.Id == "0") {
+            //    $('input[name="Classification_input"]').val("");
+            //}
+            //setTimeout(function () {
+            //    if (e.model.Classification.Id == "0") {
+            //        $('input[name="Classification_input"]').val("");
+            //    }
+            //    if (e.model.Supplier.Id == "0") {
+            //        $('input[name="Supplier_input"]').val("");
+            //    }
+            //    //if (e.model.Material.Id == "0") {
+            //    //    $('input[name="Material_input"]').val("");
+            //    //}
+            //    if (e.model.Category.Id == "0") {
+            //        $('input[name="Category_input"]').val("");
+            //    }
+            //    if (e.model.ClassificationDefect.Id == "0") {
+            //        $('input[name="ClassificationDefect_input"]').val("");
+            //    }
+            //    if (e.model.Owner.Id == "0") {
+            //        $('input[name="Owner_input"]').val("");
+            //    }
+            //}, 300);
+
+            //comboBox.enable(false);
+        }
+        else//event create button
+        {
+
+            //when create the status alway is open, user not allow choose status
+            $('#popup-editor-status-attribute-qualityalert').data("kendoComboBox").enable(false);
+
+            //hide QA related to materials
+            $('.hideWhenRelatedToMaterials').hide();
+
+            //change title popup editor
+            e.container.kendoWindow("title", "Create New Quality Alerts");
+            //change text (save changes --> create) popup editor
+            $(".k-grid-update").contents().filter(function () {
+                return this.nodeType == 3;
+            })[0].nodeValue = "Create";
+            $("#popup-editor-status-attribute-qualityalert").hide();
+            //set value datepicker = null
+            //$("#popup-editor-when-attribute-qualityalert").data("kendoDatePicker").value("");
+            $('#popup-editor-alertclassification-attribute-qualityalert').data("kendoComboBox").enable(false);
+        }
+
+        $("#popup-editor-alertdatetime-attribute-qualityalert").kendoDateTimePicker(
+        {
+            timeFormat: "HH:mm",
+            format: "MM/dd/yyyy HH:mm",
+            parseFormats: ["MM/dd/yyyy HH:mm"],
+        });
+
+
+        //validate alertdatetime datetimepicker
+        $("#popup-editor-alertdatetime-attribute-qualityalert").kendoValidator({
+            rules: {
+                checkdate: function (input) {
+                    var d = kendo.parseDate(input.val(), "MM/dd/yyyy HH:mm");
+                    return d instanceof Date;
+                }
+            }
+            ,
+            messages: {
+                //Define your custom validation massages
+                required: "Date is required",
+                checkdate: "Invalid date"
+            }
+            ,
+            errorTemplate: kendo.template($('#tooltip-template').html())
+        });
+
+        //validate alertdatetime datetimepicker
+        $("#popup-editor-when-attribute-qualityalert").kendoValidator({
+            rules: {
+                checkdate: function (input) {
+                    var d = kendo.parseDate(input.val(), "MM/dd/yyyy");
+                    return (d instanceof Date) || input.val() == "";
+                }
+            }
+            ,
+            messages: {
+                //Define your custom validation massages
+                checkdate: "Invalid date"
+            }
+            ,
+            errorTemplate: kendo.template($('#tooltip-template').html())
+        });
+
+
+        //validate machine
+        //$("#popup-editor-machine-attribute-qualityalert").kendoValidator({
+        //    rules: {
+        //        checklength: function (input) {
+        //            e.preventDefault();
+        //            return input.val().length != 0;
+        //        }
+        //    }
+        //    ,
+        //    messages: {
+        //        //Define your custom validation massages
+        //        checklength: "Machine is required!"
+        //    }
+        //    ,
+        //    errorTemplate: kendo.template($('#tooltip-template').html())
+        //});
+
+        //validate gcas <=8 character
+        $("#popup-editor-gcas-attribute-qualityalert").kendoValidator({
+            rules: {
+                checklength: function (input) {
+                    e.preventDefault();
+                    return input.val().length > 0 && input.val().length <= 8;
+                }
+            }
+            ,
+            messages: {
+                //Define your custom validation massages
+                checklength: "GCAS must less than or equal 8 characters!"
+            }
+            ,
+            errorTemplate: kendo.template($('#tooltip-template').html())
+        });
+
+        //validate SAP Lot/Supplier Lot <=10 character
+        //$("#popup-editor-saplotorsupplierlot-attribute-qualityalert").kendoValidator({
+        //    rules: {
+        //        checklength: function (input) {
+        //            return input.val().length > 0 && input.val().length <= 10;
+        //        }
+        //    }
+        //    ,
+        //    messages: {
+        //        //Define your custom validation massages
+        //        checklength: "SAP Lot/Supplier must less than or equal 10 characters!"
+        //    }
+        //    ,
+        //    errorTemplate: kendo.template($('#tooltip-template').html())
+        //});
+
+        //validate Block Lot 10 character
+        //$("#popup-editor-numblock-attribute-qualityalert").kendoValidator({
+        //    rules: {
+        //        checklength: function (input) {
+        //            //alert(input.val().length);
+        //            return input.val() > 1000000 && ;
+        //        }
+        //    }
+        //    ,
+        //    messages: {
+        //        //Define your custom validation massages
+        //        checklength: "Block must has 7 characters!"
+        //    }
+        //    ,
+        //    errorTemplate: kendo.template($('#tooltip-template').html())
+        //});
+
+        //validate Follow up action less than 40 character
+        $("#popup-editor-followupaction-attribute-qualityalert").kendoValidator({
+            rules: {
+                checklength: function (input) {
+                    return input.val().length <= 40;
+                }
+            }
+            ,
+            messages: {
+                //Define your custom validation massages
+                checklength: "Follow up action must less than 40 characters!"
+            }
+            ,
+            errorTemplate: kendo.template($('#tooltip-template').html())
+        });
+
+        //format numberic
+        $("#popup-editor-numblock-attribute-qualityalert").kendoNumericTextBox({
+            format: "",
+            value: ""
+        });
+
+        //format numberic
+        $("#popup-editor-defectedQty-attribute-qualityalert").kendoNumericTextBox({
+            format: "",
+            value: ""
+        });
+        $("#popup-editor-quantityReturn-attribute-qualityalert").kendoNumericTextBox({
+            format: "",
+            value: ""
+        });
+        $("#popup-editor-numStop-attribute-qualityalert").kendoNumericTextBox({
+            format: "",
+            value: ""
+        });
+        $("#popup-editor-pGerEffortLoss-attribute-qualityalert").kendoNumericTextBox({
+            format: "",
+            value: ""
+        });
+        $("#popup-editor-contractorEffortLoss-attribute-qualityalert").kendoNumericTextBox({
+            format: "",
+            value: ""
+        });
+
+        //$("#popup-editor-div-line-attribute-qualityalert > span > span > input").attr("readonly", "readonly");
+
+        //$('#popup-editor-owner-attribute-qualityalert').data("kendoComboBox").enable(false);
+        //$('#popup-editor-status-attribute-qualityalert').data("kendoComboBox").enable(false);
+        //$('#popup-editor-when-attribute-qualityalert').data("kendoDatePicker").enable(false);
+        //$('#popup-editor-quantityReturn-attribute-qualityalert').data("kendoNumericTextBox").enable(false);
+        //$('#popup-editor-unit-attribute-qualityalert').attr('disabled', 'disabled');
+        //$('#popup-editor-alertclassification-attribute-qualityalert').data("kendoComboBox").enable(false);
+        //$('#popup-editor-defectclassification-attribute-qualityalert').data("kendoComboBox").enable(false);
+        //$('input[name=defectRepeat]').attr('disabled', 'disabled');
+        //$('input[name=complaintType]').attr('disabled', 'disabled');
+        //$('#popup-editor-category-attribute-qualityalert').data("kendoComboBox").enable(false);
+        //$('#popup-editor-dateinformed-attribute-qualityalert').data("kendoDatePicker").enable(false);
+        //$('#popup-editor-supplierreplydate-attribute-qualityalert').data("kendoDatePicker").enable(false);
+        //$('#followUpAction').attr('disabled', 'disabled');
+
+        triggerEventQARelated();
+        triggerEventRadioButtonUncheck();
+    }
+
+
+
+
+    //Datepicker disable typing
+    dateTimeFromFilter.attr("readonly", "readonly");
+    dateTimeToFilter.attr("readonly", "readonly");
+    supplierReplyDateDatePickerFilter.attr("readonly", "readonly");
+
+    @if (permissionService.Authorize(PermissionProvider.QAMPD) || permissionService.Authorize(PermissionProvider.QAGuest))
+        {
+            <text>
+    //show edit popup when double click on row on grid
+    $("#qualityAlert-grid").delegate("tbody>tr", "dblclick", function () {
+        if (!$(this).hasClass('k-grid-edit-row')) {
+            $("#qualityAlert-grid").data("kendoGrid").editRow($(this));
+        }
+    });
+    </text>
+        }
+
+
+    function initiateAbstractScrollbar() {
+        //set width for horizontal scrollbar
+        $('#scrollbar').width($('#qualityAlert-grid').width());
+        //set width for content of horizontal scrollbar
+        $('#scrollbar div').width($('#qualityAlert-grid tbody').width());
+        //when abstract scrollbar scroll -> grid scroll too
+        $("#scrollbar").scroll(function () {
+            $('#qualityAlert-grid .k-grid-content').scrollLeft($('#scrollbar').scrollLeft());
+        });
+    }
+
+    //set width for horizontal scrollbar
+    $('#scrollbar').width($('#qualityAlert-grid').width());
+    //set width for content of horizontal scrollbar
+    $('#scrollbar div').width($('#qualityAlert-grid tbody').width());
+    //when abstract scrollbar scroll -> grid scroll too
+    $("#scrollbar").scroll(function () {
+        $('#qualityAlert-grid .k-grid-content').scrollLeft($('#scrollbar').scrollLeft());
+    });
+
+    //scroll bar resize when window resize
+    $(window).bind("resize", function () {
+        resizeFixedScroll();
+    });
+
+    function resizeFixedScroll() {
+        $('#scrollbar').width($('#qualityAlert-grid').width());
+        $('#scrollbar div').width($('#qualityAlert-grid tbody').width());
+    }
+
+    function SearchAll() {
+        //$("#export-ComplainLetter").attr('disabled', true);
+        //disable check all when click search all
+        $(".checkbox_checkall")[0].checked = false;
+
+        departmentCbxFilter.select(0);
+        dataSourceLineFillter.data(dataLineFilter);
+        lineCbxFilter.value(0);
+        statusCbxFilter.select(0);
+        dateTimeFromFilter.val("Select date");
+        dateTimeToFilter.val("Select date");
+        supplierCbxFilter.value(0);
+        categoryCbxFilter.value(0);
+        complaintTypeCbxFilter.value(0);
+        classificationDefectCbxFilter.value(0);
+        defectRepeatCbxFilter.value(0);
+        supplierReplyDateDatePickerFilter.val("Select date");
+        foundByFunctionCbxFilter.value(0);
+        $("#qualityAlert-grid").data("kendoGrid").dataSource.read();
+    }
+
+    function Search() {
+        //disable check all when click search
+        $(".checkbox_checkall")[0].checked = false;
+        //if (supplierCbxFilter.value() == 0)
+        //    $("#export-ComplainLetter").attr('disabled', true);
+        //search
+        $("#qualityAlert-grid").data("kendoGrid").dataSource.read();
+    }
+
+    //change arrow when collapse fillter
+    $('#filter-region').on('hide.bs.collapse', function () {
+        $(this).parent("div").find(".glyphicon.glyphicon-chevron-down").removeClass("glyphicon-chevron-down").addClass("glyphicon-chevron-up");
+
+    });
+
+    $('#filter-region').on('show.bs.collapse', function () {
+        $(this).parent("div").find(".glyphicon.glyphicon-chevron-up").removeClass("glyphicon-chevron-up").addClass("glyphicon-chevron-down");
+    });
+    //end region
+
+    //check num of row is selected when user check in checkbox
+    function handleEventWhenCheckOnCheckbox() {
+        $(".checkbox").change(function () {
+            disableWhenThereAreNoCheckboxChecked();
+        });
+    }
+    //end region
+
+    //check num of row is selected when user check in checkbox
+    function handleEventWhenCheckOnCheckboxCheckAll() {
+        $(".checkbox_checkall").change(function () {
+            var value = this.checked;
+
+            if (!value) {
+                $("#delete-qualityalert").attr('disabled', true);
+                $("#export-selected-excel").attr('disabled', true);
+            }
+            else {
+                if ($("#qualityAlert-grid tbody").find("input:checked").length > 0) {
+                    $("#delete-qualityalert").attr('disabled', false);
+                    $("#export-selected-excel").attr('disabled', false);
+                }
+            }
+
+            $("#qualityAlert-grid tbody").find(".checkbox").each(function (i, ele) {
+                ele.checked = value;
+            });
+        });
+    }
+    //end region
+
+    //apply condition when the grid has loaded
+    function applyConditionWhenLoaded() {
+        //debugger;
+        //if (supplierCbxFilter.value() == 0)
+        //    $("#export-ComplainLetter").attr('disabled', true);
+        //else
+        if ($("#qualityAlert-grid").data("kendoGrid").dataSource._data.length == 0) {
+            $("#export-ComplainLetter").attr('disabled', true);
+        } else {
+            $("#export-ComplainLetter").attr('disabled', false);
+        }
+
+        @if(permissionService.Authorize(PermissionProvider.QAMPD) || permissionService.Authorize(PermissionProvider.QAGuest))
+            {
+                <text>
+                //change text of create of grid
+                $('.k-button.k-button-icontext.k-grid-add').html($('.k-button.k-button-icontext.k-grid-add').html().replace($('.k-button.k-button-icontext.k-grid-add').text(), 'Add new alert'));
+                </text>
+            }
+
+        disableWhenThereAreNoCheckboxChecked();
+    }
+
+    //end region
+
+    function disableWhenThereAreNoCheckboxChecked() {
+        if ($("#qualityAlert-grid tbody").find("input:checked").length <= 0) {
+            //$("#delete-qualityalert").attr('disabled', true); //Remove delete QA function
+            $("#export-selected-excel").attr('disabled', true);
+        } else {
+            //$("#delete-qualityalert").attr('disabled', false); //Remove delete QA function
+            $("#export-selected-excel").attr('disabled', false);
+        }
+    }
+
+    function triggerEventQARelated() {
+        //create event when window create or edit load
+        //even radio Qa realated to materials change
+        $('input[type=radio][name=QARelatedToMaterials]')
+            .change(function() {
+                if (this.value == 'true') {
+                    //show all field in class 
+                    $('.hideWhenRelatedToMaterials').show();
+                    //add requried for supplierlot because supplier lot is in hide region
+                    $('input[type=text][name=SupplierLot]').attr('required', true);
+                    //remove requried for QARelatedToFG -> because it is hide and can not need required
+                    $('input[type=text][name=QARelatedToFG]').attr('required', false);
+                    //set value for hiden input -> if it not has value -> can not crate or edit
+                    $('input[type=text][name=QARelatedToMaterials]').val('true');
+                    //clear message below
+                    $('.k-invalid-msg[data-for=QARelatedToMaterials]').text('');
+                    $('#divQARelatedToFG').hide();
+                    $('#divQARelatedToFGNo').show();
+                } else if (this.value == 'false') {
+                    //hide all field in class
+                    $('.hideWhenRelatedToMaterials').hide();
+                    //remove requried for supplierlot -> because it is hide and can not need required
+                    $('input[type=text][name=SupplierLot]').attr('required', false);
+                    //set value for hidden input -> if it not has value -> can not create or edit
+                    $('input[type=text][name=QARelatedToMaterials]').val('false');
+                    //cleare message below
+                    $('.k-invalid-msg[data-for=QARelatedToMaterials]').text('');
+                    $('#divQARelatedToFG').show();
+                    if ($('input[type=text][name=QARelatedToFG]').val() == 'true')
+                        $('#divQARelatedToFGNo').show();
+                    else
+                        $('#divQARelatedToFGNo').hide();
+                }
+            });
+        $('input[type=radio][name=QARelatedToFG]')
+            .change(function() {
+                if (this.value == 'true') {
+                    $('#divQARelatedToFGNo').show();
+                    $('input[type=text][name=QARelatedToFG]').val('true');
+                } else if (this.value == 'false') {
+                    $('#divQARelatedToFGNo').hide();
+                    $('input[type=text][name=QARelatedToFG]').val('false');
+                }
+            });
+    }
+
+    function triggerEventRadioButtonUncheck() {
+        //We need to bind click handler as well
+        //as FF sets button checked after mousedown, but before click
+        $('input:radio')
+            .bind('click mousedown',
+            (function() {
+                //Capture radio button status within its handler scope,
+                //so we do not use any global vars and every radio button keeps its own status.
+                //This required to uncheck them later.
+                //We need to store status separately as browser updates checked status before click handler called,
+                //so radio button will always be checked.
+                var isChecked;
+
+                return function(event) {
+                    //console.log(event.type + ": " + this.checked);
+
+                    if (event.type == 'click') {
+                        //console.log(isChecked);
+
+                        if (isChecked) {
+                            //Uncheck and update status
+                            isChecked = this.checked = false;
+                        } else {
+                            //Update status
+                            //Browser will check the button by itself
+                            isChecked = true;
+
+                            //Do something else if radio button selected
+                            /*
+                            if(this.value == 'somevalue') {
+                                doSomething();
+                            } else {
+                                doSomethingElse();
+                            }
+                            */
+                        }
+                    } else {
+                        //Get the right status before browser sets it
+                        //We need to use onmousedown event here, as it is the only cross-browser compatible event for radio buttons
+                        isChecked = this.checked;
+                    }
+                }
+            })());
+    }
+
+    //Count the total of QA have the same "Alert Classification"   
+    function countClassificationSame() {
+        var classificationIdNewValue = $('#popup-editor-alertclassification-attribute-qualityalert').val();
+
+        $.ajax({
+            url: '/QualityAlert/CountQualityAlertByClassification',
+            type: 'post',
+            dataType: 'json',
+            //contentType: "application/json",            
+            data: {
+                id: classificationIdNewValue
+            },
+            success: function(result) {
+                if (result.status == "success") {
+                    $("label[for='count-quality-alert']").html('Total: ' + result.qualityAlertCount);
+                }
+            },
+            error: function(e) {
+
+            }
+        });
+
+        //update classificaiton id when choose one from classificaiton dropdown controll(when create or edit)
+        global_ClassificationId = classificationIdNewValue;
+    }
+
+    function filterClassification() {
+        var funcId = $('#popup-editor-FoundByFunction-attribute-qualityalert').val();
+        var temp = [];  
+        temp = dataClassification.filter(function(obj) {
+            return obj.FoundByFunction.Id == funcId && funcId != 0;
+        });
+        if (temp.length == 0) {
+            $('#popup-editor-alertclassification-attribute-qualityalert').data("kendoComboBox").enable(false);
+            temp.unshift({ Id: "0", Name: "--  None  --" });            
+        }
+        else
+            $('#popup-editor-alertclassification-attribute-qualityalert').data("kendoComboBox").enable(true);
+
+        dataSourceClassification.data(temp);
+        var cbxFilter = $("#popup-editor-alertclassification-attribute-qualityalert").data("kendoComboBox");
+        cbxFilter.select(0);
+
+        //get first classification item when choose a new found by function
+        global_ClassificationId = temp[0].Id;
+    }
+</script>

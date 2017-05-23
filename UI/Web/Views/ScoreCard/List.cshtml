@@ -1,0 +1,759 @@
+﻿@{
+
+    //page title
+    ViewBag.Title = "Scorecard";
+    Layout = "~/Views/Shared/_KendoUILayout.cshtml";
+}
+<script src="@Url.Content("~/Scripts/kendo/2014.1.318/kendo.web.min.js")"></script>
+
+<script id="scorecard-export-button-template" type="text/x-kendo-template">
+
+    <div class="btn-group">
+        <button type="button" class="btn" title="Import or Export Template" style="width: 160px;">Import/Export</button>
+        <button type="button" class="btn dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+            <span class="caret"></span>
+            <span class="sr-only">Toggle Dropdown</span>
+        </button>
+        <ul class="dropdown-menu">
+            <li>
+                <a id="exportMultiScoreCards" class="" onclick="showModalExportScoreCardsClick()" title="Export Multi Scorecards">
+                    <i class="glyphicon glyphicon-export"></i>Export Multi Scorecards
+                </a>
+            </li>
+            <li role="separator" class="divider"></li>
+            <li>
+                <a class="" id="export-MqsMeasure" title="Export MQS Measure template">
+                    <i class="glyphicon glyphicon-export"></i>Export MQS Measure
+                </a>
+            </li>
+            <li>
+                <a class="fileUpload" title="Import MQS Measure template">
+                    <span><i class="glyphicon glyphicon-import"></i>Import MQS Measure</span>
+                    <input type="file" class="upload" id="mqsMeasureFile" name="mqsMeasureFile" />
+                </a>
+            </li>
+            <li role="separator" class="divider"></li>
+            <li>
+                <a class="" id="export-ScoreCardMeasure" title="Export Scorecard Measure template">
+                    <i class="glyphicon glyphicon-export"></i>Export Scorecard Measure
+                </a>
+            </li>
+            <li>
+                <a class="fileUpload" title="Import Scorecard Measure template">
+                    <span><i class="glyphicon glyphicon-import"></i>Import Scorecard Measure</span>
+                    <input type="file" class="upload" id="scoreCardMeasureFile" name="scoreCardMeasureFile" />
+                </a>
+            </li>
+        </ul>
+    </div>
+
+    @*<a class="btn btn-info btn-info-custom pull-left" id="export-MqsMeasure" title="Export MQS Measure template">Export MQS Measure</a>
+        <div class="fileUpload btn-info btn-info-custom pull-left" style="margin-right: 20px;" title="Import MQS Measure template">
+            <span>Import MQS Measure</span>
+            <input type="file" class="upload" id="mqsMeasureFile" name="mqsMeasureFile" />
+        </div>
+
+        <a class="btn btn-info btn-info-custom pull-left" id="export-ScoreCardMeasure" title="Export Scorecard Measure template">Export Scorecard Measure</a>
+        <div class="fileUpload btn-info btn-info-custom pull-left" title="Import Scorecard Measure template">
+            <span>Import Scorecard Measure</span>
+            <input type="file" class="upload" id="scoreCardMeasureFile" name="scoreCardMeasureFile" />
+        </div>*@
+    <button value="ads" id="showComplaintTrackingChart" class="pull-right" title="Complaint Tracking Chart" style="margin: 6px;">
+        <i class="glyphicon glyphicon-stats"></i>
+    </button>
+    <button value="ads" id="showNumberComplaintTrackingChart" class="pull-right" title="Number Complaint Tracking Chart" style="margin: 6px;">
+        <i class="glyphicon glyphicon-align-left"></i>
+    </button>
+</script>
+
+<div class="scoreCard-fillter-group row">
+    <span class="pull-left">Year:</span>
+    <div class="pull-left col-sm-2">
+        <input id="yearDatePickerFilter" />
+    </div>
+
+    <span class="col-sm-1 col-sm-offset-1">Supplier:</span>
+    <div class="pull-left">
+        <input id="supplierCbxFiler" />
+    </div>
+
+    <span class="pull-left">From:</span>
+    <div class="col-sm-2">
+        <input id="datepicker_from_filter" />
+    </div>
+
+    <span class="pull-left">To:</span>
+    <div class="col-sm-2">
+        <input id="datepicker_to_filter" />
+    </div>
+    <button class="form-control pull-left" onclick="Search()" title="Search">Search</button>
+</div>
+
+<div id="scorecard-grid"></div>
+
+<!-- Modal -->
+<div class="modal fade" id="myModal" role="dialog">
+    <div class="modal-dialog">
+
+        <!-- Modal content-->
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h4 class="modal-title">Export Multi Scorecards To Excel</h4>
+            </div>
+            <div class="modal-body">
+                <input id="supplier_multicbx" />
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal" id="exportMultiSupplierBtn">Export</button>
+                <button type="button" class="btn btn-default" id="clearAllSupplierBtn">Clear</button>
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    //equal true when load page first time
+    //grid will show by data search Year: current year, Supplier: first supplier
+
+    var dataSourceSupplier = new kendo.data.DataSource({
+    });
+
+    //get data Supplier filter for combobox popup editor
+    var dataSourceSupplierFilter = new kendo.data.DataSource({
+        transport: {
+            read: {
+                dataType: "json",
+                type: "POST",
+                url: "@Html.Raw(Url.Action("GetAllSupplier", "QualityAlert"))"
+            }
+        },
+        schema: {
+            parse: function (data) {
+                data.forEach(function (entry) {
+                    dataSourceSupplier._data.push(entry);
+                });
+                //data.unshift({ Id: "0", Name: "--  Choose supplier  --" });
+                return data;
+            }
+        }
+    });
+
+    function cYear() {
+        var d = new Date();
+        y = d.getFullYear();
+        if (d.getMonth() > 5) {
+            return y + 1;
+        }
+        return y;
+    }
+
+    var currentYear = cYear();//new Date().getFullYear();
+    var yearDatePickerFiller = $("#yearDatePickerFilter").kendoDatePicker({
+        width: 120,
+        value: new Date(currentYear,1,1),
+        footer: "Current year",
+        start: "decade",
+        depth: "decade",
+        format: "yyyy",
+        parseFormats: ["yyyy"],
+        change: function (e) {
+            currentYear = e.sender.value().getFullYear();
+
+            dateFromFilter.min(new Date(currentYear - 1, 6, 1));
+            dateFromFilter.max(new Date(currentYear, 5, 30));
+            dateToFilter.min(new Date(currentYear - 1, 6, 1));
+            dateToFilter.max(new Date(currentYear, 5, 30));
+
+            dateFromFilter.value(new Date(currentYear - 1, 6, 1));
+            dateToFilter.value(new Date(currentYear, 5, 30));
+
+        }
+    });
+
+    $("#supplierCbxFiler").kendoComboBox({
+        dataTextField: "Name",
+        dataValueField: "Id",
+        dataSource: dataSourceSupplierFilter,
+        width: 20,
+        height: 100,
+        index: 0,
+        dataBound: function (e) {
+        },
+        dataBinding: function (e) {
+        },
+        change: function (e) {
+        }
+    });
+    var supplierCbxFilter = $("#supplierCbxFiler").data("kendoComboBox");
+
+
+    var dateFromFilterModel = $("#datepicker_from_filter");
+    dateFromFilterModel.kendoMaskedTextBox({
+        mask: "dd/MM/yyyy",
+        rules: {
+            "M": function (m) {
+                if (m >= 0 && m <= 1) {
+                    monthTo = m;
+                }
+                return m >= 0 && m <= 1;
+            },
+            "m": function (m) {
+
+                if (monthTo == 0) {
+                    return m >= 1 && m <= 9
+                }
+                if (monthTo == 1) {
+                    return m >= 0 && m <= 2
+                }
+            },
+            "D": function (d) {
+                if (d >= 0 && d <= 3)
+                    dateTo = d;
+                return d >= 0 && d <= 3;
+
+            },
+            "d": function (d) {
+                if (dateTo == 0)
+                    return d >= 1 && d <= 9;
+                return d >= 0 && d <= 9 && (dateTo + d) <= 31
+            },
+            "y": /[0-9]/,
+            "Y": /[1-9]/
+        }
+    });
+
+    var dateFromFilter = dateFromFilterModel.kendoDatePicker({
+        format: "dd/MM/yyyy",
+        change: fromPackingTimeChange,
+    }).data("kendoDatePicker");
+
+
+    dateFromFilterModel.closest(".k-datepicker")
+    .add(dateFromFilterModel)
+    .removeClass("k-textbox");
+
+    dateFromFilterModel.focus(function () {
+        var input = this;
+        setTimeout(function () {
+            input.setSelectionRange(0, 0);
+        }, 0);
+    });
+
+    //to date
+    var dateToFilterModel = $("#datepicker_to_filter");
+    var monthTo = -1;
+    var dateTo = -1;
+    dateToFilterModel.kendoMaskedTextBox({
+        mask: "dd/MM/yyyy",
+        rules: {
+            "M": function (m) {
+                if (m >= 0 && m <= 1) {
+                    monthTo = m;
+                }
+                return m >= 0 && m <= 1;
+            },
+            "m": function (m) {
+
+                if (monthTo == 0) {
+                    return m >= 1 && m <= 9
+                }
+                if (monthTo == 1) {
+                    return m >= 0 && m <= 2
+                }
+            },
+            "D": function (d) {
+                if (d >= 0 && d <= 3)
+                    dateTo = d;
+                return d >= 0 && d <= 3;
+
+            },
+            "d": function (d) {
+                if (dateTo == 0)
+                    return d >= 1 && d <= 9;
+                return d >= 0 && d <= 9 && (dateTo + d) <= 31
+            },
+            "y": /[0-9]/,
+            "Y": /[1-9]/
+        }
+    });
+
+    var dateToFilter = dateToFilterModel.kendoDatePicker({
+        format: "dd/MM/yyyy",
+        change: toPackingTimeChange
+    }).data("kendoDatePicker");
+
+    
+    dateToFilterModel.closest(".k-datepicker")
+    .add(dateToFilterModel)
+    .removeClass("k-textbox");
+
+    dateToFilterModel.focus(function () {
+        var input = this;
+        setTimeout(function () {
+            input.setSelectionRange(0, 0);
+        }, 0);
+    });
+
+
+    dateFromFilter.value(new Date(currentYear - 1, 6, 1));
+    dateFromFilter.min(new Date(currentYear - 1, 6, 1));
+
+    dateToFilter.value(new Date(currentYear, 5, 30));
+    dateToFilter.max(new Date(currentYear, 5, 30));
+
+    dateFromFilter.max(new Date(currentYear, 5, 30));
+    dateToFilter.min(new Date(currentYear - 1, 6, 1));
+
+    //Date for from date and to date Packing time
+
+    function fromPackingTimeChange() {
+        var fromPackingTime = dateFromFilter.value(),
+                    toPackingTime = dateToFilter.value();
+
+        if (fromPackingTime) {
+            fromPackingTime = new Date(fromPackingTime);
+            fromPackingTime.setDate(fromPackingTime.getDate());
+            dateToFilter.min(fromPackingTime);
+        } else if (toPackingTime) {
+            dateFromFilter.max(new Date(toPackingTime));
+        } else {
+            toPackingTime = new Date();
+            dateFromFilter.max(toPackingTime);
+            dateToFilter.min(toPackingTime);
+        }
+    }
+
+    function toPackingTimeChange() {
+        var fromPackingTime = dateFromFilter.value(),
+                    toPackingTime = dateToFilter.value();
+
+        if (toPackingTime) {
+            toPackingTime = new Date(toPackingTime);
+            toPackingTime.setDate(toPackingTime.getDate());
+            dateFromFilter.max(toPackingTime);
+        } else if (fromPackingTime) {
+            dateToFilter.min(new Date(fromPackingTime));
+        } else {
+            toPackingTime = new Date();
+            dateFromFilter.max(toPackingTime);
+            dateToFilter.min(toPackingTime);
+        }
+    }
+
+
+    var dataSourceTimeRange = new kendo.data.DataSource({
+        data: [
+          { Id: -1, Name: 'Ytd' },
+          { Id: 0, Name: 'Jul' },
+          { Id: 1, Name: 'Aug' },
+          { Id: 2, Name: 'Sep' },
+          { Id: 3, Name: 'Oct' },
+          { Id: 4, Name: 'Nov' },
+          { Id: 5, Name: 'Dec' },
+          { Id: 6, Name: 'Jan' },
+          { Id: 7, Name: 'Feb' },
+          { Id: 8, Name: 'Mar' },
+          { Id: 9, Name: 'Apr' },
+          { Id: 10, Name: 'May' },
+          { Id: 11, Name: 'Jun' }
+        ]
+    });
+
+    $("#timerange_multicbx").kendoMultiSelect({
+        dataTextField: "Name",
+        dataValueField: "Id",
+        dataSource: dataSourceTimeRange,
+        optionLabel: "--- Any Month ---",
+        placeholder: "--- Any Month ---",
+        autoClose: false
+    });
+    //var timeRangeMultiCbx = $("#timerange_multicbx").data("kendoMultiSelect");
+
+    var datasource = new kendo.data.DataSource({
+        //autoSync: true,
+        type: "json",
+        transport: {
+            read: {
+                url: "@Html.Raw(Url.Action("List", "ScoreCard"))",
+                type: "POST",
+                dataType: "json",
+                data: additionData,
+                complete: function () {
+                }
+            },
+            @*update: {
+                    url: "@Html.Raw(Url.Action("Update", "ScoreCard"))",
+                    type: "POST",
+                    dataType: "json",
+                    data: additionData,
+                    //complete: function (e) {
+                    //    if (e.responseJSON != undefined && e.responseJSON.status == "success")
+                    //        refreshGrid();
+                    //}
+                }*@
+        },
+        schema: {
+            data: "Data",
+            total: "Total",
+            errors: "Errors",
+            model: {
+                id: "Id",
+                fields: {
+                    Id: { editable: false, defaultValue: 0 },
+                    MsqMeasure: { editable: false },
+                    Ytd: { editable: false },
+                    Jul: { editable: true },
+                    Aug: { editable: true },
+                    Sep: { editable: true },
+                    Oct: { editable: true },
+                    Now: { editable: true },
+                    Dec: { editable: true },
+                    Jan: { editable: true },
+                    Feb: { editable: true },
+                    Mar: { editable: true },
+                    Apr: { editable: true },
+                    May: { editable: true },
+                    Jun: { editable: true },
+                    AvailableEdit: { editable: false },
+                    IsBold: {editable: false}
+                }
+            }
+        },
+        error: function (e) {
+            display_kendoui_grid_error(e);
+        },
+        serverPaging: false,
+        serverFiltering: true,
+        serverSorting: true
+    });
+
+    var grid = $("#scorecard-grid").kendoGrid({
+        dataSource: datasource,
+        editable: {
+            mode: "inline",
+        },
+        edit: function (e) {
+            if (e.model.AvailableEdit == false) {
+                this.closeCell();
+            }
+        },
+        toolbar: [{ template: $("#scorecard-export-button-template").html() }],
+        scrollable: false,
+        columns: [
+            {
+                field: "MsqMeasure",
+                title: "MQS Measure",
+                width: 250,
+                headerAttributes: { class: "text_align_center" },
+                attributes: { class: "#if(data.IsBold) {# fontbold#}#" },
+            },
+            {
+                field: "Ytd",
+                title: "YTD",
+                width: 70,
+                attributes: { class: "#if(data.IsBold) {# fontbold#}#" },
+                //headerAttributes: { class: "text_align_center" + "#if(data.Ytd == '') {# display_none#}#" },
+                //attributes: { class: "text_align_center" + "#console.log($(this));#" },
+            },
+            {
+                field: "Jul",
+                title: "Jul",
+                width: 70,
+                headerAttributes: { class: "text_align_center" },
+                attributes: { class: "text_align_center" + "#if(data.AvailableEdit) {# availableEdit#}#" + "#if(data.IsBold) {# fontbold#}#"},
+            },
+            {
+                field: "Aug",
+                title: "Aug",
+                width: 70,
+                headerAttributes: { class: "text_align_center" },
+                attributes: { class: "text_align_center" + "#if(data.AvailableEdit) {# availableEdit#}#" + "#if(data.IsBold) {# fontbold#}#" },
+            },
+            {
+                field: "Sep",
+                title: "Sep",
+                width: 70,
+                headerAttributes: { class: "text_align_center" },
+                attributes: { class: "text_align_center" + "#if(data.AvailableEdit) {# availableEdit#}#" + "#if(data.IsBold) {# fontbold#}#" },
+            },
+            {
+                field: "Oct",
+                title: "Oct",
+                width: 70,
+                headerAttributes: { class: "text_align_center" },
+                attributes: { class: "text_align_center" + "#if(data.AvailableEdit) {# availableEdit#}#" + "#if(data.IsBold) {# fontbold#}#" },
+            },
+            {
+                field: "Nov",
+                title: "Nov",
+                width: 70,
+                headerAttributes: { class: "text_align_center" },
+                attributes: { class: "text_align_center" + "#if(data.AvailableEdit) {# availableEdit#}#" + "#if(data.IsBold) {# fontbold#}#" },
+            },
+            {
+                field: "Dec",
+                title: "Dec",
+                width: 70,
+                headerAttributes: { class: "text_align_center" },
+                attributes: { class: "text_align_center" + "#if(data.AvailableEdit) {# availableEdit#}#" + "#if(data.IsBold) {# fontbold#}#" },
+            },
+            {
+                field: "Jan",
+                title: "Jan",
+                width: 70,
+                headerAttributes: { class: "text_align_center" },
+                attributes: { class: "text_align_center" + "#if(data.AvailableEdit) {# availableEdit#}#" + "#if(data.IsBold) {# fontbold#}#" },
+            },
+            {
+                field: "Feb",
+                title: "Feb",
+                width: 70,
+                headerAttributes: { class: "text_align_center" },
+                attributes: { class: "text_align_center" + "#if(data.AvailableEdit) {# availableEdit#}#" + "#if(data.IsBold) {# fontbold#}#" },
+            },
+            {
+                field: "Mar",
+                title: "Mar",
+                width: 70,
+                headerAttributes: { class: "text_align_center" },
+                attributes: { class: "text_align_center" + "#if(data.AvailableEdit) {# availableEdit#}#" + "#if(data.IsBold) {# fontbold#}#" },
+            },
+            {
+                field: "Apr",
+                title: "Apr",
+                width: 70,
+                headerAttributes: { class: "text_align_center" },
+                attributes: { class: "text_align_center" + "#if(data.AvailableEdit) {# availableEdit#}#" + "#if(data.IsBold) {# fontbold#}#" },
+            },
+            {
+                field: "May",
+                title: "May",
+                width: 70,
+                headerAttributes: { class: "text_align_center" },
+                attributes: { class: "text_align_center" + "#if(data.AvailableEdit) {# availableEdit#}#" + "#if(data.IsBold) {# fontbold#}#" },
+            },
+            {
+                field: "Jun",
+                title: "Jun",
+                width: 70,
+                headerAttributes: { class: "text_align_center" },
+                attributes: { class: "text_align_center" + "#if(data.AvailableEdit) {# availableEdit#}#" + "#if(data.IsBold) {# fontbold#}#" },
+            }
+        ],
+        editable: true,
+        save: onSave,
+        dataBinding: function () {
+            var listTemp = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
+            var dateFromValue = dateFromFilter.value();
+            var dateToValue = dateToFilter.value();
+            var numOfMonths = dateToValue.getMonth() - dateFromValue.getMonth()
+                    + (12 * (dateToValue.getFullYear() - dateFromValue.getFullYear())) + 1;
+
+            var listMonths = [];
+            for (var i = dateFromValue.getMonth() ; i < dateFromValue.getMonth() + numOfMonths; i++) {
+                if (i >= 6)
+                    listMonths.push(i - 6);
+                else
+                    listMonths.push(i + 6);
+            }
+
+            listTemp.forEach(function (entry) {
+                if (listMonths.length > 0 && listMonths.indexOf(entry) < 0) {
+                    grid.hideColumn(entry + 2);
+                }
+                else {
+                    grid.showColumn(entry + 2);
+                }
+            });
+            grid.element.children('table').css("width", "100%");
+        }
+    }).data("kendoGrid");
+
+    function additionData() {
+        return {
+            Year: yearDatePickerFiller.val(),
+            SupplierId: supplierCbxFilter.value(),
+            FromDate: kendo.toString(dateFromFilter.value(), 'MM/dd/yyyy'),
+            ToDate: kendo.toString(dateToFilter.value(), 'MM/dd/yyyy')
+            //MonthIds: [-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
+            //MonthIds: timeRangeMultiCbx.value()
+        }
+    }
+
+    function display_kendoui_grid_error(e) {
+        if (e.errors) {
+            if ((typeof e.errors) == 'string') {
+                //single error
+                //display the message
+                alert(e.errors);
+            } else {
+                //array of errors
+                //source: http://docs.kendoui.com/getting-started/using-kendo-with/aspnet-mvc/helpers/grid/faq#how-do-i-display-model-state-errors?
+                var message = "The following errors have occurred:";
+                //create a message containing all errors.
+                $.each(e.errors, function (key, value) {
+                    if (value.errors) {
+                        message += "\n";
+                        message += value.errors.join("\n");
+                    }
+                });
+                //display the message
+                alert(message);
+            }
+        } else {
+            alert(e.xhr.responseText);
+        }
+    }
+
+    document.getElementById("mqsMeasureFile").onchange = function (e) {
+        var file = e.target.files[0];
+
+        if (file.name.split('.').pop() != 'xlsx') {
+            alert("File Invalid.");
+            return;
+        }
+        var formData = new FormData();
+        formData.append('mqsMeasureFile', file, file.name);
+        var xhr = new XMLHttpRequest();
+        xhr.onreadystatechange = function () {
+            if (xhr.readyState == XMLHttpRequest.DONE) {
+                $('#mqsMeasureFile').val('');
+                if (xhr.responseText == "Success") {
+                    alert("Import file MqsMeasure.xlsx success.")
+                    $("#scorecard-grid").data("kendoGrid").dataSource.read();
+                }
+                else {
+                    alert(xhr.responseText);
+                }
+
+            }
+        }
+        xhr.open('POST', 'ScoreCard/ImportMqsMeasure', true);
+        xhr.setRequestHeader("X_FILENAME", file.name);
+        xhr.send(formData);
+    };
+
+    document.getElementById("scoreCardMeasureFile").onchange = function (e) {
+        var file = e.target.files[0];
+
+        if (file.name.split('.').pop() != 'xlsx') {
+            alert("File Invalid.");
+            return;
+        }
+        var formData = new FormData();
+        formData.append('scoreCardMeasureFile', file, file.name);
+        var xhr = new XMLHttpRequest();
+        xhr.onreadystatechange = function () {
+            if (xhr.readyState == XMLHttpRequest.DONE) {
+                $('#scoreCardMeasureFile').val('');
+                if (xhr.responseText == "Success") {
+                    alert("Import file ScoreCard.xlsx success.")
+                    $("#scorecard-grid").data("kendoGrid").dataSource.read();
+                }
+                else
+                    alert(xhr.responseText);
+            }
+        }
+        xhr.open('POST', 'ScoreCard/ImportScoreCardMeasure', true);
+        xhr.setRequestHeader("X_FILENAME", file.name);
+        xhr.send(formData);
+    };
+
+    //export scorecard measure
+    $('#export-ScoreCardMeasure').click(function () {
+        //console.log('#export-ScoreCardMeasure');
+        window.location.href = "/scorecard/ExportScoreCardMeasureToExcel?year=" + yearDatePickerFiller.val();
+    });
+
+    //export mqsMeasure
+    $('#export-MqsMeasure').click(function () {
+        window.location.href = "/scorecard/ExportMqsMeasureToExcel";
+    });
+
+    $("#supplier_multicbx").kendoMultiSelect({
+        dataTextField: "Name",
+        dataValueField: "Id",
+        dataSource: dataSourceSupplier,
+        dataBound: function (data) {
+        },
+        height: 100,
+        change: function (e) {
+            if (supplierMultiCbx.value().length > 0) {
+                $('#exportMultiSupplierBtn').attr('disabled', false);
+            }
+            else {
+                $('#exportMultiSupplierBtn').attr('disabled', 'disabled');
+            }
+        },
+        optionLabel: "--- Any Supplier ---",
+        placeholder: "--- Any Supplier ---"
+    });
+
+    showModalExportScoreCardsClick = function (e) {
+        //alert("Export click");
+        $("#myModal").modal();
+    };
+
+    var supplierMultiCbx = $("#supplier_multicbx").data("kendoMultiSelect");
+    $('#clearAllSupplierBtn').click(function () {
+        $('#exportMultiSupplierBtn').attr('disabled', 'disabled');
+        supplierMultiCbx.value('');
+    });
+
+    $('#exportMultiSupplierBtn').click(function () {
+        //console.log(supplierMultiCbx.value().toString());
+        //window.location.href = "/scorecard/ExportMultiScoreCardMeasureToExcel?year=" + yearDatePickerFiller.val() + "&supplierIds=" + supplierMultiCbx.value().toString() + "&monthIds=" + timeRangeMultiCbx.value().toString();
+        window.location.href = "/scorecard/ExportMultiScoreCardMeasureToExcel?year=" + yearDatePickerFiller.val() + "&supplierIds=" + supplierMultiCbx.value().toString() + "&fromDate=" + kendo.toString(dateFromFilter.value(), 'MM/dd/yyyy') + "&toDate=" + kendo.toString(dateToFilter.value(), 'MM/dd/yyyy');
+    });
+
+    $('#myModal').on('show.bs.modal', function () {
+        $('#exportMultiSupplierBtn').attr('disabled', 'disabled');
+        supplierMultiCbx.value('');
+    })
+
+    //show complaint tracking chart
+    $('#showComplaintTrackingChart').click(function () {
+        window.location.href = "/QualityAlert/ComplaintTracking?supplierid=" + supplierCbxFilter.value().toString();
+    });
+
+    //show number complaint tracking chart
+    $('#showNumberComplaintTrackingChart').click(function () {
+        window.location.href = "/QualityAlert/NumberComplaintTracking?supplierid=" + supplierCbxFilter.value().toString();
+    });
+
+    function onSave(e) {
+        var month;
+        for (var propName in e.values) {
+            month = propName;
+        }
+        $.ajax({
+            url: "/ScoreCard/Update",
+            data: {
+                Year: yearDatePickerFiller.val(),
+                SupplierId: supplierCbxFilter.value(),
+                ScMeasureId: e.model.ScMeasureId,
+                Month: month,
+                Value: e.values[month]
+            },
+            type: "POST",
+            dataType: 'application/json',
+            complete: function (data) {
+                refreshGrid();
+            }
+        });
+    };
+
+    //refresh grid
+    refreshGrid = function () {
+        grid.dataSource.read();
+    }
+
+    function Search() {
+        refreshGrid();
+        //$("#scorecard-grid").data("kendoGrid").dataSource.read();
+    }
+
+</script>

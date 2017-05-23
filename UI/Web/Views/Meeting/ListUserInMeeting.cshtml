@@ -1,0 +1,196 @@
+﻿@model Web.Models.Meeting.MeetingTransportModel
+@{
+
+    //page title
+    ViewBag.Title = "User In Meeting";
+    Layout = "~/Views/Shared/_KendoUILayout.cshtml";
+}
+<script src="@Url.Content("~/Scripts/kendo/2014.1.318/kendo.web.min.js")"></script>
+
+<div id="userinmeeting-grid"></div>
+
+<script id="backtomeeting-template" type="text/x-kendo-template">
+    <a href='/Meeting/List' class='k-button k-button-icontext btn-info-custom' title=' Back to Meeting'>
+        <span class="k-icon k-i-arrow-w"></span>Back</a>
+</script>
+<script>
+    var dataSourceUser = new kendo.data.DataSource({
+        transport: {
+            read: {
+                dataType: "json",
+                type: "POST",
+                url: "@Html.Raw(Url.Action("GetAllUser", "UserManager"))"
+            }
+        }
+     ,
+        schema: {
+            parse: function (data) {
+                data.unshift({ Id: "0", Name: "--  Choose User  --" });
+                return data;
+            }
+        }
+    });
+    function UserDropDownEditor(container, options) {
+        $('<input required="required" data-text-field="Name" data-value-field="Id" name="'+ options.field +'" data-bind="value:' + options.field + '"/>')
+            .appendTo(container)
+            .kendoComboBox({
+                autoBind: false,
+                dataSource: dataSourceUser,
+                //template: "<i class=\"fa fa-#=data.Name.toLowerCase()#\"></i> #=data.Name#"
+            });
+        $('<span class="k-invalid-msg" data-for="' + options.field + '"></span>').appendTo(container);
+    }
+
+
+    var grid = $("#userinmeeting-grid").kendoGrid({
+        dataSource: {
+            type: "json",
+            transport: {
+                read: {
+                    url: "@Html.Raw(Url.Action("ListUserInMeeting", "Meeting"))",
+                    type: "POST",
+                    dataType: "json",
+                    data: @Model.Id
+                    },
+                update: {
+                    url: "@Html.Raw(Url.Action("UpdateUserInMeeting", "Meeting"))",
+                    type: "POST",
+                    dataType: "json",
+                    complete: function(e) {
+                        if (e.responseJSON != undefined && e.responseJSON.status == "success")
+                            $("#userinmeeting-grid").data("kendoGrid").dataSource.read();
+                    }
+                },
+                destroy: {
+                    url: "@Html.Raw(Url.Action("DeleteUserInMeeting", "Meeting"))",
+                    type: "POST",
+                    dataType: "json",
+                    complete: function(e) {
+                        if (e.responseJSON != undefined && e.responseJSON.status == "success")
+                            $("#userinmeeting-grid").data("kendoGrid").dataSource.read();
+                    }
+                },
+                create: {
+                    url: "@Html.Raw(Url.Action("CreateUserInMeeting", "Meeting", new { meetingId = Model.Id}))",
+                    type: "POST",
+                    dataType: "json",
+                    complete: function(e) {
+                        if (e.responseJSON != undefined && e.responseJSON.status == "success")
+                            $("#userinmeeting-grid").data("kendoGrid").dataSource.read();
+                    }
+                }
+            },
+            schema: {
+                data: "Data",
+                total: "Total",
+                errors: "Errors",
+                model: {
+                    id: "Id",
+                    fields: {
+                        Id: { editable: false, defaultValue: 0 },
+                        MeetingId: { defaultValue: @Model.Id },
+                        User: {
+                            editable: true,
+                            defaultValue: { Id: "0", Name: "--  Choose User  --" },
+                            validation: {
+                                required: true,
+                                //validateUser: function (input) {
+                                //    if (input.is("[name=User]")) {
+                                //        console.log(input.val());
+                                //        if (input.val() === "0")
+                                //        {
+                                //            input.attr("data-validateUser-msg", "Invalid User");
+                                //            return false;
+                                //        }
+                                //        //console.log(valid);
+                                //        return true;
+                                //    }
+                                //    //return true;
+                                //}
+                            }
+                        },
+                        IsLeader: {
+                            editable: true,
+                            type: "boolean"
+                        },
+                        IsCurrentLeader: {
+                            editable: true,
+                            type: "boolean"
+                        },
+                        Order: {
+                            editable: true,
+                            type: "number"
+                        }
+                    }
+                }
+            },
+            error: function (e) {
+                display_kendoui_grid_error(e);
+
+            },
+            pageSize: 15,
+            serverPaging: true,
+            serverFiltering: true,
+            serverSorting: true
+        },
+        columns: [
+        {
+            field: "User",
+            title: "User",
+            width: 350,
+            editor: UserDropDownEditor,
+            template: "#=User.Name#"
+        },
+        {
+            field: "IsLeader",
+            title: "Leader",
+            width: 100,
+            template: '<img src="@Url.Content("~/Content/img/")active-#=IsLeader#.gif" />'
+        },
+        {
+            field: "IsCurrentLeader",
+            title: "CurrentLeader",
+            width: 100,
+            template: '<img src="@Url.Content("~/Content/img/")active-#=IsCurrentLeader#.gif" />'
+        },
+        {
+            field: "Order",
+            title: "Order",
+            width: 100,
+            format: "n0",
+            template: "#=Order#"
+        },
+        {
+            command: [
+            {
+                name: "edit",
+                text: { update: "Save Changes", cancel: "Cancel" }
+            },
+            //"destroy"
+            {
+                name     : "destroy",
+                text     : "remove",
+                className: "ob-delete"
+            }
+            ],
+            title: "&nbsp;",
+            width: "250px"
+        }
+        ],
+        pageable: {
+            refresh: true,
+            pageSizes: ["5", "10", "15", "20"]
+        },
+        editable: "inline",
+        toolbar: [{ template: $("#backtomeeting-template").html() },"create"],
+        scrollable: false,
+        remove:function(e){ 
+            if(e.model.IsCurrentLeader == true)
+            {
+                alert("This user is Current Leader. Can not delete");
+                $("#userinmeeting-grid").data("kendoGrid").dataSource.read();
+            }
+        }
+    }).data("kendoGrid");
+
+</script>

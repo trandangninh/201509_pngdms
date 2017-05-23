@@ -1,0 +1,277 @@
+﻿@using RepositoryPattern.Infrastructure
+@using Service.Departments
+@using Web.Controllers
+@using Web.Models;
+@using Utils;
+@using Entities.Domain.Users;
+<style type="text/css">
+    .dashboard-permission, .dashboard-userallowinsupplychain, .dashboard-configuserinmeeting, .dashboard-usermanager,
+    .dashboard-line, .dashboard-dms, .dashboard-measure,
+    .meeting-making, .meeting-packing, .meeting-suplychain,
+    .report-making, .report-packing, .report-supplychain {
+    }
+</style>
+@{
+    var siteMap = new XmlSiteMap();
+    siteMap.LoadFrom("~/sitemap.config");
+}
+
+<script>
+
+    var flag = 1;
+    var checkIsFRDepartmentDDS = 0;
+
+    $(document).ready(function () {
+        try {
+            //Edit Heigh
+            if ($(".content-title").context.title.indexOf("FR Department DDS") != -1)
+                checkIsFRDepartmentDDS = 1
+            else
+                checkIsFRDepartmentDDS = 0;
+
+            valueSideBar = $('.sidebar').height();
+            y = $('body').height() - $('.container').height();
+
+            $(".full-screen-icon").css("cssText", "display: ;");
+
+            if (valueSideBar >= y) {
+                y = valueSideBar;               
+            }
+            else {
+                valueFullScreen = $('body').height() - $('.container').height() - $('#sidebar').height() + 14;
+                $(".full-screen-icon").css("cssText", "margin-top:" + valueFullScreen + "px");
+            }
+
+            if (checkIsFRDepartmentDDS != 0)
+                $("#page").css("cssText", "height:" + y + "px; overflow: hidden");
+
+            if (checkIsFRDepartmentDDS == 0)
+            {
+                valueSideBar = $('.sidebar').height();
+                $('.sidebar').css("cssText", "height:" + valueSideBar + "px");
+                $(".full-screen-icon").css("cssText", "display: none;");
+            }
+        }
+        catch (err) {
+         
+        }
+    });
+
+    $(window).resize(function () {
+        if (checkIsFRDepartmentDDS == 1)
+        {
+            if (flag == 0) {
+                $(".full-screen-icon").css("cssText", "margin-top:" + 15 + "px");
+                var valueSideBar = $('.sidebar').height();
+                y = $('body').height() - $('.container').height();
+                x = $('body').height() - $('.container').height() - $('.k-grid-header').height() - 4;
+
+                if (valueSideBar >= y) {
+                    y = valueSideBar;
+                    x = valueSideBar - $('.k-grid-header').height() - 4
+                }
+                else {
+                    valueFullScreen = $('body').height() - $('.container').height() - $('#sidebar').height() + 14;
+                    $(".full-screen-icon").css("cssText", "margin-top:" + valueFullScreen + "px");
+                }
+
+                $("#page").css("cssText", "height:" + y + "px; overflow: hidden");
+                $("#content").css("cssText", "height:" + y + "px");
+
+                $("#grid").css("cssText", "height: auto");
+                $(".k-grid-content").css("cssText", "height: " + x + "px");
+            }
+            else {
+                
+                $(".full-screen-icon").css("cssText", "margin-top:" + 15 + "px");
+
+                var valueSideBar = $('.sidebar').height();
+                y = $('body').height() - $('.container').height() - 2;
+                x = $('body').height() - $('.k-grid-header').height() - $('#grid').offset().top - $('.container').height();
+
+                if (valueSideBar >= y) {
+                    y = valueSideBar;
+                    x = valueSideBar - $('.k-grid-header').height() - $('#grid').offset().top;
+                }
+                else {
+                    valueFullScreen = $('body').height() - $('.container').height() - $('#sidebar').height() + 14;
+                    $(".full-screen-icon").css("cssText", "margin-top:" + valueFullScreen + "px");
+                }
+
+                $("#page").css("cssText", "height:" + y + "px; overflow: hidden");
+                $("#content").css("cssText", "height:" + y + "px");
+                $("#grid").css("cssText", "height: auto");
+                $(".k-grid-content").css("cssText", "height: " + x + "px");
+
+            }
+        }
+    });
+
+    function openFullScreen() {
+
+        if (flag == 1) {
+
+            $(".form-group").css("cssText", "display: none");
+            $(".box-title").css("cssText", "display: none");
+            $(".tab-content").css("cssText", "margin-top: 0");
+            $(".nav-tabs").css("cssText", "display: none");
+            $(".nav-tabs").css("cssText", "display: none");
+            $(".box.border .box-body").css("cssText", "padding: 0");
+            $(".full-screen").css("cssText", "padding: 0");
+            document.getElementsByClassName("page-header")[0].style.display = "none";
+            $("#main-content").css("cssText", "overflow: hidden");
+
+            $(".full-screen-icon").css("cssText", "margin-top:" + 15 + "px");
+            var valueSideBar = $('.sidebar').height();
+            y = $('body').height() - $('.container').height();
+            x = $('body').height() - $('.container').height() - $('.k-grid-header').height() - 4;
+
+            if (valueSideBar >= y) {
+                y = valueSideBar;
+                x = valueSideBar - $('.k-grid-header').height() - 4
+            }
+            else {
+                $(".full-screen-icon").css("cssText", "margin-top:" + 15 + "px");
+                valueFullScreen = $('body').height() - $('.container').height() - $('#sidebar').height() + 14;
+                $(".full-screen-icon").css("cssText", "margin-top:" + valueFullScreen + "px");
+            }
+
+            $("#page").css("cssText", "height:" + y + "px; overflow: hidden");
+            $("#content").css("cssText", "height:" + y + "px");
+
+            $("#grid").css("cssText", "height: auto");
+            $(".k-grid-content").css("cssText", "height: " + x + "px");
+            flag = 0;
+
+        }
+        else {
+
+
+            $(".form-group").css("cssText", "display: ");
+            $(".box-title").css("cssText", "display: ");
+            $(".tab-content").css("cssText", "margin-top: ");
+            $(".nav-tabs").css("cssText", "display: ");
+            $(".nav-tabs").css("cssText", "display: ");
+            $(".box.border .box-body").css("cssText", "padding: ");
+            $(".full-screen").css("cssText", "padding: ");
+            document.getElementsByClassName("page-header")[0].style.display = "";
+            flag = 1;
+
+           
+            $(".full-screen-icon").css("cssText", "margin-top:" + 15 + "px");
+           
+            var valueSideBar = $('.sidebar').height();
+            y = $('body').height() - $('.container').height() - 2;
+            x = $('body').height() - $('.k-grid-header').height() - $('#grid').offset().top - $('.container').height();
+
+            if (valueSideBar >= y) {
+                y = valueSideBar;
+                x = valueSideBar - $('.k-grid-header').height() - $('#grid').offset().top ;
+            }
+            else {
+                valueFullScreen = $('body').height() - $('.container').height() - $('#sidebar').height() + 14;
+                $(".full-screen-icon").css("cssText", "margin-top:" + valueFullScreen + "px");
+            }
+
+            $("#page").css("cssText", "height:" + y + "px; overflow: hidden");
+            $("#content").css("cssText", "height:" + y + "px");
+            $("#grid").css("cssText", "height: auto");
+            $(".k-grid-content").css("cssText", "height: " + x + "px");
+
+        }
+
+    }
+
+ </script>
+@helper RenderMenuItem(Web.Models.SiteMapNode item)
+{
+    string url = null;
+    if (!string.IsNullOrEmpty(item.ControllerName) && !string.IsNullOrEmpty(item.ActionName))
+    {
+        url = Url.Action(item.ActionName, item.ControllerName, item.RouteValues, null, null);
+    }
+    else
+    {
+        url = "javascript:;";
+    }
+    <li class="@(item.ChildNodes.Any(x => x.Visible)?"has-sub":"")">
+        <a href="@url" class="">
+            @if (!string.IsNullOrEmpty(item.Icon))
+            {
+                <text>
+                    <i class="fa @item.Icon"></i>
+                </text>
+            }
+            <span class="menu-text">@item.Title</span>
+            @if(item.ChildNodes.Any(x => x.Visible))
+            {
+            <text>
+                <span class="arrow"></span>
+            </text>
+            }
+        </a>
+        @if (item.ChildNodes.Any(x => x.Visible))
+        {
+            <ul class="sub">
+                @foreach (var childItem in item.ChildNodes.Where(x => x.Visible))
+                {
+                    @RenderMenuItem(childItem)
+                }
+            </ul>
+        }
+    </li>
+}
+<ul>
+    @{
+        var workContext = EngineContext.Current.Resolve<IWorkContext>();
+        var deparmentService = EngineContext.Current.Resolve<IDepartmentService>();
+        var deparments = deparmentService.SearchDepartment(workContext.CurrentUser != null && workContext.CurrentUser.IsAdmin() ? null : workContext.CurrentUser, true);
+        foreach (var item in siteMap.RootNode.ChildNodes.Where(x => x.Visible))
+        {
+            if (workContext.CurrentUser == null)
+            {
+                if (item.Title.ToLower() == "quality alert")
+                {
+                    @RenderMenuItem(item)
+                }
+            }
+            else
+            {
+                if (item.Title.ToLower() == "dds meeting")
+                {
+                    item.ChildNodes = deparments.Select(d => new Web.Models.SiteMapNode
+                    {
+                        Title = d.Name,
+                        ActionName = "Index",
+                        ControllerName = "DdsMeeting",
+                        RouteValues = new RouteValueDictionary { { "id", d.Id } },
+                        Visible = true
+                    }).ToList();
+                }
+                if (item.Title.ToLower() == "report")
+                {
+                    item.ChildNodes = deparments.Select(d => new Web.Models.SiteMapNode
+                    {
+                        Title = d.Name,
+                        ActionName = "Index",
+                        ControllerName = "Report",
+                        RouteValues = new RouteValueDictionary { { "id", d.Id } },
+                        Visible = true
+                    }).ToList();
+                }
+             @RenderMenuItem(item)
+                }
+            }
+        }
+
+
+</ul>
+<ul class="full-screen-icon">
+    <li>
+        <a onclick="openFullScreen()">
+            <i class="fa fa-arrows-alt" aria-hidden="true"></i>
+        </a>
+    </li>
+</ul>
+
+

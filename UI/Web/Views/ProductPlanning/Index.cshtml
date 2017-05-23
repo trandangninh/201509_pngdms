@@ -1,0 +1,395 @@
+﻿@using Entities.Domain
+@using Microsoft.Ajax.Utilities
+@using Service.Common
+@using Service.Interface
+@*@model Web.Models.ProductPlanning.ProductPlanningModel*@
+
+@model List<Web.Models.ProductPlanning.ProductPlanningNewModel>
+
+@*List<web.models.packing.meetingresultmodel>*@
+@{
+    ViewBag.Title = "Product Planning in next 7 days";
+    Layout = "~/Views/Shared/_KendoUILayout.cshtml";
+
+}
+<div class="form-group">
+
+    <div class="pull-right " style="padding-right:0; margin-bottom:5px">
+        <input id="datepicker"  class="datepicker-fullscreen" style="width: 150px;" />
+    </div>
+
+</div>
+<div class="row">
+    <div class="col-md-12">
+        <!-- BOX -->
+        <div class="box border blue">
+            <div class="box-title">
+                <h4><i class="fa fa-user"></i><span class="hidden-inline-mobile">  </span></h4>
+            </div>
+            <div class="box-body">
+                <div class="tabbable header-tabs">
+                    <ul class="nav nav-tabs">
+
+                        <li class="active"><a href="#tabresult" data-toggle="tab"><span class="hidden-inline-mobile"><i class="fa fa-calendar fa-fw"></i>Production Planning </span></a></li>
+
+                    </ul>
+                    <!-- Modal-->
+                    <div class="modal fade" id="tracking-model" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+                        <form method="post" name="frmimport" id="frmimport" class="frmimport" enctype="multipart/form-data" target="ifrsendmail">
+
+                            <div class="modal-dialog">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Cancel</span></button>
+                                        <h4 class="modal-title" id="myModalLabel"> Import Data </h4>
+                                    </div>
+                                    <div class="modal-body">
+                                        <table style="width:100%">
+
+                                            <tr>
+                                                <td>Input File</td>
+                                                <td>
+                                                    <input class="excell-file" onsubmit="return false" id="postedFileId" name="postedFile" type="file" />
+                                                </td>
+                                            </tr>
+                                        </table>
+
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button id="btn-close" type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                                        <button id="btn-frmimport" type="button" class="btn btn-primary">Import </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+
+                    <div class="tab-content">
+
+                        <!-- Result -->
+                        <div class="tab-pane fade in active" id="tabresult">
+                            <div class="pull-left col-xs-2" style="margin-bottom: 5px; padding-left: 0;">
+                                <a id="import-excel" class="btn btn-info btn-info-custom" href="#" title="import data">Import Data </a>
+                            </div>
+
+                            <div class="box border orange">
+
+                                <table class="table" id="result-product">
+                                    <thead>
+                                        <tr>
+                                            <th style="width:90px">Date</th>
+                                            <th  style="width:50px">Shift</th>
+                                            <th>LPD 1</th>
+                                            <th>LPD 2</th>
+                                            <th>LPD 3</th>
+                                            <th>DSR (BATCH)</th>
+                                            <th>FR(MK3)</th>
+                                            <th>FR(MK4)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+
+                                        @{
+                                            var count = 0;
+                                    var border = "";
+                                            var xmlService = DependencyResolver.Current.GetService<IXmlService>();
+                                            var listColor = xmlService.GetAllProductionPlanningColors().ToList();
+                                        }
+                                        @foreach (var productLineResult in Model)
+                                        {
+
+                                            <tr>
+                                                @if(count%3 == 2 && count>0)
+                                                {
+                                                    border = "0.3em solid blue";
+                                                }  else{ border = "1px solid"; }
+                                               
+                                                @if (count % 3 == 0)
+                                                {
+                                                    <td rowspan="3"  style="border-bottom:0.3em solid blue">@productLineResult.DateTime</td>
+                                                }
+                                              
+                                                @if (DateTime.Parse(productLineResult.DateTime) >= DateTime.Now.Date && DateTime.Parse(productLineResult.DateTime) <= DateTime.Now.AddDays(6).Date)
+                                                {
+                                                    <td style="border-bottom:@border">@productLineResult.ShiftType</td>
+                                                    foreach (var item in productLineResult.ListProductLineResult)
+                                                    {
+
+                                                        <td class="line-editable-product production-col " style="background-color: @item.Color; border-bottom:@border">
+                                                            
+                                                            <span class="line-edit-span-product">@item.LineResult</span>
+                                                        
+                                                            <input class="line-edit-value-product hide" data-date="@productLineResult.DateTime" type="text" data-shift="@productLineResult.ShiftType" value="@item.LineResult" data-line="@item.LineType" data-result="@item.LineResult " />
+                                                        </td>
+                                                    }
+                                                }
+                                                else
+                                                {
+                                                    <td sytle="border-bottom:@border">@productLineResult.ShiftType</td>
+                                                    foreach (var item in productLineResult.ListProductLineResult)
+                                                    {
+                                                        <td style="background-color: @item.Color; border-bottom:@border">
+                                                            <span class="line-edit-span-product">@item.LineResult</span>
+
+                                                        </td>
+                                                    }
+                                                }
+
+                                            </tr>
+                                            count++;
+                                        }
+                                    </tbody>
+                                </table>
+
+
+
+
+
+
+
+                                <div id="bottom_anchor"></div>
+                            </div>
+                        </div>
+                        <!-- /Result -->
+
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+@section bottomjs{
+    <script src="@Url.Content("~/Scripts/kendo/2014.1.318/kendo.web.min.js")"></script>
+    <script>
+        var isEdittingProductionTabe = false;
+        var currentDate;
+        var oldvalproduct = 0;
+        var $table = $("#result-product");
+        $(document).ready(function () {
+
+            function getURLParameter(name) {
+                return decodeURIComponent(
+                    (location.search.match(RegExp("[?|&]" + name + '=(.+?)(&|$)')) || [, null])[1]
+                );
+            }
+
+            var date = getURLParameter('date');
+            if (date != "null") {
+                currentDate = date;
+                $("#datepicker").val(date);
+            } else {
+                $("#datepicker").val($.datepicker.formatDate('mm/dd/yy', new Date()));
+                currentDate = $.datepicker.formatDate('mm/dd/yy', new Date());
+
+            }
+            // date picker
+            $(".datepicker-fullscreen").kendoDatePicker({
+                origin: "top right",
+                position: "bottom right",
+                change: function() {
+                    window.location.href = "/ProductPlanning/Index?date=" +
+                        kendo.toString(this.value(), 'd');
+                }
+
+            });
+
+            function activeEditProduct(e) {
+                $(e).children('.line-edit-span-product').hide();
+                $(e).children('input').removeClass('hide');
+                $(e).children('input').addClass('input-editting-product');
+                $(e).children('input').focus();
+                $(e).children('input').select();
+                oldvalproduct = $(e).children('input').val();
+                setTimeout(function () {
+                    isEdittingProductionTabe = true;
+                }, 100);
+                
+            }
+
+
+            $(".line-editable-product").click(function() {
+                if (isEdittingProductionTabe == false) {
+                    activeEditProduct(this);
+                }
+            });
+
+            
+
+            $table.on("tr.td.next.product", function (e, $input) {
+               
+                $input = $($input);
+                var $nextInRowTd = $input.parent(".line-editable-product").next();
+                if ($nextInRowTd.length > 0) {
+                    activeEditProduct($nextInRowTd);
+                } else {
+                    var $trParent = $input.parents("tr");
+                    var $nextTr = $trParent.next();
+                    console.log($nextTr);
+                    var currentTdIndex = $nextTr.children('.line-editable-product').first().index();
+                    if ($nextTr.length > 0 ) {
+                        var $nextTd = $nextTr.children("td").eq(currentTdIndex);
+                        if ($nextTd.length > 0) {
+                            activeEditProduct($nextTd);
+                        }
+                    } 
+                }
+                
+            });
+
+            function EditValueProduct() {
+                var $input = jQuery(".input-editting-product");
+                //if input exist and on edit mode
+                if ($input.length > 0 //if textbox is on active
+                        && isEdittingProductionTabe //if on edit mode
+                ) {
+
+                    var newVal = $input.val();
+                    var dateTime = $input.data('date'); //get tartet
+                    var shiftType = $input.data('shift'); //get measure code
+                    var lineCode = $input.data('line'); //get line code
+                    if (newVal != "" && newVal != oldvalproduct) { //validate new value
+                        $.ajax({
+                            url: '/ProductPlanning/UpdateProductPlanningResult',
+                            type: 'POST',
+                            dataType: 'json',
+                            data: {
+                                dateTime: dateTime,
+                                shiftType: shiftType,
+                                lineCode: lineCode,
+                                result: newVal
+                            },
+                            success: function(data) {
+                                if (data.status == "success") {
+                                    
+                                    $input.parent().children('.line-edit-span-product').show(); //show span
+                                    $input.parent().children('.line-edit-span-product').html(newVal); // update new value to span
+                                    $input.addClass('hide'); //hide the textbox
+                                    $input.removeClass('input-editting-product'); //remove edit class to the textbox
+                                    //add color
+
+                                }
+                            }
+                        });
+
+                        // set color for td
+                        GetColorByProductName(newVal.split(':')[0], $input);
+                    } else {
+                        //if value not change
+                        $input.parent().children('.line-edit-span-product').show(); //show the span
+                        $input.addClass('hide'); //hide the textbox
+                        $input.removeClass('input-editting-product'); //remove edit class
+                      
+                    }
+
+                } else {
+
+                }
+                isEdittingProductionTabe = false; //remove edit mode
+            }
+
+            jQuery(".line-edit-value-product").keypress(function(event) {
+
+                    var charCode = event.which || event.keyCode;
+                    if (charCode == 13) {
+
+                        event.preventDefault();
+                        EditValueProduct();
+                        isEdittingProductionTabe = false;
+                      
+                        $table.trigger("tr.td.next.product", this);
+
+                    }
+
+                })
+                .blur(function() {
+
+                    EditValueProduct();
+                    isEdittingProductionTabe = false;
+
+                });
+
+            function GetColorByProductName(productName , e) {
+                var color = "#ffff";
+                $.ajax({
+                    url: '/ProductPlanning/GetColorByProductName',
+                    type: 'POST',
+                  data: {
+                      productName: productName,
+                    },
+                    success: function (data) {
+                        color = data;
+                        // this td
+                        var $td = $(e).parent("td");
+                   
+                        // set background color
+                        $td.css('background-color', color);
+                    }
+                });
+                return color;
+            }
+            $("#nav-product-plan").addClass("active");
+            //set readonly datepicker
+
+            $('#datepicker').prop('readonly', true);
+
+            // Import excel
+
+            $("#import-excel").click(function () {
+                $("#tracking-model").modal('show');
+
+            });
+
+            $("#btn-frmimport").click(function (ev) {
+                ev.preventDefault();
+                var check = true;
+
+                try {
+                    if ($('#postedFileId').val() != "") {
+                        //$("#frmimport").click(function() {
+
+                        var form = $("#frmimport");
+
+
+                        $("#frmimport").click(function () {
+                            if (check) {
+                                $.ajax({
+                                    url: '/ProductPlanning/ImportDataFromExcell',
+                                    type: 'POST',
+                                    data: new FormData(this),
+                                    processData: false,
+                                    contentType: false,
+                                    success: function (data) {
+                                        if (data.status == "success") {
+                                            check = false;
+                                            $("#tracking-model").modal('hide');
+                                            $("#postedFileId").val('');
+                                
+                                            alert("import successfully");
+                                            location.reload();
+                                        }
+                                        if (data.status == "error") {
+                                            check = false;
+                                            $("#tracking-model").modal('hide');
+                                        }
+                                    }
+                                });
+                            }
+                        });
+
+
+                        //});
+                    }
+                   /* $("#tracking-model").modal('hide');
+                    $("#tracking-model").removeData();
+                    $('#trackinggrid').data('kendoGrid').refresh();*/
+                } catch (e) {
+
+                }
+            });
+        });
+
+    </script>
+}
+

@@ -1,0 +1,390 @@
+﻿@using Entities.Domain
+@using Microsoft.Ajax.Utilities
+@using Service.Common
+@using Service.Departments
+@using Service.Interface
+@model List<Web.Models.Packing.MeetingResultModel>
+
+@*List<web.models.packing.meetingresultmodel>*@
+@{
+    ViewBag.Title = "Making Department DDS";
+    Layout = "~/Views/Shared/_KendoUILayout.cshtml";
+    var dmsCodes = Model.Select(t => t.DmsCode).Distinct().ToList();
+
+    var listResults = new List<Web.Models.Packing.LineResult>();
+    var listLineName = new List<string>();
+    foreach (var result in Model.Select(t => t.ListResult))
+    {
+       
+            listResults.AddRange(result);
+            listLineName.AddRange(result.Select(lineResult => lineResult.LineName));
+        
+    }
+    listResults = listResults.DistinctBy(x => x.LineCode).Where(p => p.LineCode != "DeedmacOperation").ToList();
+    listLineName = listLineName.Where(p => p != "DeedmacOperation").Distinct().ToList();
+    var _report = DependencyResolver.Current.GetService<IReportService>();
+   
+    var _dmsService = DependencyResolver.Current.GetService<IDmsService>();
+}
+
+@if (listResults.Count > 0)
+{
+  
+    <div class="row">
+        <div class="col-md-12">
+            <!-- BOX -->
+            <div class="box border blue">
+                <div class="box-title">
+                    <h4><i class="fa fa-user"></i><span class="hidden-inline-mobile">  </span></h4>
+                </div>
+                <div class="box-body">
+
+
+                    <div class="tabbable header-tabs">
+                        <ul class="nav nav-tabs">
+                            
+                            <li class="active"><a href="#tabresult" data-toggle="tab"><i class="fa fa-question"></i> <span class="hidden-inline-mobile">Result daily </span></a></li>
+
+                        </ul>
+                        <div class="tab-content">
+
+                            <!-- Result -->
+
+                            <div class="tab-pane fade in active" id="tabresult">
+                                   
+                                </div>
+                                <div class="box">
+
+                                    <table class="table" id="resultMakingConfig">
+                                        <thead>
+                                            <tr>
+                                                <th>DMS</th>
+                                                <th>IP/OP</th>
+                                                <th>Measure</th>
+                                                <th>Owner</th>
+                                                <th>Target</th>
+                                                <th>Unit</th>
+                                                @foreach (var str in listResults)
+                                            {
+                                                var linec = str.LineCode.Replace("(", "").Replace(")", "");
+                                                LineHardCodeType lc;
+                                                Enum.TryParse(linec, out lc);
+                                                var lci = (int)lc;
+
+                                              
+                                                <th class="linename  th-popup" title="@str.Remark" data-linecode="@lci">@str.LineName</th>
+                                            }
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @{
+                                                var evenRow = 0;
+                                            }
+                                            @foreach (var dmsCode in dmsCodes)
+                                            {
+                                                var currentRow = 0;
+                                                var totalDmsMeasures = 0;
+                                                evenRow++;
+                                                var data = Model.Where(t => t.DmsCode == dmsCode);
+
+                                                totalDmsMeasures = data.Count();
+                                                if (totalDmsMeasures < 1)
+                                                {
+                                                    totalDmsMeasures = 1;
+                                                }
+                                                foreach (var meetingResultModel in data)
+                                                {
+
+                                                    currentRow++;
+                                                    if (evenRow % 2 != 0)
+                                                    {
+                                                        <text>
+                                                            <tr class="eventRow tr-edit">
+                                                        </text>
+                                                    }
+                                                    else
+                                                    {
+                                                        <text>
+                                                            <tr class="tr-edit">
+                                                        </text>
+                                                    }
+
+
+                                                    if (currentRow == 1)
+                                                    {
+                                                        <text>
+                                                            <td rowspan="@totalDmsMeasures" class="rol-pan dms-code-col depart-DMS" data="dms-code">@_dmsService.GetDmsByDmsCode(dmsCode).Result.Description</td>
+                                                        </text>
+                                                    }
+
+                                                    switch (meetingResultModel.MeasureType)
+                                                    {
+                                                        case "Null":
+                                                            <text>
+                                                                <td data="MeasureMeasureType" class="measure-type-col"></td></text>
+                                                            break;
+                                                        case "IPorOP":
+                                                            <text>
+                                                                <td data="MeasureMeasureType" class="measure-type-col">IP/OP</td></text>
+                                                            break;
+                                                        default:
+                                                            <text>
+                                                                <td data="MeasureMeasureType" class="measure-type-col">@meetingResultModel.MeasureType</td></text>
+                                                            break;
+                                                    }
+                                                    <text>
+                                                        <td data="MeasureName">@meetingResultModel.MeasureName</td>
+                                                        <td data="Owner" class="owner-col">@meetingResultModel.Owner</td>
+                                                        <td data="Target" class="target-col">@meetingResultModel.Target</td>
+                                                        <td data="Unit" class="unit-col">@meetingResultModel.Unit</td>
+                                                    </text>
+                                                    
+                                                        
+                                                    
+                                                        foreach (var str in listResults)
+                                                        {
+                                                            var lineValue = meetingResultModel.ListResult.Single(s => s.LineCode == str.LineCode);
+                                                            DmsCode dmsc;
+                                                            Enum.TryParse(dmsCode, out dmsc);
+                                                            var dmsci = (int)dmsc;
+
+                                                            var measurec = meetingResultModel.MeasureCode;
+                                                            NoisMainMeasureType mc;
+                                                            Enum.TryParse(measurec, out mc);
+                                                            var mci = (int)mc;
+
+                                                            var linec = str.LineCode.Replace("(", "").Replace(")", "");
+                                                            LineHardCodeType lc;
+                                                            Enum.TryParse(linec, out lc);
+                                                            var lci = (int)lc;
+                                                           
+                                                                <td class="line-editable line-check-edit " data-mscode="@mci-@lci" data-linename="@str.LineName" title="">
+                                                                    <div class="line-edit-span">@lineValue.Result</div>
+                                                                    <input value="@lineValue.ReadOnly" required type="checkbox" checked="@lineValue.ReadOnly" class="hide line-edit-value" data-dmscode="@dmsci" data-measurecode="@mci" data-linecode="@lci" data-target="@meetingResultModel.Target" />
+                                                                </td>
+                                                           
+                                                        }
+
+                                                    
+                                                    @: </tr>
+                                                }
+                                            }
+
+                                        </tbody>
+                                    </table>
+                                    <div id="bottom_anchor"></div>
+                                </div>
+                            </div>
+                            <!-- /Result -->
+                          
+                        </div>
+                        
+                        
+                      
+                    </div>
+
+                </div>
+            </div>
+        </div>
+   
+}
+else
+{
+    <div>
+        Opp! Admin didn’t assign any line for you so that you can update information.Please contact admin for it!!!
+    </div>
+}
+@section bottomjs{
+    <script src="@Url.Content("~/Scripts/kendo/2014.1.318/kendo.web.min.js")"></script>
+    <script>
+        var isEditting = false;
+     
+        var oldval = 0;
+        $(document).ready(function() {
+
+          
+
+          
+
+            function activeEdit(e) {
+                $(e).children('.line-edit-span').hide();
+                $(e).children('input').removeClass('hide');
+                $(e).children('input').addClass('input-editting');
+                $(e).children('input').select();
+                $(e).children('input').focus();
+
+                oldval = $(e).children('input').is(':checked');
+                setTimeout(function() {
+                    isEditting = true;
+                }, 100);
+
+            }
+
+            $(".line-editable").click(function() {
+                if (isEditting == false) {
+                    activeEdit(this);
+                }
+            });
+            var $table = jQuery("#resultMakingConfig");
+
+
+            $table.on("tr.td.next", function(e, $input) {
+                $input = $($input);
+                var $nextInRowTd = $input.parent(".line-check-edit").next();
+                if ($nextInRowTd.length > 0) {
+                    if (!$nextInRowTd.hasClass("hide")) {
+                        activeEdit($nextInRowTd);
+                    } else {
+                        var currentTdIndex = $input.parent(".line-check-edit").index();
+                        var totalCurrentTd = $input.parents("tr").children("td").length;
+                        var totalNesTd = $input.parents("tr").next().children("td").length;
+                        if (totalCurrentTd > totalNesTd) {
+                            currentTdIndex -= 1;
+                        }
+                        if (totalCurrentTd < totalNesTd) {
+                            currentTdIndex += 1;
+                        }
+                        var $nextTr = $input.parents("tr").next();
+                        console.log(currentTdIndex);
+                        console.log($nextTr);
+                        if ($nextTr.length > 0 && $nextTr.hasClass("tr-edit")) {
+                            $nextTd = $nextTr.children("td").eq(currentTdIndex);
+                            if ($nextTd.length > 0) {
+                                activeEdit($nextTd);
+                            } else {
+                                $nextTr = $input.parents("tr").next().next().next();
+                                var $nextTd = $nextTr.children("td").eq(currentTdIndex);
+                                if ($nextTd.length > 0) {
+                                    activeEdit($nextTd);
+                                }
+                            }
+                        }
+
+                    }
+
+
+                } else {
+
+                    var $trParent = $input.parents("tr");
+
+                    var $nextTr = $trParent.next();
+                    var currentTdIndex = $input.parent(".line-check-edit").index();
+                    var totalCurrentTd = $input.parents("tr").children("td").length;
+                    var totalNesTd = $input.parents("tr").next().children("td").length;
+
+                    if (totalCurrentTd > totalNesTd) {
+                        currentTdIndex -= 1;
+                    }
+                    if (totalCurrentTd < totalNesTd) {
+                        currentTdIndex += 1;
+                    }
+                    if (!$nextTr.children(".line-check-edit").first().hasClass("hide")) {
+                        currentTdIndex = $nextTr.children(".line-check-edit").first().index();
+                    }
+                    console.log(currentTdIndex);
+                    console.log($nextTr);
+                    if ($nextTr.length > 0 && $nextTr.hasClass("tr-edit")) {
+
+                        var $nextTd = $nextTr.children("td").eq(currentTdIndex);
+                        console.log($nextTd);
+                        if ($nextTd.length > 0) {
+                            activeEdit($nextTd);
+                        }
+                    } else {
+                        $nextTr = $input.parents("tr").next().next();
+                        var $nextTd = $nextTr.children("td").eq(currentTdIndex);
+                        console.log($nextTd);
+                        if ($nextTd.length > 0) {
+                            activeEdit($nextTd);
+                        }
+                    }
+                }
+
+            });
+
+            var formatNewTargetBackground = function() {
+                var $input = jQuery(".input-editting");
+                //if input exist and on edit mode
+                if ($input.length > 0 //if textbox is on active
+                        && isEditting //if on edit mode
+                ) {
+
+                    var newVal = $input.is(':checked');
+                    var textResult = "edit";
+                    if (newVal == true)
+                        textResult = "edit";
+                    else
+                        textResult = "not edit";
+                    var target = $input.data('target').toString(); //get tartet
+                    var dmsCode = $input.data('dmscode'); //get dmsCode
+                    var measureCode = $input.data('measurecode'); //get measure code
+                    var lineCode = $input.data('linecode'); //get line code
+                    if (newVal != oldval) { //validate new value
+                      
+                        $.ajax({
+                            url: '/MakingConfig/UpdateMeetingResult',
+                            type: 'POST',
+                            dataType: 'json',
+                            data: {
+                                dmscode: dmsCode,
+                                lineCode: lineCode,
+                                measureCode: measureCode,
+                                result: newVal
+                            },
+                            success: function(data) {
+                                if (data.status == "success") {
+
+                                    $input.parent().children('.line-edit-span').show(); //show span
+                                    $input.parent().children('.line-edit-span').html(textResult); // update new value to span
+                                    $input.addClass('hide'); //hide the textbox
+                                    $input.removeClass('input-editting'); //remove edit class to the textbox
+                                    //add color
+                                    // TARGET DON'T CONTAIN CALCULATIONS: target.indexOf(">")<0 && target.indexOf("<") < 0
+                                  
+
+                                }
+                            }
+                        });
+                    } else {
+                        //if value not change
+                        $input.parent().children('.line-edit-span').show(); //show the span
+                        $input.addClass('hide'); //hide the textbox
+                        $input.removeClass('input-editting'); //remove edit class
+
+                    }
+
+                }
+                isEditting = false; //remove edit mode
+            };
+
+
+          
+
+            jQuery(".line-edit-value")
+                //.keypress(function(event) {
+
+                //    var charCode = event.which || event.keyCode;
+                //    if (charCode == 13) {
+
+                //        event.preventDefault();
+                //        formatNewTargetBackground();
+                //        isEditting = false;
+                //        $table.trigger("tr.td.next", this);
+
+                //    }
+
+                //})
+                .blur(function() {
+
+                    formatNewTargetBackground();
+                    isEditting = false;
+
+                });
+
+
+          
+        });
+
+    </script>
+}
+

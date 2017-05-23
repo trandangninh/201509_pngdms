@@ -1,0 +1,606 @@
+﻿@using Service.Common
+@using Service.Interface
+@using Service.Users
+@model Web.Models.SupplyChain.SupplyChainModel
+@{
+
+    Layout = null;
+    var _report = DependencyResolver.Current.GetService<IReportService>();
+}
+
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="box border orange">
+            <table id="supplychaingriddds" class="table">
+                <thead>
+                    <tr>
+                        <th>DMS</th>
+                        <th>Measure-Making</th>
+                        <th>Owner</th>
+                        <th>LPD1</th>
+                        <th>LPD2</th>
+                        <th>LPD3</th>
+                        <th>Bat</th>
+                        <th>FR( MK )</th>
+                        <th class="remark-supplychain">Remarks</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    <!-- Making -->
+                    @{
+                        var addDmsCompleted = false;
+                    }
+
+                    @for (int i = 0; i < 3; i++)
+                    {
+                        if (i == 0)
+                        {
+                            <text>
+                                <tr data-type="1" data-measurecode="@(i + 1)" class="scdds-target">
+                            </text>
+                        }
+                        else
+                        {
+                            <text>
+                            <tr class="tr-edit" data-type="1" data-measurecode="@(i + 1)">
+                            </text>
+                        }
+
+                        if (!addDmsCompleted)
+                        {
+                            <text>
+                                <td rowspan="7" class="scdds-DMS">DDS</td></text>
+                            addDmsCompleted = true;
+                        }
+
+                        <text>
+                            <td class="measurecode">
+                                @Model.SupplyChainDDS[i].MeasureName
+                                <input type="text" value="@Model.SupplyChainDDS[i].MeasureCode" />
+                            </td>
+                        </text>
+
+                        if (i == 0)
+                        {
+
+                            <td></td>
+                            <td class="lpd1 target-making-dds line-edit-dds line-check-edit line-cols">
+                                <span>@Model.SupplyChainDDS[i].LPD1 </span>
+                                <input class="input-edit-value-result" type="text" value="@Model.SupplyChainDDS[i].LPD1" />
+                            </td>
+                            <td class="lpd2 target-making-dds line-edit-dds line-check-edit line-cols">
+                                <span>@Model.SupplyChainDDS[i].LPD2 </span>
+                                <input class="input-edit-value-result" type="text" value="@Model.SupplyChainDDS[i].LPD2" />
+                            </td>
+                            <td class="lpd3 target-making-dds line-edit-dds line-check-edit line-cols">
+                                <span>@Model.SupplyChainDDS[i].LPD3 </span>
+                                <input class="input-edit-value-result" type="text" value="@Model.SupplyChainDDS[i].LPD3" />
+                            </td>
+                            <td class="batch target-making-dds line-edit-dds line-check-edit line-cols">
+                                <span>@Model.SupplyChainDDS[i].Batch </span>
+                                <input class="input-edit-value-result" type="text" value="@Model.SupplyChainDDS[i].Batch" />
+                            </td>
+                            <td class="frmk target-making-dds line-edit-dds line-check-edit line-cols">
+                                <span>@Model.SupplyChainDDS[i].FRMK </span>
+                                <input class="input-edit-value-result" type="text" value="@Model.SupplyChainDDS[i].FRMK" />
+                            </td>
+
+    <td class="remark target-making-dds line-edit-dds line-check-edit line-remark remark-float">
+        <span>@Html.Raw(Model.SupplyChainDDS[i].RemarkDisplay.Replace("\n", "<br />")) </span>
+        <textarea class="input-edit-value-result" readonly="readonly" value="@Model.SupplyChainDDS[i].Remark">@Model.SupplyChainDDS[i].Remark</textarea>
+    </td>
+                        }
+                        else
+                        {
+                            <td class="owner line-edit-dds">
+                                <span>@Model.SupplyChainDDS[i].Owner</span>
+                                @{
+                            var ownerservice = DependencyResolver.Current.GetService<IUserService>();
+                            var owner = ownerservice.GetAllUsersAsync().ToList();
+                            var userAdmin = ownerservice.GetUserByUsernameAsync("Admin").Result;
+                            if (userAdmin != null)
+                            {
+                                owner.Remove(userAdmin);
+                            }
+                                }
+                                <select id="Owner1">
+                                    @foreach (var user in owner)
+                                    {
+                                        if (user.Username == Model.SupplyChainDDS[i].Owner)
+                                        {
+                                            <option value="@user.Username" selected>@user.Username</option>
+                                        }
+                                        else
+                                        {
+                                            <option value="@user.Username">@user.Username</option>
+                                        }
+
+                                    }
+                                </select>
+                            </td>
+
+
+                            <td class="@_report.checkColor(Model.SupplyChainDDS[0].LPD1, Model.SupplyChainDDS[i].LPD1) making-dds lpd1 line-edit-dds line-check-edit line-cols">
+                                <span>@Model.SupplyChainDDS[i].LPD1 </span>
+                                <input class="input-edit-value-result" type="text" value="@Model.SupplyChainDDS[i].LPD1" />
+                            </td>
+
+                            <td class="@_report.checkColor(Model.SupplyChainDDS[0].LPD2, Model.SupplyChainDDS[i].LPD2) making-dds lpd2 line-edit-dds line-check-edit line-cols">
+                                <span>@Model.SupplyChainDDS[i].LPD2 </span>
+                                <input class="input-edit-value-result" type="text" value="@Model.SupplyChainDDS[i].LPD2" />
+                            </td>
+                            <td class="@_report.checkColor(Model.SupplyChainDDS[0].LPD3, Model.SupplyChainDDS[i].LPD3) making-dds lpd3 line-edit-dds line-check-edit line-cols">
+                                <span>@Model.SupplyChainDDS[i].LPD3 </span>
+                                <input class="input-edit-value-result" type="text" value="@Model.SupplyChainDDS[i].LPD3" />
+                            </td>
+                            <td class="@_report.checkColor(Model.SupplyChainDDS[0].Batch, Model.SupplyChainDDS[i].Batch) making-dds batch line-edit-dds line-check-edit line-cols">
+                                <span>@Model.SupplyChainDDS[i].Batch </span>
+                                <input class="input-edit-value-result" type="text" value="@Model.SupplyChainDDS[i].Batch" />
+                            </td>
+                            <td class="@_report.checkColor(Model.SupplyChainDDS[0].FRMK, Model.SupplyChainDDS[i].FRMK) making-dds frmk line-edit-dds line-check-edit line-cols">
+                                <span>@Model.SupplyChainDDS[i].FRMK </span>
+                                <input class="input-edit-value-result" type="text" value="@Model.SupplyChainDDS[i].FRMK" />
+                            </td>
+
+    <td class="remark line-edit-dds line-check-edit line-remark remark-float">
+        <span>
+            @Html.Raw(Model.SupplyChainDDS[i].RemarkDisplay.Replace("\n", "<br />"))
+        </span>
+        <textarea class="input-edit-value-result" value="@Model.SupplyChainDDS[i].Remark">@Model.SupplyChainDDS[i].Remark</textarea>
+    </td>
+                        }
+
+
+                     @:</tr>
+                    }
+
+                    <!--Packing-->
+                    <tr class="thead">
+                        <td>Measure-Packing</td>
+                        <td>Owner</td>
+                        <td>Bottle</td>
+                        <td>Sachet</td>
+                        <td>Pouch</td>
+                        <td>FR(PK)</td>
+                        <td>FE</td>
+                        <td>Remarks</td>
+                    </tr>
+                    @for (int i = 3; i < 6; i++)
+                    {
+                        if (i == 3)
+                        {
+                            <text>
+                                <tr data-type="2" data-measurecode="@(i-2)" class="scdds-target">
+                            </text>
+                        }
+                        else
+                        {
+                            <text>
+                            <tr class="tr-edit" data-type="2" data-measurecode="@(i-2)">
+                            </text>
+                        }
+
+                        <td>@Model.SupplyChainDDS[i].MeasureName</td>
+                        if (i == 3)
+                        {
+                            <td></td>
+    <td class="target-packing-dds pacing-dds bottle line-edit-dds line-check-edit line-cols" title="@Model.SupplyChainDDS[i]">
+        <span>@Model.SupplyChainDDS[i].Bottle</span>
+        <input class="input-edit-value-result" type="text" value="@Model.SupplyChainDDS[i].Bottle" />
+    </td>
+                            <td class="target-packing-dds pacing-dds sachet line-edit-dds line-check-edit line-cols">
+                                <span>@Model.SupplyChainDDS[i].Sachet</span>
+                                <input class="input-edit-value-result" type="text" value="@Model.SupplyChainDDS[i].Sachet" />
+                            </td>
+                            <td class="target-packing-dds pacing-dds pouch line-edit-dds line-check-edit line-cols">
+                                <span>@Model.SupplyChainDDS[i].Pouch</span>
+                                <input class="input-edit-value-result" type="text" value="@Model.SupplyChainDDS[i].Pouch" />
+                            </td>
+                            <td class="target-packing-dds pacing-dds frpk line-edit-dds line-check-edit line-cols">
+                                <span>@Model.SupplyChainDDS[i].FRPK</span>
+                                <input class="input-edit-value-result" type="text" value="@Model.SupplyChainDDS[i].FRPK" />
+                            </td>
+                            <td class="target-packing-dds pacing-dds fe line-edit-dds line-check-edit line-cols">
+                                <span>@Model.SupplyChainDDS[i].FE</span>
+                                <input class="input-edit-value-result" type="text" value="@Model.SupplyChainDDS[i].FE" />
+                            </td>
+
+    <td class="remark line-edit-dds  line-check-edit line-remark remark-float">
+        <span>@Html.Raw(Model.SupplyChainDDS[i].RemarkDisplay.Replace("\n", "<br />"))</span>
+        <textarea class="input-edit-value-result" readonly="readonly" value="@Model.SupplyChainDDS[i].Remark">@Model.SupplyChainDDS[i].Remark</textarea>
+    </td>
+                        }
+                        else
+                        {
+                            <td class="owner line-edit-dds">
+                                <span>@Model.SupplyChainDDS[i].Owner</span>
+                                @{
+                            var ownerservice = DependencyResolver.Current.GetService<IUserService>();
+                            var owner = ownerservice.GetAllUsersAsync().ToList();
+                            var userAdmin = ownerservice.GetUserByUsernameAsync("Admin").Result;
+                            if (userAdmin != null)
+                            {
+                                owner.Remove(userAdmin);
+                            }
+                                }
+                                <select id="Owner1">
+                                    @foreach (var user in owner)
+                                    {
+                                        if (user.Username == Model.SupplyChainDDS[i].Owner)
+                                        {
+                                            <option value="@user.Username" selected>@user.Username</option>
+                                        }
+                                        else
+                                        {
+                                            <option value="@user.Username">@user.Username</option>
+                                        }
+
+                                    }
+                                </select>
+                            </td>
+    <td class="@_report.checkColor(Model.SupplyChainDDS[3].Bottle, Model.SupplyChainDDS[i].Bottle) bottle  line-edit-dds line-check-edit line-cols" title="@Model.SupplyChainDDS[i].BottleRemark ">
+        <span>@Model.SupplyChainDDS[i].Bottle</span>
+        <input class="input-edit-value-result" type="text" value="@Model.SupplyChainDDS[i].Bottle" />
+    </td>
+    <td class="@_report.checkColor(Model.SupplyChainDDS[3].Sachet, Model.SupplyChainDDS[i].Sachet) sachet  line-edit-dds line-check-edit line-cols" title="@Model.SupplyChainDDS[i].SachetRemark">
+        <span>@Model.SupplyChainDDS[i].Sachet</span>
+        <input class="input-edit-value-result" type="text" value="@Model.SupplyChainDDS[i].Sachet" />
+    </td>
+    <td class="@_report.checkColor(Model.SupplyChainDDS[3].Pouch, Model.SupplyChainDDS[i].Pouch) pouch  line-edit-dds line-check-edit line-cols" title="@Model.SupplyChainDDS[i].PouchRemark">
+        <span>@Model.SupplyChainDDS[i].Pouch</span>
+        <input class="input-edit-value-result" type="text" value="@Model.SupplyChainDDS[i].Pouch" />
+    </td>
+    <td class="@_report.checkColor(Model.SupplyChainDDS[3].FRPK, Model.SupplyChainDDS[i].FRPK) frpk line-edit-dds line-check-edit line-cols" title="@Model.SupplyChainDDS[i].FRPKRemark">
+        <span>@Model.SupplyChainDDS[i].FRPK</span>
+        <input class="input-edit-value-result" type="text" value="@Model.SupplyChainDDS[i].FRPK" />
+    </td>
+                            <td class="@_report.checkColor(Model.SupplyChainDDS[3].FE, Model.SupplyChainDDS[i].FE) fe line-edit-dds line-check-edit line-cols">
+                                <span>@Model.SupplyChainDDS[i].FE</span>
+                                <input class="input-edit-value-result" type="text" value="@Model.SupplyChainDDS[i].FE" />
+                            </td>
+
+    <td class="@_report.checkColor(Model.SupplyChainDDS[3].Remark, Model.SupplyChainDDS[i].Remark) remark line-edit-dds line-check-edit line-remark remark-float">
+        <span>
+            @*@Model.SupplyChainDDS[i].Remark*@
+            @Html.Raw(Model.SupplyChainDDS[i].RemarkDisplay.Replace("\n", "<br />"))
+        </span>
+        <textarea class="input-edit-value-result" value="@Model.SupplyChainDDS[i].Remark">@Model.SupplyChainDDS[i].Remark</textarea>
+    </td>
+                        }
+
+
+                    @:</tr>
+                    }
+
+                </tbody>
+            </table>
+
+        </div>
+
+    </div>
+</div>
+
+
+
+<script src="@Url.Content("~/Scripts/kendo/2014.1.318/kendo.web.min.js")"></script>
+<script>
+
+    $(document).ready(function () {
+        var isEdittingDDS = false;
+
+        var oldval = 0;
+
+        function CheckColorDDS(target, number) {
+            if (typeof target != "undefined") {
+
+                target = target.replace("%", "");
+                number = number.replace("%", "");
+                if ($.isNumeric(target) && $.isNumeric(number)) {
+                    if (parseFloat(target) > parseFloat(number))
+                        return "no-match-target";
+                    else return "match-target";
+                }
+                else {
+
+                    return "";
+                }
+            }
+        }
+
+        var $tabledds = jQuery("#supplychaingriddds");
+
+        $tabledds.on("tr.td.next", function (e, $input) {
+            $input = $($input);
+            var $nextInRowTd = $input.parent(".line-check-edit").next();
+
+            if ($nextInRowTd.length > 0) {
+                activeEdit($nextInRowTd);
+            } else {
+                var currentTdIndex = 2;
+                var $trParent = $input.parents("tr");
+                var $nextTr = $trParent.next();
+                if ($nextTr.length > 0 && $nextTr.hasClass("tr-edit")) {
+                    var $nextTd = $nextTr.children("td").eq(currentTdIndex);
+                    if ($nextTd.length > 0) {
+                        activeEdit($nextTd);
+                    }
+                } else {
+                    $nextTr = $input.parents("tr").next().next().next();
+                    var $nextTd = $nextTr.children("td").eq(currentTdIndex);
+                    if ($nextTd.length > 0) {
+                        activeEdit($nextTd);
+                    }
+                }
+            }
+
+        });
+
+
+        function activeEdit(e) {
+            var inputEditInline = e.children(".input-edit-value-result");
+            inputEditInline.removeClass("hide");
+            var isReadonly = $(inputEditInline).prop("readonly");
+            if (isReadonly) {
+                var nextRow = e.parent("tr").next();
+                GoToNextRow(nextRow, 2);
+                inputEditInline.addClass("hide");
+                return;
+            }
+            else {
+                e.children("span").addClass("hide");
+                e.children(".input-edit-value-result").select();
+                e.children(".input-edit-value-result").focus();
+
+                e.children("select").removeClass("hide");
+                e.children("select").focus();
+                oldval = $(e).children('.input-edit-value-result').val();
+                setTimeout(function () {
+                    isEdittingDDS = true;
+                }, 100);
+
+            }
+        }
+
+        function GoToNextRow($newRow, startTdIndex) {
+            if ($newRow.length > 0 && $newRow.hasClass("tr-edit")) {
+                var $nextTd = $newRow.children("td").eq(startTdIndex);
+                if ($nextTd.length > 0) {
+                    activeEdit($nextTd);
+                }
+            } else {
+                $newRow = $input.parents("tr").next().next().next();
+                var $nextTd = $newRow.children("td").eq(startTdIndex);
+                if ($nextTd.length > 0) {
+                    activeEdit($nextTd);
+                }
+            }
+        }
+
+        // gird supply chain\
+        $("#tabresult-dms-dds td .input-edit-value-result ").addClass("hide");
+        $("#tabresult-dms-dds td input ").addClass("hide");
+        $("#tabresult-dms-dds td select ").addClass("hide");
+
+        $(".line-edit-dds").click(function () {// target
+
+            if (isEdittingDDS == false) {
+                activeEdit(jQuery(this));
+            }
+        });
+
+        function editvalueDDS(e) {
+            var $input = jQuery(e);
+            var $tr = jQuery($input.parent().parent());
+
+
+            //if input exist and on edit mode
+            if ($input.length > 0 //if textbox is on active
+                    && isEdittingDDS //if on edit mode
+            ) {
+                var newVal = $input.val();
+                if (newVal != oldval) { //validate new value
+                    var owner = $tr.children(".owner").children("span").html();
+                    var type = $tr.data('type');
+                    var measureCode = $tr.data('measurecode');
+                    var lpd1 = $tr.children(".lpd1").children(".input-edit-value-result").val();
+                    var lpd2 = $tr.children(".lpd2").children(".input-edit-value-result").val();
+                    var lpd3 = $tr.children(".lpd3").children(".input-edit-value-result").val();
+                    var batch = $tr.children(".batch").children(".input-edit-value-result").val();
+                    var frmk = $tr.children(".frmk").children(".input-edit-value-result").val();
+                    var bottle = $tr.children(".bottle").children(".input-edit-value-result").val();
+                    var sachet = $tr.children(".sachet").children(".input-edit-value-result").val();
+                    var pouch = $tr.children(".pouch").children(".input-edit-value-result").val();
+                    var frpk = $tr.children(".frpk").children(".input-edit-value-result").val();
+                    var fe = $tr.children(".fe").children(".input-edit-value-result").val();
+                    var remark = $tr.children(".remark ").children(".input-edit-value-result").val();
+                    $.ajax({
+                        url: '/SupplyChain/UpdateDDS',
+                        type: 'POST',
+                        dataType: 'json',
+                        data: {
+                            Owner: owner,
+                            type: type,
+                            MeasureCode: measureCode,
+                            LPD1: lpd1,
+                            LPD2: lpd2,
+                            LPD3: lpd3,
+                            Batch: batch,
+                            FRMK: frmk,
+                            Bottle: bottle,
+                            Sachet: sachet,
+                            Pouch: pouch,
+                            FRPK: frpk,
+                            FE: fe,
+                            Remark: remark,
+                            Date: currentDate
+                        },
+                        success: function (data) {
+
+                            if (data.status == "success") {
+
+                                var regexNewVal = newVal.replace(/\n/g, "<br />");
+                                //isEdittingDDS = false; //remove edit mode
+                                $input.parent().children('span').removeClass("hide"); //show span
+                                $input.parent().children('span').html(regexNewVal);
+                                $input.addClass("hide");
+                                var $currentTd = $input.parents("td");
+
+                                if ($currentTd.hasClass("making-dds")) { // set color for td making
+
+                                    if (!$currentTd.hasClass("target-making-dds")) {
+                                        var $currentIndexId = $currentTd.index() - 2; // get index current target over
+                                        var inputTarget = $(".target-making-dds").eq($currentIndexId).children("span").html(); // get value span
+                                        var color = CheckColorDDS(inputTarget, regexNewVal); // calular color
+                                        $currentTd.removeClass("no-match-target"); // remove class css
+                                        $currentTd.removeClass("match-target");// remove class css
+                                        $currentTd.addClass(color); // add  true class
+                                    }
+                                } else {// set color for td packing
+
+                                    if (!$currentTd.hasClass("target-packing-dds") && !$currentTd.hasClass("target-making-dds")) {
+                                        var $currentIndexId = $currentTd.index() - 2; // get index current target over
+                                        var inputTarget = $(".target-packing-dds").eq($currentIndexId).children("span").html(); // get value span
+                                        var color = CheckColorDDS(inputTarget, regexNewVal); // calular color
+                                        $currentTd.removeClass("no-match-target"); // remove class css
+                                        $currentTd.removeClass("match-target");// remove class css
+                                        //console.log($currentIndexId + " " + inputTarget + " " + color);
+                                        $currentTd.addClass(color); // add  true class
+                                    }
+                                }
+
+                            }
+                        }
+                    });
+                } else {
+                    //if value not change
+
+                    isEdittingDDS = false; //remove edit mode
+                    $input.parent().children('span').removeClass("hide"); //show span
+                    $input.addClass("hide");
+                }
+
+            } else {
+
+            }
+
+        }
+
+        function validateDecimal(e) {
+
+            if (e.value.length > 0) {
+                var RE = /^[+-]?\d+(\.\d+)?$/;
+                if (RE.test(e.value)) {
+                    return true;
+                } else {
+                    return false;
+                }
+            } else {
+                return true;
+            }
+        }
+
+        jQuery(".line-edit-dds").children(".input-edit-value-result")
+                .keypress(function (event) {
+
+                    var charCode = event.which || event.keyCode;
+                    if (charCode == 13) {
+                        var td = $(this).parent("td");
+                        if (!td.hasClass("line-remark")) {
+
+                            event.preventDefault();
+                            editvalueDDS(this);
+                            isEdittingDDS = false;
+                            $tabledds.trigger("tr.td.next", this);
+                        }
+
+                    }
+
+                })
+                .blur(function () {
+
+
+                    editvalueDDS(this);
+                    isEdittingDDS = false;
+
+                });
+
+        //end gird supply chain
+        jQuery(".line-edit-dds").children("select").blur(function () {
+            var $input = jQuery(this);
+
+            var $tr = jQuery($input.parent().parent());
+
+
+            //if input exist and on edit mode
+            if ($input.length > 0 //if textbox is on active
+                    && isEdittingDDS //if on edit mode
+            ) {
+
+                var newVal = $input.val();
+                if (newVal != "" && newVal != oldval) { //validate new value
+                    var owner = this.value;
+                    var type = $tr.data('type');
+                    var measureCode = $tr.data('measurecode');
+                    var lpd1 = $tr.children(".lpd1").children(".input-edit-value-result").val();
+                    var lpd2 = $tr.children(".lpd2").children(".input-edit-value-result").val();
+                    var lpd3 = $tr.children(".lpd3").children(".input-edit-value-result").val();
+                    var batch = $tr.children(".batch").children(".input-edit-value-result").val();
+                    var frmk = $tr.children(".frmk").children(".input-edit-value-result").val();
+                    var bottle = $tr.children(".bottle").children(".input-edit-value-result").val();
+                    var sachet = $tr.children(".sachet").children(".input-edit-value-result").val();
+                    var pouch = $tr.children(".pouch").children(".input-edit-value-result").val();
+                    var frpk = $tr.children(".frpk").children(".input-edit-value-result").val();
+                    var fe = $tr.children(".fe").children(".input-edit-value-result").val();
+                    var remark = $tr.children(".remark ").children(".input-edit-value-result").val();
+                    $.ajax({
+                        url: '/SupplyChain/UpdateDDS',
+                        type: 'POST',
+                        dataType: 'json',
+                        data: {
+                            Owner: owner,
+                            type: type,
+                            MeasureCode: measureCode,
+                            LPD1: lpd1,
+                            LPD2: lpd2,
+                            LPD3: lpd3,
+                            Batch: batch,
+                            FRMK: frmk,
+                            Bottle: bottle,
+                            Sachet: sachet,
+                            Pouch: pouch,
+                            FRPK: frpk,
+                            FE: fe,
+                            Remark: remark,
+                            Date: currentDate
+                        },
+                        success: function (data) {
+                            if (data.status == "success") {
+                                isEdittingDDS = false; //remove edit mode
+                                $input.parent().children('span').removeClass("hide"); //show span
+                                $input.parent().children('span').html(owner);
+                                $input.addClass("hide");
+                            }
+                        }
+                    });
+                } else {
+                    //if value not change
+
+                    isEdittingDDS = false; //remove edit mode
+                    $input.parent().children('span').removeClass("hide"); //show span
+                    $input.addClass("hide");
+                }
+
+            } else {
+
+            }
+
+        });
+
+        // date picker
+
+    });
+
+</script>
+

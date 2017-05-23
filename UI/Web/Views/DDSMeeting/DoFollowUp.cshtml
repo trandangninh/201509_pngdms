@@ -1,0 +1,153 @@
+﻿@using Entities.Domain.Users
+@using RepositoryPattern.Infrastructure
+@using Utils
+@model Web.Models.DdsMeeting.IssueListModel
+@{
+    ViewBag.Title = "Manage Issue";
+    Layout = "~/Views/Shared/_KendoUILayout.cshtml";
+    var workContext = EngineContext.Current.Resolve<IWorkContext>();
+}
+<script src="@Url.Content("~/Scripts/kendo/2014.1.318/kendo.web.min.js")"></script>
+<div class="dofollowup-filter" style="height: 40px">
+    <input type="text" id="search-txt" placeholder="Search" class="form-control" style="float: left; height: 30px; padding: 4px 12px; width: 22%"/>
+    <span style="margin: 5px 5px 5px 15px; float: left">Status:</span>
+    <input id="status_cbx" style="float: left; width: 20%" />
+   
+    @{
+        //var style = "display:none";
+        var style = "";
+        //if (workContext.CurrentUser != null && (workContext.CurrentUser.IsAdmin() || workContext.CurrentUser.IsLeader()))
+        //{
+        //    style = "";
+        //}
+        }
+    <input id="user_cbx" style="float: right; width: 20%; @style" />
+    <span style="margin: 5px 5px 5px 15px; float: right; @style"> User:</span>
+    <input id="department_cbx" class="department-cbx" style="width: 12%;" />
+    <span style="margin: 5px 5px 5px 15px; float: right">Department:</span>
+</div>
+<style>
+    .k-combobox.department-cbx {
+        float: right;
+    }
+</style>
+<div class="form-group">
+    @Html.Action("Issue", new { departmentId = Model.DepartmentId, showDepartmentCbx = Model.ShowDepartmentCbx })
+</div>
+
+<script>
+    @*var departmentId = "@Model.DepartmentId";*@
+    function issueGetDepartmentId() {
+        return {
+            departmentId: departmentId
+        };
+    }
+
+    function issueAdditionalData() {
+        return {
+            SearchString: $("#search-txt").val(),
+            DepartmentId: departmentId,
+            IssueStatusId: statuscbx.value().toString(),
+            UserId: userIds(),
+        };
+    }
+
+    var dataSourceDepartment = new kendo.data.DataSource({
+        transport: {
+            read: {
+                dataType: "json",
+                type: "POST",
+                url: "@Html.Raw(Url.Action("GetAllDepartment", "Department"))"
+            }
+            @if(workContext.CurrentUser==null || workContext.CurrentUser.IsAdmin())
+            {   
+                <text>,
+                    schema: {
+                    parse: function (data) {
+                        data.unshift({ Id: "0", Name: "--  All Department  --" });
+                        return data;
+                    }
+                }</text>
+            }
+        }
+    });
+
+    var allUserAttributeFillter = new kendo.data.DataSource({
+        transport: {
+            read: {
+                dataType: "json",
+                type: "POST",
+                url: "@Html.Raw(Url.Action("GetAllUser", "DdsMeeting"))",
+            data: { departmentId: 0}//get from _Issue partial view
+        }
+    }
+    });
+    $("#department_cbx").kendoComboBox({
+        dataTextField: "Name",
+        dataValueField: "Id",
+        dataSource: dataSourceDepartment,
+        height: 100,
+        index: 0,
+        //dataBind: function (e) {
+        //    //dataSourceDepartment._data.unshift({ Id: "0", Name: "--  All Department  --" });
+        //    console.log(e.sender.dataSource._data.unshift({ Id: "0", Name: "--  All Department  --" }));
+        //},
+        change: function (e) {
+            departmentId = departmentcbx.value();
+            $("#issue-grid").data("kendoGrid").dataSource.read();
+            $('#user_cbx').data("kendoMultiSelect").dataSource.read();
+        }
+    });
+    var userIds;
+    var departmentcbx = $("#department_cbx").data("kendoComboBox");
+    @*@if (workContext.CurrentUser != null && (workContext.CurrentUser.IsAdmin() || workContext.CurrentUser.IsLeader()))
+    {
+    <text>*@
+        $("#user_cbx").kendoMultiSelect({
+        dataTextField: "Name",
+        dataValueField: "Id",
+        dataSource: allUserAttributeFillter,
+        height: 100,
+        change: function (e) {
+            $("#issue-grid").data("kendoGrid").dataSource.read();
+        },
+        optionLabel: "--- Any User ---",
+        placeholder: "--- Any User ---"
+    });
+    var usercbx = $("#user_cbx").data("kendoMultiSelect");
+    var userIds = function () {
+        return usercbx.value().toString();
+    }
+    //</text>
+    //}else
+    //{
+    //    <text>
+    //var userIds = function () {
+    //    return "";
+    //}
+    //</text>
+    //}
+    $("#status_cbx").kendoMultiSelect({
+        dataTextField: "Name",
+        dataValueField: "Id",
+        dataSource: allStatusAttributes,
+        height: 100,
+        change: function (e) {
+            $("#issue-grid").data("kendoGrid").dataSource.read();
+        },
+        optionLabel: "--- Any Status ---",
+        placeholder: "--- Any Status ---"
+    });
+    var statuscbx = $("#status_cbx").data("kendoMultiSelect");
+
+
+    
+    //search
+    $('#search-txt').bind("input", function (e) {
+        if (this.value.length >= 3 || e.keyCode == 13 || e.keyCode == 8 || e.keyCode == 46 || this.value.length == 0) {
+            $("#issue-grid").data("kendoGrid").dataSource.read();
+        }
+        return false;
+    });
+</script>
+
